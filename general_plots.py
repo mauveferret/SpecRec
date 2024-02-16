@@ -55,7 +55,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 # Experimental LEIS spectra. Measured on "Large Mass-Monochromator "MEPhI" facility
 
 #26.10.2023-18-16-Ar+ 18 keV W 60deg 23nA
-#spectrum_path += "exp_Ar18keV60deg_WH.dat"
+spectrum_path += "exp_Ar18keV60deg_WH.dat"
 
 #04.09.2019-14-05-H+ 25 keV 56 nA clean W on glass
 #spectrum_path += "exp_H25keV32deg_W.dat"
@@ -78,7 +78,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDW.dat"
-spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
+#spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
 #spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
@@ -86,7 +86,7 @@ spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 
-SCD.calc_name = str(spectrum_path.split(os.sep)[-1])
+SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
 SCD.Emin = 500
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
@@ -271,10 +271,10 @@ fig.show()
 
 if not isExp:
     plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=0.5, label='Raw spectrum') 
-    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k-',linewidth=1,
+    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=1,
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r-', linewidth=1, label='Simple Deconvolution') 
-    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-', linewidth=1, label='Numerical Deconvolution') 
+    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=1.5, label='Simple Deconvolution') 
+    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-', linewidth=1.5, label='Numerical Deconvolution') 
     plt.legend(fontsize=8)
     plt.ylim(0,1)
     plt.xlim(1, spectrum_en[-1]/1000)
@@ -287,12 +287,12 @@ if not isExp:
     #plt.show()
 if isExp:
     fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True, figsize=(12, 6))
-    ax1.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=0.5, label='Raw spectrum') 
-    ax1.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r-', linewidth=1, label='Simple Deconvolution') 
+    ax1.plot(spectrum_en/1000, spectrum_int, 'b--',linewidth=1, label='Raw spectrum') 
+    ax1.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=1, label='Simple Deconvolution') 
     ax1.plot(spectrum_en/1000, broadening_convolution_of_simple_deconv[0:len(spectrum_en)], 'k-',linewidth=1,
             label='Convolution of simple deconvolution with dE/E='+str(SCD.spectrometer_resolution)) 
-    ax2.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=0.5, label='Raw spectrum') 
-    ax2.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'r-', linewidth=1, label='Numerical Deconvolution') 
+    ax2.plot(spectrum_en/1000, spectrum_int, 'b--',linewidth=1, label='Raw spectrum') 
+    ax2.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'r:', linewidth=1, label='Numerical Deconvolution') 
     ax2.plot(spectrum_en/1000, broadening_convolution_of_numeric_deconv[0:len(spectrum_en)], 'k-',linewidth=1,
             label='Convolution of numerical deconvolution with dE/E='+str(SCD.spectrometer_resolution)) 
     ax1.set_ylim(0,1)
