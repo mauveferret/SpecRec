@@ -8,6 +8,8 @@ The program **SpecRec** is intended as supporting material to the scientific pap
 
 More detailed description of the used algorithms and methods is given in `You will see the reference here when the article would be published`. Briefly, it **SpecRec** allows to use analytical method of spectra reconstruction suggested by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Urusov V.A.](http://link.springer.com/10.1134/S1063785010050196). Also it allows to utilize modern numerical methods, *inter alia* proposed by [TwoMey](https://dl.acm.org/doi/10.1145/321150.321157).  Both group of methods are intended for solving Fredholm Integral Equation of the first kind, while most methods for spectra reconstruction are valid for classic convolution integral equations.  Meanwhile, as was shown by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Yu. K. Golikov et. al.](https://cyberleninka.ru/article/n/ob-apparatnoy-funktsii-elektrostaticheskih-elektronnyh-spektrometrov), the use of classical convolution equations is not correct for the most of electrostatic and magnetic spectrometers and the Fredholm or Volterra Integral Equations has to be used instead.
 
+![header](https://github.com/mauveferret/SpecRec/blob/main/out/spec_reconstr_sim_Ne18keV32deg_HDW.dat_with_gauss_kernel.png?raw=true)
+
 ## Getting Started
 
 ### Installation and Dependencies
@@ -53,3 +55,7 @@ If you have questions regarding this program or any execution problems, please c
 ## License
 
 This project is licensed under the GNU License - see the LICENSE.md file for details
+
+## Acknowledgements
+
+* [inteq](https://github.com/mwt/inteq)
