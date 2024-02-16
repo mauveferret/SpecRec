@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.01
+SCD.spectrometer_resolution = 0.05
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -99,17 +99,17 @@ for i in range (int((1500-25)/step), int(1500/step)): spectrum_int[i] = (i-(int(
 for i in range (int(1500/step), int((1500+25)/step)): spectrum_int[i] = (int((1500+25)/step)-i)/(int(25/step))
 for i in range (int((10500-250)/step), int(10500/step)): spectrum_int[i] = (i-(int((10500-250)/step)))/(int(250/step))
 for i in range (int(10500/step), int((10500+250)/step)): spectrum_int[i] = (int((10500+250)/step)-i)/(int(250/step))
-calc_name = "sim_triangles"
+SCD.calc_name = "sim_triangles"
 """
 
 # 2 several gausses
-"""
+
 local_sigma = 120
 spectrum_int = np.zeros(len(spectrum_int))
 for energy in range(1000, 21000, 2000):
     spectrum_int+=np.exp(-(spectrum_en-energy)**2/2/local_sigma**2)
-calc_name = "sim_sev_gausses_sigma="+str(local_sigma)
-"""
+SCD.calc_name = "sim_sev_gausses_sigma="+str(local_sigma)
+
 
 # 3 rectangular pulse
 """
@@ -351,21 +351,21 @@ gauss_integral_dep = np.zeros(peaks_num+1)
 gauss_width_dep = np.zeros(peaks_num+1)
 
 for peak in range (1, peaks_num+1, 1):
-    gauss_intensity_dep[peak] = max(simple_deconv[int((peak*1000-500)/step):int((peak*1000+500)/step)])
-    gauss_conv_intensity_dep[peak]=max(broadening_convolution[int((peak*1000-500)/step):int((peak*1000+500)/step)])
+    gauss_intensity_dep[peak] = max(simple_deconv[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
+    gauss_conv_intensity_dep[peak]=max(broadening_sim_convolution[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
     gauss_energy[peak] = peak
     border = False
-    for i in range (int((peak*1000-500)/step),int((peak*1000+500)/step),step):
+    for i in range (int((peak*1000-500)/SCD.step),int((peak*1000+500)/SCD.step),SCD.step):
         gauss_integral_dep[peak]+=simple_deconv[i]
         if (simple_deconv[i]> gauss_intensity_dep[peak]/2 and not border):
-            gauss_width_dep[peak]=i*step
+            gauss_width_dep[peak]=i*SCD.step
             border = True
         if (simple_deconv[i]< gauss_intensity_dep[peak]/2 and border):
-            gauss_width_dep[peak]=i*step-gauss_width_dep[peak]
+            gauss_width_dep[peak]=i*SCD.step-gauss_width_dep[peak]
             border = False
 
-with open("gauss_analysis_sigma="+str(local_sigma)+"_dEtoE="+str(spectrometer_energy_resolution)+"_"+
-          calc_name+".dat", "w",newline='\n') as f:   
+with open("out"+os.sep+"gauss_analysis_sigma="+str(local_sigma)+"_dEtoE="+str(SCD.spectrometer_resolution)+"_"+
+          SCD.calc_name+".dat", "w",newline='\n') as f:   
     f.write("Energy,keV SimpleDeconvInt SimpleDeconvArea SimpleDeconvWidth WidConvInt"+"\n")
     for i in range (1, peaks_num+1, 1):
         f.write(str("{:.3e}".format(gauss_energy[i]).rjust(10))+" "+
