@@ -55,7 +55,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 # Experimental LEIS spectra. Measured on "Large Mass-Monochromator "MEPhI" facility
 
 #26.10.2023-18-16-Ar+ 18 keV W 60deg 23nA
-spectrum_path += "exp_Ar18keV60deg_WH.dat"
+#spectrum_path += "exp_Ar18keV60deg_WH.dat"
 
 #04.09.2019-14-05-H+ 25 keV 56 nA clean W on glass
 #spectrum_path += "exp_H25keV32deg_W.dat"
@@ -77,7 +77,7 @@ spectrum_path += "exp_Ar18keV60deg_WH.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
-#spectrum_path += "sim_Ne18keV32deg_HDW.dat"
+spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
