@@ -182,7 +182,6 @@ def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_typ
 
 ####################################     DECONVOLUTIONS     #######################################
 
-
 # based on https://gist.github.com/danstowell/f2d81a897df9e23cc1da
 def wiener_deconvolution(signal, kernel, SNR=SNR):
     sequence  = np.hstack((kernel , np.zeros(len(signal) - len(kernel)))) 
