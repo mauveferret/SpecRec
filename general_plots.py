@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.01
+SCD.spectrometer_resolution = 0.005
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -91,7 +91,7 @@ SCD.Emin = 500
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = False
+do_gausses = True
 
 # 1 two triangles
 """
@@ -105,7 +105,7 @@ SCD.calc_name = "sim_triangles"
 
 # 2 several gausses
 if do_gausses:
-    local_sigma = 120
+    local_sigma = 200
     SCD.Emax = 30000
     spectrum_en = np.arange(1, SCD.Emax, SCD.step)
     spectrum_int = np.zeros(len(spectrum_en))
@@ -159,12 +159,12 @@ def deconv (signal):
     t1 = time.time()
     numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution))
     t2 = time.time()
-    print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, ms: "+str((t2-t1)*1000))
+    print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, s: "+str((t2-t1)))
     return simple_deconv, numerical_deconv
 
 def conv (signal):
     t1 = time.time()
-    broadening_gauss_convolution = SCD.norm(SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution))
+    broadening_gauss_convolution = SCD.norm(SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution, step=SCD.step))
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" convolution time, s: "+str((t2-t1)))
     return broadening_gauss_convolution
@@ -365,7 +365,7 @@ if do_gausses:
         gauss_energy[peak] = peak
         border = False
         border2=False
-        for i in range (int((peak*1000-500)/SCD.step),int((peak*1000+500)/SCD.step),SCD.step):
+        for i in range (int((peak*1000-500)//SCD.step),int((peak*1000+500)//SCD.step),1):
             gauss_conv_area_dep[peak]+=broadening_sim_convolution[i]
             if (broadening_sim_convolution[i]> gauss_conv_intensity_dep[peak]/2 and not border):
                 gauss_conv_width_dep[peak]=i*SCD.step
@@ -405,6 +405,7 @@ if do_gausses:
     plt.legend( frameon=False, loc='lower right', fontsize=9)
     plt.xlim(0, spectrum_en[-1]/1000-2)
     plt.xticks(np.arange(0, spectrum_en[-1]/1000+1, 5))
+    plt.ylim(0,1)
     plt.minorticks_on()
     plt.xlabel('energy, keV')
     plt.ylabel('intensity, a.u.')   

@@ -21,10 +21,10 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = False
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 100
+SCD.filter_window_length = 50
 
 # add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = True
+SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 

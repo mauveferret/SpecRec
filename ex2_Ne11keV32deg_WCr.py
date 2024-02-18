@@ -24,7 +24,7 @@ SCD.doInputSmooth = False
 SCD.filter_window_length = 100
 
 # add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = True
+SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 
