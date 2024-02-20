@@ -19,7 +19,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
 SCD.filter_window_length = 100
 
@@ -118,4 +118,5 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="Cr", y_max=101, error_max=12) 
+SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv,
+                      conc_element_name="Cr", y_max=101, error_max=8) 
