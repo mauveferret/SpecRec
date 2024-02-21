@@ -66,7 +66,7 @@ logging_options = ""
 def broadening_kernel(type, FWHM):
     if type=="gauss":
         def broadening_gauss_kernel(energies, shift):
-            return np.exp(-((energies-shift)**2)/(2*(FWHM/2*shift)**2))  #/(1+shift/1000)
+            return np.exp(-((energies-shift)**2)/(2*(FWHM/2*shift)**2)) 
         return broadening_gauss_kernel
     
     elif type=="rectangle":
@@ -164,11 +164,11 @@ def basic_convolution(f,g):
 def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_type, deltaEtoE=spectrometer_resolution, step=step):
     #we create this gauss array only to estimate max vicinity (energy width) we need to 
     # analyse during convolution for each point of raw signal
-    g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en))
+    g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en)*step)
     g = g[g>.001]
     Lg = len(g)
     Lf = len(f)
-    en = np.arange(raw_en[0]*step, (len(raw_en)+len(g))*step, step)
+    en = np.arange(raw_en[0], (len(raw_en)+len(g))*step, step)
     L = len(en)
     cnv = np.zeros(L)
     for k in range (1, L):
@@ -181,7 +181,6 @@ def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_typ
     return cnv
 
 ####################################     DECONVOLUTIONS     #######################################
-
 
 # based on https://gist.github.com/danstowell/f2d81a897df9e23cc1da
 def wiener_deconvolution(signal, kernel, SNR=SNR):
@@ -228,7 +227,8 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
         f = np.interp(s,local_energies, signal)
         return f
     # apply the solver
-    spectrum_en_deconv, numerical_deconv_local = SolveFredholm(broadening_kernel(kernel_type, deltaEtoE), g, a=1, b=len(signal), gamma=1, num=1000)
+    # larger parameter num may improve the solution
+    spectrum_en_deconv, numerical_deconv_local = SolveFredholm(broadening_kernel(kernel_type, deltaEtoE), g, a=1, b=len(signal), gamma=1, num=int(len(signal)//step))
     spectrum_en_deconv *=step
     numerical_deconv = np.interp(spectrum_en,spectrum_en_deconv, numerical_deconv_local)
     return numerical_deconv
@@ -239,8 +239,8 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
 
 def import_data(spectrum_file):  
     global logging_options
-    if doInputSmooth and ("_Smooth="+str(filter_window_length)+"eV" not in logging_options):
-        logging_options+="_Smooth="+str(filter_window_length)+"eV"
+    if doInputSmooth and ("_Smooth="+str(filter_window_length)+" eV" not in logging_options):
+        logging_options+="_Smooth="+str(filter_window_length)+" eV"
     if doBroadeningConvNoise  and ("_Noise="+str(noise_power)+"_"  not in logging_options):
         logging_options+="_Noise="+str(noise_power)+"_" 
         
@@ -265,7 +265,7 @@ def import_data(spectrum_file):
         spectrum_int = scipy.signal.savgol_filter(spectrum_int, int(filter_window_length/step), 3)
     
     # spectrum normalization to 1 in range (Emin, Emax)
-    spectrum_int /= max(spectrum_int[int(Emin/step):int(Emax/step)]) 
+    spectrum_int = norm(spectrum_int) 
     return spectrum_en, spectrum_int
 
 
@@ -285,7 +285,7 @@ def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
-    with open(save_path+os.sep+"conc_conv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".dat", "w",newline='\n') as f:   
+    with open(save_path+os.sep+"conc_conv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options.replace(" ","")+".dat", "w",newline='\n') as f:   
         f.write(("resolution").ljust(14))
         for data in range(0, len(datas)):
                 f.write((str(datas[data].split(".")[0])).ljust(14))
@@ -394,7 +394,7 @@ def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
     ax = fig.add_subplot()
     energy_per_frame_scale = 20
     # do broadening convolution at different stages of k
-    g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en))
+    g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en)*step)
     g = g[g>.001]
     Lg = len(g)
     Lf = len(f)

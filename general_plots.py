@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.05
+SCD.spectrometer_resolution = 0.005
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -73,11 +73,11 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_He3keV145deg_Bi2Se3.dat"
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
-#spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
+spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
-spectrum_path += "sim_Ne18keV32deg_HDW.dat"
+#spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
@@ -91,6 +91,7 @@ SCD.Emin = 500
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
 # or test on input analytical specific curves instead of external spectrum_file
+do_gausses = True
 
 # 1 two triangles
 """
@@ -103,13 +104,16 @@ SCD.calc_name = "sim_triangles"
 """
 
 # 2 several gausses
-
-local_sigma = 120
-spectrum_int = np.zeros(len(spectrum_int))
-for energy in range(1000, 21000, 2000):
-    spectrum_int+=np.exp(-(spectrum_en-energy)**2/2/local_sigma**2)
-SCD.calc_name = "sim_sev_gausses_sigma="+str(local_sigma)
-
+if do_gausses:
+    local_sigma = 200
+    SCD.Emax = 30000
+    spectrum_en = np.arange(1, SCD.Emax, SCD.step)
+    spectrum_int = np.zeros(len(spectrum_en))
+    peaks_num = 0
+    for energy in range(1000, SCD.Emax, 1000):
+        peaks_num+=1
+        spectrum_int+=np.exp(-(spectrum_en-energy)**2/2/local_sigma**2)
+    SCD.calc_name = "sim_sev_gausses_sigma="+str(local_sigma)
 
 # 3 rectangular pulse
 """
@@ -153,14 +157,14 @@ def deconv (signal):
 
     # Do more direct deconvolution by solving Fredholm equation with broadening kernel 
     t1 = time.time()
-    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en))
+    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution))
     t2 = time.time()
-    print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, ms: "+str((t2-t1)*1000))
+    print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, s: "+str((t2-t1)))
     return simple_deconv, numerical_deconv
 
 def conv (signal):
     t1 = time.time()
-    broadening_gauss_convolution = SCD.norm(SCD.broadening_kernel_convolution(signal, spectrum_en))
+    broadening_gauss_convolution = SCD.norm(SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution, step=SCD.step))
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" convolution time, s: "+str((t2-t1)))
     return broadening_gauss_convolution
@@ -277,7 +281,7 @@ if not isExp:
     plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-', linewidth=1.5, label='Numerical Deconvolution') 
     plt.legend(fontsize=8)
     plt.ylim(0,1)
-    plt.xlim(1, spectrum_en[-1]/1000)
+    plt.xlim(0, spectrum_en[-1]/1000)
     #plt.xticks(np.arange(1, spectrum_en[-1]/1000, ))
     plt.minorticks_on()
     plt.xlabel('energy, keV')
@@ -340,48 +344,72 @@ if SCD.doAnimation:
 
 #####################  CREATE PEAK INT DEPENDENCIES ON ENERGY #####################
 
-# Only valid if "several gausses" were chosen as input data
+if do_gausses:
+    save_path = 'out'+os.sep+"sim_sev_gausses"
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
 
-"""
-peaks_num = 20
-gauss_energy = np.zeros(peaks_num+1)
-gauss_intensity_dep = np.zeros(peaks_num+1)
-gauss_conv_intensity_dep = np.zeros(peaks_num+1)
-gauss_integral_dep = np.zeros(peaks_num+1)
-gauss_width_dep = np.zeros(peaks_num+1)
+    gauss_energy = np.zeros(peaks_num+1)
+    gauss_sim_deconv_intensity_dep = np.zeros(peaks_num+1)
+    gauss_num_deconv_intensity_dep = np.zeros(peaks_num+1)
+    gauss_conv_intensity_dep = np.zeros(peaks_num+1)
+    gauss_conv_area_dep = np.zeros(peaks_num+1)
 
-for peak in range (1, peaks_num+1, 1):
-    gauss_intensity_dep[peak] = max(simple_deconv[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
-    gauss_conv_intensity_dep[peak]=max(broadening_sim_convolution[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
-    gauss_energy[peak] = peak
-    border = False
-    for i in range (int((peak*1000-500)/SCD.step),int((peak*1000+500)/SCD.step),SCD.step):
-        gauss_integral_dep[peak]+=simple_deconv[i]
-        if (simple_deconv[i]> gauss_intensity_dep[peak]/2 and not border):
-            gauss_width_dep[peak]=i*SCD.step
-            border = True
-        if (simple_deconv[i]< gauss_intensity_dep[peak]/2 and border):
-            gauss_width_dep[peak]=i*SCD.step-gauss_width_dep[peak]
-            border = False
+    gauss_raw_width_dep = np.zeros(peaks_num+1)
+    gauss_conv_width_dep = np.zeros(peaks_num+1)
 
-with open("out"+os.sep+"gauss_analysis_sigma="+str(local_sigma)+"_dEtoE="+str(SCD.spectrometer_resolution)+"_"+
-          SCD.calc_name+".dat", "w",newline='\n') as f:   
-    f.write("Energy,keV SimpleDeconvInt SimpleDeconvArea SimpleDeconvWidth WidConvInt"+"\n")
-    for i in range (1, peaks_num+1, 1):
-        f.write(str("{:.3e}".format(gauss_energy[i]).rjust(10))+" "+
-                str("{:.3e}".format(gauss_intensity_dep[i])).rjust(10)+" "+
-                str("{:.3e}".format(gauss_integral_dep[i])).rjust(10)+" "+
-                str("{:.3e}".format(gauss_width_dep[i])).rjust(10)+" "+
-                str("{:.3e}".format(gauss_conv_intensity_dep[i])).rjust(10)+"\n")
-    f.close
+    for peak in range (1, peaks_num, 1):
+        gauss_sim_deconv_intensity_dep[peak] = max(simple_deconv[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
+        gauss_num_deconv_intensity_dep[peak] = max(numerical_deconv[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
+        gauss_conv_intensity_dep[peak]=max(broadening_sim_convolution[int((peak*1000-500)/SCD.step):int((peak*1000+500)/SCD.step)])
+        gauss_energy[peak] = peak
+        border = False
+        border2=False
+        for i in range (int((peak*1000-500)//SCD.step),int((peak*1000+500)//SCD.step),1):
+            gauss_conv_area_dep[peak]+=broadening_sim_convolution[i]
+            if (broadening_sim_convolution[i]> gauss_conv_intensity_dep[peak]/2 and not border):
+                gauss_conv_width_dep[peak]=i*SCD.step
+                border = True
+            if (broadening_sim_convolution[i]< gauss_conv_intensity_dep[peak]/2 and border):
+                gauss_conv_width_dep[peak]=i*SCD.step-gauss_conv_width_dep[peak]
+                border = False
+                
+            if (spectrum_int[i]> 1/2 and not border2):
+                gauss_raw_width_dep[peak]=i*SCD.step
+                border2 = True
+            if (spectrum_int[i]< 1/2 and border2):
+                gauss_raw_width_dep[peak]=i*SCD.step-gauss_raw_width_dep[peak]
+                border2 = False
+        gauss_conv_width_dep[peak]/=gauss_raw_width_dep[peak]
+        gauss_conv_width_dep[peak]-=1
         
+    with open(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+".dat", "w",newline='\n') as f:   
+        f.write("Energy,keV ConvInt convWidth convArea NumDeconvInt SimDeconvInt"+"\n")
+        for i in range (1, peaks_num+1, 1):
+            f.write(str("{:.3e}".format(gauss_energy[i]).rjust(10))+" "+
+                    str("{:.3e}".format(gauss_conv_intensity_dep[i])).rjust(10)+" "+
+                    str("{:.3e}".format(gauss_conv_width_dep[i])).rjust(10)+" "+
+                    str("{:.3e}".format(gauss_conv_area_dep[i])).rjust(10)+" "+
+                    str("{:.3e}".format(gauss_sim_deconv_intensity_dep[i])).rjust(10)+" "+
+                    str("{:.3e}".format(gauss_num_deconv_intensity_dep[i])).rjust(10)+"\n")
+        f.close          
 
-gauss_integral_dep /= max(gauss_integral_dep) 
-gauss_width_dep /= max(gauss_width_dep)
+    gauss_conv_area_dep /= max(gauss_conv_area_dep) 
+    plt.show()
+    plt.title('Demonstration of  distortion and reconstruction of \nGaussian peaks sigma='+str(local_sigma)+' and dE/E='+str(SCD.spectrometer_resolution), fontsize=10)
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_intensity_dep[1:peaks_num],'*k-.',  label="conv. intensity", linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_width_dep[1:peaks_num], '.r:',  label="conv. width",linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_area_dep[1:peaks_num], 'sg-',  label="conv. area", linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_num_deconv_intensity_dep[1:peaks_num], '^b-',  label="num. deconv. intensity", linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_sim_deconv_intensity_dep[1:peaks_num], 'vm:',  label="simple deconv. intensity", linewidth=1.5) 
+    plt.legend( frameon=False, loc='lower right', fontsize=9)
+    plt.xlim(0, spectrum_en[-1]/1000-2)
+    plt.xticks(np.arange(0, spectrum_en[-1]/1000+1, 5))
+    plt.ylim(0,1)
+    plt.minorticks_on()
+    plt.xlabel('energy, keV')
+    plt.ylabel('intensity, a.u.')   
+    plt.grid(True, linestyle=':') 
+    plt.savefig(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+".png", dpi=300)
+    plt.show()
 
-plt.plot(gauss_energy[1:peaks_num], gauss_intensity_dep[1:peaks_num], '.g-') 
-plt.plot(gauss_energy[1:peaks_num], gauss_integral_dep[1:peaks_num], '.r-') 
-plt.plot(gauss_energy[1:peaks_num], gauss_conv_intensity_dep[1:peaks_num], '.b-') 
-plt.plot(gauss_energy[1:peaks_num], gauss_width_dep[1:peaks_num], '.r-') 
-plt.show()
-"""

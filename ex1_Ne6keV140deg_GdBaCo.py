@@ -21,17 +21,17 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = False
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 100
+SCD.filter_window_length = 50
 
 # add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = True
+SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 
 # positions of elastic peaks in eV
 E_peak_Co = 1680
 # energy where only background is seen, that can be subtracted from Gd and Ba peaks
-E_background = 3602
+E_background = 2500
 E_peak_Gd = 3766
 E_peak_Ba = 3556
 
@@ -65,7 +65,7 @@ for f in range(0, len(datas)):
     step = SCD.step
     Gd_peak = max(spectrum_int[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])-spectrum_int[int(E_background/step)]
     Ba_peak = max(spectrum_int[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])-spectrum_int[int(E_background/step)]
-    Co_peak = max(spectrum_int[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
+    Co_peak = max(spectrum_int[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])-spectrum_int[int(E_background/step)]
     Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
     
     data_cnv[0,f+1]=Co_conc
@@ -80,7 +80,7 @@ for f in range(0, len(datas)):
 
         Gd_peak = max(conv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])-conv[int(E_background/step)]
         Ba_peak = max(conv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])-conv[int(E_background/step)]
-        Co_peak = max(conv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
+        Co_peak = max(conv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])-conv[int(E_background/step)]
         conv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
         data_cnv[R+1, f+1] = conv_Co_conc
         
@@ -89,7 +89,7 @@ for f in range(0, len(datas)):
             
         Gd_peak = max(simple_deconv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])-simple_deconv[int(E_background/step)]
         Ba_peak = max(simple_deconv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])-simple_deconv[int(E_background/step)]
-        Co_peak = max(simple_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
+        Co_peak = max(simple_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])-simple_deconv[int(E_background/step)]
         deconv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
         data_simple_deconv[R+1, f+1] = deconv_Co_conc
         
@@ -98,7 +98,7 @@ for f in range(0, len(datas)):
 
         Gd_peak = max(numerical_deconv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])-numerical_deconv[int(E_background/step)]
         Ba_peak = max(numerical_deconv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])-numerical_deconv[int(E_background/step)]
-        Co_peak = max(numerical_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
+        Co_peak = max(numerical_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])-numerical_deconv[int(E_background/step)]
         numeric_deconv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
         data_numeric_deconv[R+1, f+1] = numeric_deconv_Co_conc
 
