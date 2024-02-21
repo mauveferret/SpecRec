@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.005
+SCD.spectrometer_resolution = 0.01
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -73,7 +73,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_He3keV145deg_Bi2Se3.dat"
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
-spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
+#spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
@@ -81,7 +81,7 @@ spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
-#spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
+spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd70Ba10Co20.dat"
 
 ##################################### GET DATA FROM INPUT FILE #####################################
 
@@ -91,7 +91,7 @@ SCD.Emin = 500
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = True
+do_gausses = False
 
 # 1 two triangles
 """

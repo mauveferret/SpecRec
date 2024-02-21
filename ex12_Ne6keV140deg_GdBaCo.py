@@ -19,9 +19,9 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 50
+SCD.filter_window_length = 80
 
 # add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -29,16 +29,17 @@ SCD.doBroadeningConvNoise = False
 SCD.noise_power = 0.02
 
 # positions of elastic peaks in eV
-E_peak_Co = 1680
-# energy where only background is seen, that can be subtracted from Gd and Ba peaks
-E_background = 3000
-E_peak_Gd = 3766
+E_peak_Co = 1693
+E_peak_Gd = 3803
 E_peak_Ba = 3556
+# energy where only background is seen, that can be subtracted from elastic peaks
+E_background =2770
 
-# differential cross-sections for elastic scattering peaks in cm2/sr
-dSigmadOmega_Co = 0.0026
-dSigmadOmega_Ba = 0.00678
-dSigmadOmega_Gd = 0.00772
+#  elemental sensitivity in a form of difference of squares of impact parameters 
+# for a specific registration solid angle divided by a pass energy, Å^2/eV
+crossSection_Co = 0.00023/54
+crossSection_Ba = 0.00069/47
+crossSection_Gd = 0.00061/44
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -63,10 +64,10 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
 for f in range(0, len(datas)):    
     spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
     step = SCD.step
-    Gd_peak = sum(spectrum_int[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])
-    Ba_peak = sum(spectrum_int[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])
-    Co_peak = sum(spectrum_int[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
-    Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
+    Gd_peak = sum(spectrum_int[int((E_peak_Gd-80)/step):int((E_peak_Gd+80)/step)])-spectrum_int[int(E_background/step)]*160/step
+    Ba_peak = sum(spectrum_int[int((E_peak_Ba-80)/step):int((E_peak_Ba+80)/step)])-spectrum_int[int(E_background/step)]*160/step
+    Co_peak = sum(spectrum_int[int((E_peak_Co-80)/step):int((E_peak_Co+80)/step)])-spectrum_int[int(E_background/step)]*160/step
+    Co_conc =  (Co_peak/crossSection_Co)/((Co_peak/crossSection_Co)+(Gd_peak/crossSection_Gd)+(Ba_peak/crossSection_Ba))
     
     data_cnv[0,f+1]=Co_conc
     data_simple_deconv[0,f+1]=Co_conc
@@ -78,28 +79,28 @@ for f in range(0, len(datas)):
         conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R], step))
 
-        Gd_peak = sum(conv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])
-        Ba_peak = sum(conv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])
-        Co_peak = sum(conv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
-        conv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
+        Gd_peak = sum(conv[int((E_peak_Gd-80)/step):int((E_peak_Gd+80)/step)])-conv[int(E_background/step)]*160/step
+        Ba_peak = sum(conv[int((E_peak_Ba-80)/step):int((E_peak_Ba+80)/step)])-conv[int(E_background/step)]*160/step
+        Co_peak = sum(conv[int((E_peak_Co-80)/step):int((E_peak_Co+80)/step)])-conv[int(E_background/step)]*160/step
+        conv_Co_conc =  (Co_peak/crossSection_Co)/((Co_peak/crossSection_Co)+(Gd_peak/crossSection_Gd)+(Ba_peak/crossSection_Ba))
         data_cnv[R+1, f+1] = conv_Co_conc
         
         # do simple deconvolution
         simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
             
-        Gd_peak = sum(simple_deconv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])
-        Ba_peak = sum(simple_deconv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])
-        Co_peak = sum(simple_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
-        deconv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
+        Gd_peak = sum(simple_deconv[int((E_peak_Gd-80)/step):int((E_peak_Gd+80)/step)])-simple_deconv[int(E_background/step)]*160/step
+        Ba_peak = sum(simple_deconv[int((E_peak_Ba-80)/step):int((E_peak_Ba+80)/step)])-simple_deconv[int(E_background/step)]*160/step
+        Co_peak = sum(simple_deconv[int((E_peak_Co-80)/step):int((E_peak_Co+80)/step)])-simple_deconv[int(E_background/step)]*160/step
+        deconv_Co_conc =  (Co_peak/crossSection_Co)/((Co_peak/crossSection_Co)+(Gd_peak/crossSection_Gd)+(Ba_peak/crossSection_Ba))
         data_simple_deconv[R+1, f+1] = deconv_Co_conc
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
 
-        Gd_peak = sum(numerical_deconv[int((E_peak_Gd-100)/step):int((E_peak_Gd+100)/step)])
-        Ba_peak = sum(numerical_deconv[int((E_peak_Ba-100)/step):int((E_peak_Ba+100)/step)])
-        Co_peak = sum(numerical_deconv[int((E_peak_Co-100)/step):int((E_peak_Co+100)/step)])
-        numeric_deconv_Co_conc =  (Co_peak/dSigmadOmega_Co)/((Co_peak/dSigmadOmega_Co)+(Gd_peak/dSigmadOmega_Gd)+(Ba_peak/dSigmadOmega_Ba))
+        Gd_peak = sum(numerical_deconv[int((E_peak_Gd-80)/step):int((E_peak_Gd+80)/step)])-numerical_deconv[int(E_background/step)]*160/step
+        Ba_peak = sum(numerical_deconv[int((E_peak_Ba-80)/step):int((E_peak_Ba+80)/step)])-numerical_deconv[int(E_background/step)]*160/step
+        Co_peak = sum(numerical_deconv[int((E_peak_Co-80)/step):int((E_peak_Co+80)/step)])-numerical_deconv[int(E_background/step)]*160/step
+        numeric_deconv_Co_conc =  (Co_peak/crossSection_Co)/((Co_peak/crossSection_Co)+(Gd_peak/crossSection_Gd)+(Ba_peak/crossSection_Ba))
         data_numeric_deconv[R+1, f+1] = numeric_deconv_Co_conc
 
 #save data to output and create plots
