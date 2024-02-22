@@ -28,13 +28,14 @@ SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 
-# positions of elastic peaks: Scatterin of Ne in Cr and W 
+# positions of elastic peaks: Scattering of Ne on Cr and W 
 E_peak_Cr = 9760
 E_peak_W = 10640
 
-# differential cross-sections for elastic scattering peaks
-dSigmadOmega_Cr = 0.08828
-dSigmadOmega_W = 0.18577
+#  elemental sensitivity in a form of difference of squares of impact parameters 
+# for a specific registration solid angle, Å^2
+crossSection_Cr = 0.00327
+crossSection_W = 0.00688
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -74,7 +75,7 @@ for f in range(0, len(datas)):
     W_peak = max(spectrum_int[int((E_peak_W-200)/step):int((E_peak_W+200)/step)]) 
     Cr_peak_sp = (spectrum_int-background_ref[0:len(spectrum_int)]*W_peak)
     Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
-    real_Cr_conc =  Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)/(Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)+W_peak)
+    real_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
     
     data_cnv[0,f+1]=real_Cr_conc
     data_simple_deconv[0,f+1]=real_Cr_conc
@@ -82,7 +83,7 @@ for f in range(0, len(datas)):
     
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
-        # do convolution
+        # do broadening convolution
         conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R], step))      
         if W_real == 100:
@@ -90,7 +91,7 @@ for f in range(0, len(datas)):
         W_peak = max(conv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])   
         Cr_peak_sp = (conv-background_ref_conv[R][0:len(conv)]*W_peak)
         Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
-        conv_Cr_conc =  Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)/(Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)+W_peak)
+        conv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_cnv[R+1, f+1] = conv_Cr_conc
         
         # do simple deconvolution
@@ -98,22 +99,20 @@ for f in range(0, len(datas)):
         
         if W_real == 100:
             background_ref_simple_deconv[R][0:len(simple_deconv)] = simple_deconv
-            
         W_peak = max(simple_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])    
         Cr_peak_sp = (simple_deconv-background_ref_simple_deconv[R][0:len(simple_deconv)]*W_peak)
         Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
-        deconv_Cr_conc =  Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)/(Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)+W_peak)
+        deconv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_simple_deconv[R+1, f+1] = deconv_Cr_conc
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
-
         if W_real == 100:
             background_ref_numeric_deconv [R][0:len(numerical_deconv)] = numerical_deconv
         W_peak = max(numerical_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
         Cr_peak_sp = (numerical_deconv-background_ref_numeric_deconv[R][0:len(numerical_deconv)]*W_peak)
         Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
-        numeric_deconv_Cr_conc =  Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)/(Cr_peak*(dSigmadOmega_W/dSigmadOmega_Cr)+W_peak)
+        numeric_deconv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_numeric_deconv[R+1, f+1] = numeric_deconv_Cr_conc
 
 #save data to output and create plots

@@ -81,8 +81,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
-spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd70Ba10Co20.dat"
-
+spectrum_path += "ex3_sim_Ar20keV32deg_HDW"+os.sep+"H20D20W60.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 

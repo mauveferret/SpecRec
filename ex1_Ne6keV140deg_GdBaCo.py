@@ -32,6 +32,7 @@ SCD.noise_power = 0.02
 E_peak_Co = 1693
 E_peak_Gd = 3803
 E_peak_Ba = 3556
+
 # energy where only background is seen, that can be subtracted from elastic peaks
 E_background =2770
 
@@ -75,7 +76,7 @@ for f in range(0, len(datas)):
     
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
-        # do convolution
+        # do broadening convolution
         conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R], step))
 
@@ -86,8 +87,7 @@ for f in range(0, len(datas)):
         data_cnv[R+1, f+1] = conv_Co_conc
         
         # do simple deconvolution
-        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
-            
+        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))    
         Gd_peak = max(simple_deconv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-simple_deconv[int(E_background/step)]
         Ba_peak = max(simple_deconv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-simple_deconv[int(E_background/step)]
         Co_peak = max(simple_deconv[int((E_peak_Co-50)/step):int((E_peak_Co+50)/step)])-simple_deconv[int(E_background/step)]
@@ -96,7 +96,6 @@ for f in range(0, len(datas)):
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
-
         Gd_peak = max(numerical_deconv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-numerical_deconv[int(E_background/step)]
         Ba_peak = max(numerical_deconv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-numerical_deconv[int(E_background/step)]
         Co_peak = max(numerical_deconv[int((E_peak_Co-50)/step):int((E_peak_Co+50)/step)])-numerical_deconv[int(E_background/step)]

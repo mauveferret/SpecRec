@@ -19,9 +19,9 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 100
+SCD.filter_window_length = 20
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -33,11 +33,17 @@ E_peak_H = 1371
 E_peak_D = 2612
 E_peak_W = 18718
 
-# energy where only background is seen, that can be subtracted from H peak
+# detection energy widths  for the specific angle detection width (dBeta=4 deg)
+E_width_H = 1429-1310
+E_width_D = 2724-2497
+E_width_W = 18865 - 18563
+
+# energy where only background is seen, that can be subtracted from H an D peaks
 E_background_of_H = 1500
+E_background_of_D = 2748
 
 #  elemental sensitivity in a form of difference of squares of impact parameters 
-# for a specific registration solid angle divided by a pass energy, Å^2/eV
+# for a specific registration solid angle, Å^2
 crossSection_H = 0.00153
 crossSection_D = 0.000672
 crossSection_W = 0.01273
@@ -65,12 +71,12 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
 for f in range(0, len(datas)):    
     spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
     step = SCD.step
-    W_peak = sum(spectrum_int[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])
+    W_peak = sum(spectrum_int[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])
     without_background = spectrum_int - spectrum_int[int(E_background_of_H/step)]
-    H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-    D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+    H_peak = sum(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
+    without_background = spectrum_int - spectrum_int[int(E_background_of_D/step)]
+    D_peak = sum(without_background[int((E_peak_D-E_width_D/2)/step):int((E_peak_D+E_width_D/2)/step)])
     real_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
-    
     
     data_cnv[0,f+1]=real_H_conc
     data_simple_deconv[0,f+1]=real_H_conc
@@ -78,24 +84,24 @@ for f in range(0, len(datas)):
     
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
-        # do convolution
+        # do broadening convolution
         conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R], step))
-
-        W_peak = sum(conv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
+        W_peak = sum(conv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = conv - conv[int(E_background_of_H/step)]
-        H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        H_peak = sum(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
+        without_background = conv - conv[int(E_background_of_D/step)]
+        D_peak = sum(without_background[int((E_peak_D-E_width_D/2)/step):int((E_peak_D+E_width_D/2)/step)])
         conv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_cnv[R+1, f+1] = conv_H_conc
         
         # do simple deconvolution
         simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
-         
-        W_peak = sum(simple_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])
+        W_peak = sum(simple_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])
         without_background = simple_deconv - simple_deconv[int(E_background_of_H/step)]
-        H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        H_peak = sum(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
+        without_background = simple_deconv - simple_deconv[int(E_background_of_D/step)]
+        D_peak = sum(without_background[int((E_peak_D-E_width_D/2)/step):int((E_peak_D+E_width_D/2)/step)])
         deconv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_simple_deconv[R+1, f+1] = deconv_H_conc
         
@@ -103,14 +109,14 @@ for f in range(0, len(datas)):
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
                                                               SCD.spectrometer_resolutions[R]))
-
-        W_peak = sum(numerical_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
+        W_peak = sum(numerical_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = numerical_deconv - numerical_deconv[int(E_background_of_H/step)]
-        H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        H_peak = sum(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
+        without_background = numerical_deconv - numerical_deconv[int(E_background_of_D/step)]
+        D_peak = sum(without_background[int((E_peak_D-E_width_D/2)/step):int((E_peak_D+E_width_D/2)/step)])
         numeric_deconv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_numeric_deconv[R+1, f+1] = numeric_deconv_H_conc
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=101, error_max=60) 
+SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=95, error_max=30) 
