@@ -30,14 +30,17 @@ SCD.noise_power = 0.02
 
 # positions of elastic peaks: Scattering of Ar in W and recoil of W in eV
 E_peak_H = 1371
+E_peak_D = 2612
 E_peak_W = 18718
 
 # energy where only background is seen, that can be subtracted from H peak
 E_background_of_H = 1500
 
-# differential cross-sections for elastic scattering peaks
-dSigmadOmega_H = 0.0206
-dSigmadOmega_W = 0.17
+#  elemental sensitivity in a form of difference of squares of impact parameters 
+# for a specific registration solid angle divided by a pass energy, Å^2/eV
+crossSection_H = 0.00153
+crossSection_D = 0.000672
+crossSection_W = 0.01273
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -60,15 +63,14 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
 
 for f in range(0, len(datas)):    
-    H_real =  int(datas[f].split("D")[0][1:])
-    D_real = 100 - H_real
-    
     spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
     step = SCD.step
     W_peak = sum(spectrum_int[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])
     without_background = spectrum_int - spectrum_int[int(E_background_of_H/step)]
     H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-    real_H_conc =  H_peak*(dSigmadOmega_W/dSigmadOmega_H)/(H_peak*(dSigmadOmega_W/dSigmadOmega_H)+W_peak)
+    D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+    real_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
+    
     
     data_cnv[0,f+1]=real_H_conc
     data_simple_deconv[0,f+1]=real_H_conc
@@ -83,7 +85,8 @@ for f in range(0, len(datas)):
         W_peak = sum(conv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
         without_background = conv - conv[int(E_background_of_H/step)]
         H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        conv_H_conc =  H_peak*(dSigmadOmega_W/dSigmadOmega_H)/(H_peak*(dSigmadOmega_W/dSigmadOmega_H)+W_peak)
+        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        conv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_cnv[R+1, f+1] = conv_H_conc
         
         # do simple deconvolution
@@ -92,7 +95,8 @@ for f in range(0, len(datas)):
         W_peak = sum(simple_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])
         without_background = simple_deconv - simple_deconv[int(E_background_of_H/step)]
         H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        deconv_H_conc =  H_peak*(dSigmadOmega_W/dSigmadOmega_H)/(H_peak*(dSigmadOmega_W/dSigmadOmega_H)+W_peak)
+        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        deconv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_simple_deconv[R+1, f+1] = deconv_H_conc
         
         
@@ -103,7 +107,8 @@ for f in range(0, len(datas)):
         W_peak = sum(numerical_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
         without_background = numerical_deconv - numerical_deconv[int(E_background_of_H/step)]
         H_peak = sum(without_background[int((E_peak_H-100)/step):int((E_peak_H+100)/step)])
-        numeric_deconv_H_conc =  H_peak*(dSigmadOmega_W/dSigmadOmega_H)/(H_peak*(dSigmadOmega_W/dSigmadOmega_H)+W_peak)
+        D_peak = sum(without_background[int((E_peak_D-100)/step):int((E_peak_D+100)/step)])
+        numeric_deconv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_numeric_deconv[R+1, f+1] = numeric_deconv_H_conc
 
 #save data to output and create plots
