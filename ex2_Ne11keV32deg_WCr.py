@@ -32,6 +32,8 @@ SCD.noise_power = 0.02
 E_peak_Cr = 9760
 E_peak_W = 10640
 
+energy_width_original = E_peak_W*0.008/2
+
 #  elemental sensitivity in a form of difference of squares of impact parameters 
 # for a specific registration solid angle, Å^2
 crossSection_Cr = 0.00327
@@ -59,6 +61,7 @@ data_numeric_deconv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1
 
 #write X axis in data arrays
 for R in range(0,len(SCD.spectrometer_resolutions)):
+    
     data_cnv[R+1,0] = SCD.spectrometer_resolutions[R]
     data_simple_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
@@ -72,9 +75,9 @@ for f in range(0, len(datas)):
     
     if W_real == 100:
         background_ref[0:len(spectrum_int)] = spectrum_int
-    W_peak = max(spectrum_int[int((E_peak_W-200)/step):int((E_peak_W+200)/step)]) 
+    W_peak = max(spectrum_int[int((E_peak_W-energy_width_original)/step):int((E_peak_W+energy_width_original)/step)]) 
     Cr_peak_sp = (spectrum_int-background_ref[0:len(spectrum_int)]*W_peak)
-    Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
+    Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-energy_width_original)/step):int((E_peak_Cr+energy_width_original)/step)])
     real_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
     
     data_cnv[0,f+1]=real_Cr_conc
@@ -83,14 +86,15 @@ for f in range(0, len(datas)):
     
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
+        energy_width=E_peak_W*SCD.spectrometer_resolutions[R]/2
         # do broadening convolution
         conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R], step))      
         if W_real == 100:
             background_ref_conv[R][0:len(conv)] = conv
-        W_peak = max(conv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])   
+        W_peak = max(conv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])   
         Cr_peak_sp = (conv-background_ref_conv[R][0:len(conv)]*W_peak)
-        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
+        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-energy_width)/step):int((E_peak_Cr+energy_width)/step)])
         conv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_cnv[R+1, f+1] = conv_Cr_conc
         
@@ -99,9 +103,9 @@ for f in range(0, len(datas)):
         
         if W_real == 100:
             background_ref_simple_deconv[R][0:len(simple_deconv)] = simple_deconv
-        W_peak = max(simple_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])    
+        W_peak = max(simple_deconv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])    
         Cr_peak_sp = (simple_deconv-background_ref_simple_deconv[R][0:len(simple_deconv)]*W_peak)
-        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
+        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-energy_width)/step):int((E_peak_Cr+energy_width)/step)])
         deconv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_simple_deconv[R+1, f+1] = deconv_Cr_conc
         
@@ -109,13 +113,13 @@ for f in range(0, len(datas)):
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
         if W_real == 100:
             background_ref_numeric_deconv [R][0:len(numerical_deconv)] = numerical_deconv
-        W_peak = max(numerical_deconv[int((E_peak_W-200)/step):int((E_peak_W+200)/step)])  
+        W_peak = max(numerical_deconv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])  
         Cr_peak_sp = (numerical_deconv-background_ref_numeric_deconv[R][0:len(numerical_deconv)]*W_peak)
-        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-200)/step):int((E_peak_Cr+200)/step)])
+        Cr_peak = max(Cr_peak_sp[int((E_peak_Cr-energy_width)/step):int((E_peak_Cr+energy_width)/step)])
         numeric_deconv_Cr_conc =  Cr_peak*(crossSection_W/crossSection_Cr)/(Cr_peak*(crossSection_W/crossSection_Cr)+W_peak)
         data_numeric_deconv[R+1, f+1] = numeric_deconv_Cr_conc
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
 SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv,
-                      conc_element_name="Cr", y_max=101, error_max=8) 
+                      conc_element_name="Cr", y_max=101, error_max=11.2) 

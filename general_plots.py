@@ -23,9 +23,9 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 50
+SCD.filter_window_length = 1000
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -81,9 +81,8 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
-spectrum_path += "ex3_sim_Ar20keV32deg_HDW"+os.sep+"H20D20W60.dat"
+spectrum_path += "ex5_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
-
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
 SCD.Emin = 500
@@ -272,6 +271,11 @@ fig.show()
     
 #####################################     SAVE PIC TO OUT DIR    ###################################
 
+save_path = 'out'+os.sep+SCD.calc_name
+if not os.path.exists(save_path):
+    os.mkdir(save_path)
+
+
 if not isExp:
     plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=0.5, label='Raw spectrum') 
     plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=1,
@@ -286,7 +290,7 @@ if not isExp:
     plt.xlabel('energy, keV')
     plt.ylabel('intensity, r.u.')
     plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""))
-    plt.savefig('out'+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
+    plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
 if isExp:
     fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True, figsize=(12, 6))
@@ -305,12 +309,12 @@ if isExp:
     ax1.legend(fontsize=9)
     ax2.legend(fontsize=9)
     fig.suptitle("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""))
-    fig.savefig('out'+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
+    fig.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
 
 #####################################     SAVE DATA TO OUT DIR    ##################################
 
-with open('out'+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".dat", "w",newline='\n') as f:   
+with open(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".dat", "w",newline='\n') as f:   
     f.write("Energy,keV Raw_signal Basic_conv,sigma="+str(SCD.constant_kernel_sigma)+
             " Wiener_deconv")
     if isExp:

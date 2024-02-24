@@ -28,6 +28,9 @@ SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 
+# type of kernel for broadening kernel: gauss, triangle or rectangle
+SCD.broadening_kernel_type = "gauss"
+
 # positions of elastic peaks in eV
 E_peak_Co = 1693
 E_peak_Gd = 3803

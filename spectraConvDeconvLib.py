@@ -51,7 +51,7 @@ SNR = 10
 broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-spectrometer_resolutions = ( 0.002, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
+spectrometer_resolutions = ( 0.002, 0.005, 0.008, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
 spectrometer_resolution = 0.01
 
 # name for output
@@ -319,7 +319,7 @@ def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
 def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, type = "conc", conc_element_name="Co", y_max=101, y1_step=10, error_max=60):   
     save_path = 'out'+os.sep+calc_name 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharex=False, sharey=False, figsize=(12, 6))
-    fig.suptitle(calc_name + " "+type+" and error in conv and deconv by "+broadening_kernel_type+" kernel spectra. "+logging_options.replace("_",""))   
+    fig.suptitle(calc_name + " "+type+" and error in conv and deconv by "+broadening_kernel_type+" kernel spectra"+logging_options.replace("_",". "))   
             
     markers = ['.', 's','*','^','v','>','<','p','x','d','8','1','2']
     
@@ -335,9 +335,9 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     for data in range(0, len(datas)):
         ax1.plot(data_numeric_deconv[:,0], data_numeric_deconv[:,data+1]*y1_coeff,  'b-', marker=markers[data], markersize=5, linewidth=1) 
 
-    ax1.set_xlabel('resolution of spectrometer, ΔE/E')
+    ax1.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax1.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.01, 0.01))
-    ax1.set_ylabel(conc_element_name+' estimated concentration, %')
+    ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
     ax1.set_yticks(np.arange(0, y_max, y1_step))
     ax1.set_ylim(0,y_max)
     ax1.set_xlim(-0.001, spectrometer_resolutions[-1]+0.001)
@@ -372,12 +372,12 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
             ax2.plot(data_numeric_deconv[1:,0], abs((data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])/(2*data_numeric_deconv[0,data+1]))*100,
                     'b-', marker=markers[data], markersize=5, linewidth=1) 
 
-    ax2.set_xlabel('resolution of spectrometer, ΔE/E')
+    ax2.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax2.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.001, 0.01))
     if type== "conc":
-        ax2.set_ylabel('elemental composition error, %')
+        ax2.set_ylabel('elemental composition error, %', fontsize=13)
     if type== "thickness":
-        ax2.set_ylabel('film thickness error, %')
+        ax2.set_ylabel('film thickness error, %', fontsize=13)
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
     ax2.legend(loc='upper left', fontsize=9)
@@ -424,8 +424,8 @@ def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
         plt.xlim(0, en[-1]/1000)
         plt.xticks(np.arange(0, en[-1]/1000+1, 1))
         plt.minorticks_on()
-        plt.xlabel('energy, keV')
-        plt.ylabel('intensity, a.u.')
+        plt.xlabel('energy, keV', fontsize=13)
+        plt.ylabel('intensity, a.u.', fontsize=13)
         
         en1=en/1000
         f2 = np.interp(en,raw_en, f)
