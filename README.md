@@ -6,9 +6,9 @@ The program **SpecRec** is intended as supporting material to the scientific pap
 
 **SpecRec** can be used to postprocess experimental spectra measured by electrostatic or magnetic separators of charged particles. It allows to provide smoothing, noising of the original spectra, it convolution and deconvolution with different kernel's shapes (Gaussian, Triangle, Rectangle and arbitrary) with constant or broadening full width at half maximum (FWHM). It thus can be useful in mass analysis and ion scattering spectroscopy. 
 
-More detailed description of the used algorithms and methods is given in `You will see the reference here when the article would be published`. Briefly, it **SpecRec** allows to use analytical method of spectra reconstruction suggested by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Urusov V.A.](http://link.springer.com/10.1134/S1063785010050196). Also it allows to utilize modern numerical methods, *inter alia* proposed by [TwoMey](https://dl.acm.org/doi/10.1145/321150.321157).  Both group of methods are intended for solving Fredholm Integral Equation of the first kind, while most methods for spectra reconstruction are valid for classic convolution integral equations.  Meanwhile, as was shown by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Yu. K. Golikov et. al.](https://cyberleninka.ru/article/n/ob-apparatnoy-funktsii-elektrostaticheskih-elektronnyh-spektrometrov), the use of classical convolution equations is not correct for the most of electrostatic and magnetic spectrometers and the Fredholm or Volterra Integral Equations has to be used instead.
+More detailed description of the used algorithms and methods is given in `You will see the reference here when the article would be published`. Briefly, **SpecRec** allows to use analytical methods of spectra reconstruction suggested by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Urusov V.A.](http://link.springer.com/10.1134/S1063785010050196). Also it allows to utilize modern numerical methods, *inter alia* proposed by [TwoMey](https://dl.acm.org/doi/10.1145/321150.321157).  Both group of methods are intended for solving Fredholm Integral Equation of the first kind, while most methods for spectra reconstruction are valid for classic convolution integral equations.  Meanwhile, as was shown by [Zhabrev and Zhdanov V.A.](https://inis.iaea.org/search/search.aspx?orig_q=RN:11571670) and by [Yu. K. Golikov et. al.](https://cyberleninka.ru/article/n/ob-apparatnoy-funktsii-elektrostaticheskih-elektronnyh-spektrometrov), the use of classical convolution equations is not correct for the most of electrostatic and magnetic spectrometers and the Fredholm or Volterra Integral Equations has to be used instead.
 
-![header](https://github.com/mauveferret/SpecRec/blob/main/out/spec_reconstr_sim_Ne18keV32deg_HDW_with_gauss_kernel.png?raw=true)
+![header](https://github.com/mauveferret/SpecRec/blob/main\out\sim_Ne18keV32deg_HDW\spec_reconstr_sim_Ne18keV32deg_HDW_with_gauss_kernel.png?raw=true)
 
 ## Getting Started
 
@@ -39,7 +39,7 @@ As soon as  the program does not provide graphical user interface, the best way 
 
 * dir `raw_data` indeed contains raw data of computer simulations and experiments. The sorce of the data is described in paper, mentioned in the beginning of this readme.
 
-* dir `out` contain outputs of all python scripts
+* dir `out` contain outputs of all python scripts, including figures and data files with spectra
 
 * dir gifs contain animated charts, that shows a process of convolution with broadening kernel. This charts can be created with `general_plots.py` script.
 
@@ -58,4 +58,5 @@ This project is licensed under the GNU License - see the LICENSE.md file for det
 
 ## Acknowledgements
 
-* [inteq](https://github.com/mwt/inteq)
+
+* [Inteq](https://github.com/mwt/inteq) for python lib, intended for Fredholm and Volterra equation solving with [TwoMey](https://dl.acm.org/doi/10.1145/321150.321157) method.

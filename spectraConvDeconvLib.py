@@ -218,7 +218,7 @@ def simple_deconvolution(signal):
 
 # numerical solution of Fredholm integral equations of the first kind
 # based on https://doi.org/10.1145/321150.321157
-def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_type, deltaEtoE = spectrometer_resolution):
+def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_type, deltaEtoE = spectrometer_resolution, num=1000):
     # define function to deconvolve
     def g(s):
         #Fredholm solver call this function with some s array, whose length can not be as high 
@@ -227,8 +227,9 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
         f = np.interp(s,local_energies, signal)
         return f
     # apply the solver
-    # larger parameter num may improve the solution
-    spectrum_en_deconv, numerical_deconv_local = SolveFredholm(broadening_kernel(kernel_type, deltaEtoE), g, a=1, b=len(signal), gamma=1, num=int(len(signal)//step))
+    # larger parameter num may improve the solution: num=int(len(signal)//step)
+    spectrum_en_deconv, numerical_deconv_local = SolveFredholm(broadening_kernel(kernel_type, deltaEtoE), 
+                                                               g, a=1, b=len(signal), gamma=1, num=num)
     spectrum_en_deconv *=step
     numerical_deconv = np.interp(spectrum_en,spectrum_en_deconv, numerical_deconv_local)
     return numerical_deconv

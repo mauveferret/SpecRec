@@ -25,7 +25,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 #smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 1000
+SCD.filter_window_length = 100
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.01
+SCD.spectrometer_resolution = 0.03
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -77,15 +77,15 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
-#spectrum_path += "sim_Ne18keV32deg_HDW.dat"
+spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
-spectrum_path += "ex5_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
+#spectrum_path += "ex32_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
-SCD.Emin = 500
+SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
 # or test on input analytical specific curves instead of external spectrum_file
@@ -270,8 +270,10 @@ fig.update_yaxes(range=[0, 1])
 fig.show()
     
 #####################################     SAVE PIC TO OUT DIR    ###################################
-
-save_path = 'out'+os.sep+SCD.calc_name
+if "ex" in spectrum_path and "exp" not in spectrum_path:
+    save_path = 'out'+os.sep+spectrum_path.split(os.sep)[-2]+os.sep+SCD.calc_name
+else:
+    save_path = 'out'+os.sep+SCD.calc_name
 if not os.path.exists(save_path):
     os.mkdir(save_path)
 

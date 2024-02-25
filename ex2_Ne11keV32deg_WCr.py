@@ -43,7 +43,6 @@ crossSection_W = 0.00688
 
 # choose data files
 spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex2_sim_Ne11keV32deg_WCr"
-#do not forget to change working dir! 
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
 datas = os.listdir(spectra_path)
