@@ -25,7 +25,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 #smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 100
+SCD.filter_window_length = 200
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -45,7 +45,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.03
+SCD.spectrometer_resolution = 0.01
 
 #####################################    CHOOSE INPUT FILE    ######################################
 
@@ -66,6 +66,9 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #26.12.2023-20-24-Ne+ 130nA smart 1e24 D 100eV +gun
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
 
+#17.05.2018-12-06-Ar+ 18 keV  I~ 175 nA clean SI
+spectrum_path += "exp_Ar18kev_Si.dat"
+
 # Spectra simulated in the SDTrimSP_6.02 code.
 
 #spectrum_path += "sim_Ne11keV32deg_ArKr.dat"
@@ -77,7 +80,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
-spectrum_path += "sim_Ne18keV32deg_HDW.dat"
+#spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 
@@ -155,7 +158,7 @@ def deconv (signal):
 
     # Do more direct deconvolution by solving Fredholm equation with broadening kernel 
     t1 = time.time()
-    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution))
+    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=1000))
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, s: "+str((t2-t1)))
     return simple_deconv, numerical_deconv
