@@ -71,7 +71,7 @@ for f in range(0, len(datas)):
     Ba_peak = max(spectrum_int[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-spectrum_int[int(E_background/step)]
     Co_peak = max(spectrum_int[int((E_peak_Co-50)/step):int((E_peak_Co+50)/step)])-spectrum_int[int(E_background/step)]
     Co_conc =  (Co_peak/crossSection_Co)/((Co_peak/crossSection_Co)+(Gd_peak/crossSection_Gd)+(Ba_peak/crossSection_Ba))
-    
+
     data_cnv[0,f+1]=Co_conc
     data_simple_deconv[0,f+1]=Co_conc
     data_numeric_deconv[0,f+1]=Co_conc

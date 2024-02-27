@@ -67,7 +67,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
 
 #17.05.2018-12-06-Ar+ 18 keV  I~ 175 nA clean SI
-spectrum_path += "exp_Ar18kev_Si.dat"
+#spectrum_path += "exp_Ar18kev_Si.dat"
 
 # Spectra simulated in the SDTrimSP_6.02 code.
 
@@ -76,7 +76,7 @@ spectrum_path += "exp_Ar18kev_Si.dat"
 #spectrum_path += "sim_He3keV145deg_Bi2Se3.dat"
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
-#spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
+spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
@@ -155,10 +155,9 @@ def deconv (signal):
     # Actually it is a division of broadening_gauss_convolution (as measured by electrostatic analyzer) 
     # energy spectrum by the energy. For more info see Urusov's papers: https://doi.org/10.1134/1.1258598
     simple_deconv = SCD.norm(SCD.simple_deconvolution(signal))
-
     # Do more direct deconvolution by solving Fredholm equation with broadening kernel 
     t1 = time.time()
-    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=1000))
+    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=5000))
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, s: "+str((t2-t1)))
     return simple_deconv, numerical_deconv

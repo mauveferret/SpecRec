@@ -104,7 +104,6 @@ for f in range(0, len(datas)):
         deconv_H_conc =  (H_peak/crossSection_H)/((H_peak/crossSection_H)+(D_peak/crossSection_D)+(W_peak/crossSection_W))
         data_simple_deconv[R+1, f+1] = deconv_H_conc
         
-        
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
                                                               SCD.spectrometer_resolutions[R], num = 5000))
@@ -118,4 +117,4 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=81, error_max=25) 
+SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=101, error_max=35) 
