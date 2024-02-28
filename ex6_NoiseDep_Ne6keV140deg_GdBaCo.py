@@ -171,7 +171,6 @@ ax2.minorticks_on()
 ax2.grid()
 ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')
 
-plt.savefig(save_path+os.sep+"noise_conc"+"_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+
-            SCD.logging_options+".png", dpi=300)
+plt.savefig(save_path+os.sep+"noise_conc"+"_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+".png", dpi=300)
 plt.show()
 

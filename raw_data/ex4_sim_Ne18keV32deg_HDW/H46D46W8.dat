@@ -1,4 +1,20 @@
-E,eV	N,part
+Energy particles 
+eV  count 
+
+***************** ISInCa - Ion Surface Interaction Calculator v2024.1.1 *****************
+*               by mauveferret@gmail.com from "Plasma physics" dep., MEPhI               *
+******************************************************************************************
+*          Calculated with SDTrimSP. ISInCa postprocessing id SDTrimSP_74.0_455          *
+*      Postprocessing started at 2024-02-26 at 05:21:07 MSK. Main input parameters:      *
+*          Ne beam with E0 = 18000.0 eV at polar angle 74.0 degrees from normal          *
+*                 azimuth angle 0.0 degrees with doze 30000000 particles                 *
+*                                    target of  H D W                                    *
+******************************************************************************************
+*          E step 20.0 eV  beta 74.0 deg dBeta 1.5 deg phi 0.0 deg dPhi 2.0 deg          *
+******************************************************************************************
+
+*                              calculated  for all elements                              *
+******************************************************************************************
 0.00 20302.000
 20.00 3168.000
 40.00 1168.000
