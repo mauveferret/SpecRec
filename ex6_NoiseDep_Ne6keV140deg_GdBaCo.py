@@ -31,7 +31,7 @@ SCD.spectrometer_resolution = 0.01
 # add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = True
 # adding gauss noise where noise_power is a gauss sigma
-noise_powers = ( 0.01, 0.02, 0.03, 0.05, 0.1)
+noise_powers = (0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.12)
 
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
