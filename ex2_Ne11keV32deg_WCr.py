@@ -87,8 +87,8 @@ for f in range(0, len(datas)):
         
         energy_width=E_peak_W*SCD.spectrometer_resolutions[R]/2
         # do broadening convolution
-        conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step))      
+        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
+                                                          SCD.spectrometer_resolutions[R], step)     
         if W_real == 100:
             background_ref_conv[R][0:len(conv)] = conv
         W_peak = max(conv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])   
@@ -98,7 +98,7 @@ for f in range(0, len(datas)):
         data_cnv[R+1, f+1] = conv_Cr_conc
         
         # do simple deconvolution
-        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
+        simple_deconv = SCD.simple_deconvolution(conv)
         
         if W_real == 100:
             background_ref_simple_deconv[R][0:len(simple_deconv)] = simple_deconv
@@ -109,7 +109,7 @@ for f in range(0, len(datas)):
         data_simple_deconv[R+1, f+1] = deconv_Cr_conc
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
-        numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
+        numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R])
         if W_real == 100:
             background_ref_numeric_deconv [R][0:len(numerical_deconv)] = numerical_deconv
         W_peak = max(numerical_deconv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])  

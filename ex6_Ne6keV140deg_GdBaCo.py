@@ -85,8 +85,8 @@ for f in range(0, len(datas)):
         
         SCD.noise_power = noise_powers[R]
         # do broadening convolution
-        conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolution, step))
+        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
+                                                          SCD.spectrometer_resolution, step)
 
         Gd_peak = max(conv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-conv[int(E_background/step)]
         Ba_peak = max(conv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-conv[int(E_background/step)]
@@ -95,7 +95,7 @@ for f in range(0, len(datas)):
         data_cnv[R+1, f+1] = conv_Co_conc
         
         # do simple deconvolution
-        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))    
+        simple_deconv = SCD.simple_deconvolution(conv)   
         Gd_peak = max(simple_deconv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-simple_deconv[int(E_background/step)]
         Ba_peak = max(simple_deconv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-simple_deconv[int(E_background/step)]
         Co_peak = max(simple_deconv[int((E_peak_Co-50)/step):int((E_peak_Co+50)/step)])-simple_deconv[int(E_background/step)]
@@ -103,7 +103,7 @@ for f in range(0, len(datas)):
         data_simple_deconv[R+1, f+1] = deconv_Co_conc
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
-        numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type,  SCD.spectrometer_resolution, num=1000))
+        numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type,  SCD.spectrometer_resolution, num=1000)
         Gd_peak = max(numerical_deconv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-numerical_deconv[int(E_background/step)]
         Ba_peak = max(numerical_deconv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-numerical_deconv[int(E_background/step)]
         Co_peak = max(numerical_deconv[int((E_peak_Co-50)/step):int((E_peak_Co+50)/step)])-numerical_deconv[int(E_background/step)]

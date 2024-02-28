@@ -73,8 +73,8 @@ for f in range(0, len(datas)):
     for R in range(0,len(SCD.spectrometer_resolutions)):
     
         # do convolution
-        conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                                SCD.spectrometer_resolutions[R], step))
+        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
+                                                                SCD.spectrometer_resolutions[R], step)
         W_peak_max =  SCD.peak(conv)      
         W_peak_pos = 500 #approximate
         for E in range (0, len(spectrum_int)):  
@@ -84,7 +84,7 @@ for f in range(0, len(datas)):
         data_cnv[R+1, f+1] = thick_calib(W_peak_pos)
 
         # do simple deconvolution
-        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
+        simple_deconv = SCD.simple_deconvolution(conv)
         W_peak_max =  SCD.peak(simple_deconv) 
         W_peak_pos = 500 #approximate
         for E in range (0, len(spectrum_int)):  
@@ -94,7 +94,7 @@ for f in range(0, len(datas)):
         data_simple_deconv[R+1, f+1] = thick_calib(W_peak_pos)
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
-        numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R]))
+        numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R])
 
         W_peak_max =  SCD.peak(numerical_deconv) 
         W_peak_pos = 500 #approximate

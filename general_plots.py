@@ -155,7 +155,7 @@ def deconv (signal):
     # Do our simple deconvolution
     # Actually it is a division of broadening_gauss_convolution (as measured by electrostatic analyzer) 
     # energy spectrum by the energy. For more info see Urusov's papers: https://doi.org/10.1134/1.1258598
-    simple_deconv = SCD.norm(SCD.simple_deconvolution(signal))
+    simple_deconv = SCD.simple_deconvolution(signal)
     # Do more direct deconvolution by solving Fredholm equation with broadening kernel 
     t1 = time.time()
     numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=1000))
@@ -165,7 +165,7 @@ def deconv (signal):
 
 def conv (signal):
     t1 = time.time()
-    broadening_gauss_convolution = SCD.norm(SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution, step=SCD.step))
+    broadening_gauss_convolution = SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution, step=SCD.step)
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" convolution time, s: "+str((t2-t1)))
     return broadening_gauss_convolution

@@ -190,7 +190,7 @@ def wiener_deconvolution(signal, kernel, SNR=SNR):
     
     for i in range (len(deconvolved)-1, int(len(kernel)/2), -1):
         deconvolved[i] = deconvolved[i-int(len(kernel)/2)]
-    return deconvolved
+    return norm(deconvolved)
 
 
 # method proposed in Zhabrev, G. I., & Zhdanov, S. K. (1979). 
@@ -205,7 +205,7 @@ def analitycal_deconvolution(signal, en, deltaEtoE=spectrometer_resolution):
     deconvoluted = np.zeros(len(signal))    
     for E in range (1, len(deconvoluted)-2):
         deconvoluted[E] = shifted_signal[E]/(deltaEtoE*en[E])-sig_diff[E]
-    return deconvoluted
+    return norm(deconvoluted)
 
 
 #based on PhD dissertation of Urusov V.A.
@@ -213,7 +213,7 @@ def simple_deconvolution(signal):
     simple_deconv = np.zeros(len(signal))
     for i in range (1,len(signal)):
         simple_deconv[i] = signal[i]/(step*i)
-    return(simple_deconv)
+    return(norm(simple_deconv))
 
 
 # numerical solution of Fredholm integral equations of the first kind
@@ -232,7 +232,7 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
                                                                g, a=1, b=len(signal), gamma=1, num=num)
     spectrum_en_deconv *=step
     numerical_deconv = np.interp(spectrum_en,spectrum_en_deconv, numerical_deconv_local)
-    return numerical_deconv
+    return norm(numerical_deconv)
 
 
 ####################################     GENERAL FUNCTIONS     #####################################

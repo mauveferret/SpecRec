@@ -84,8 +84,8 @@ for f in range(0, len(datas)):
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
         # do broadening convolution
-        conv = SCD.norm(SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step))
+        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
+                                                          SCD.spectrometer_resolutions[R], step)
         W_peak = max(conv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = conv - conv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
@@ -95,7 +95,7 @@ for f in range(0, len(datas)):
         data_cnv[R+1, f+1] = conv_H_conc
         
         # do simple deconvolution
-        simple_deconv = SCD.norm(SCD.simple_deconvolution(conv))
+        simple_deconv = SCD.simple_deconvolution(conv)
         W_peak = max(simple_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])
         without_background = simple_deconv - simple_deconv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
@@ -105,8 +105,8 @@ for f in range(0, len(datas)):
         data_simple_deconv[R+1, f+1] = deconv_H_conc
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
-        numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
-                                                              SCD.spectrometer_resolutions[R], num = 5000))
+        numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
+                                                              SCD.spectrometer_resolutions[R], num = 5000)
         W_peak = max(numerical_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = numerical_deconv - numerical_deconv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
