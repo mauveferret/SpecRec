@@ -23,12 +23,12 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = True
+SCD.doInputSmooth = False
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
 SCD.filter_window_length = 50
 
 #add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = True
+SCD.doBroadeningConvNoise = False
 #adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.08
 
@@ -74,7 +74,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne11keV32deg_ArKr.dat"
 
 #spectrum_path += "sim_He3keV145deg_Bi2Se3.dat"
-spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
+#spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
 #spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
@@ -83,12 +83,13 @@ spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
+spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
 #spectrum_path += "ex32_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
-SCD.Emin = 1000
+SCD.Emin = 100
 spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
 
 # or test on input analytical specific curves instead of external spectrum_file

@@ -246,10 +246,22 @@ def import_data(spectrum_file):
         logging_options+="_Noise="+str(noise_power)+"_" 
         
     lines = spectrum_file.splitlines()
+    
+    __indexes_letter_strings = []
+    #find letter strings and save its indexes
+    for i in range(0, len(lines)):
+        if  any(c.isalpha() for c in lines[i]) or ("*" in lines[i]) or lines[i]=='':
+            __indexes_letter_strings.append(lines[i])
+    
+    #remove letter strings from lines
+    for i in __indexes_letter_strings:
+        lines.remove(i)
+        
+    #create data arrays
     raw_spectrum_int = np.zeros(len(lines))
     raw_spectrum_en = np.zeros(len(lines))
 
-    for i in range(1, len(lines)):
+    for i in range(0, len(lines)):
         lines[i] = lines[i].replace('\t'," ").replace(",", ".").replace("E","e")
         data = lines[i].split(" ")
         raw_spectrum_en[i] = float(data[0])
