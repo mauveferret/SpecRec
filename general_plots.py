@@ -25,12 +25,12 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 #smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 200
+SCD.filter_window_length = 50
 
 #add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = False
+SCD.doBroadeningConvNoise = True
 #adding gauss noise where noise_power is a gauss sigma
-SCD.noise_power = 0.005 
+SCD.noise_power = 0.08
 
 #create gif with animation of broadening convolution
 SCD.doAnimation = False
@@ -74,9 +74,9 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne11keV32deg_ArKr.dat"
 
 #spectrum_path += "sim_He3keV145deg_Bi2Se3.dat"
-#spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
+spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
-spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
+#spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
 #spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
 #spectrum_path +="sim_Ar20keV32deg_HDW.dat"
@@ -157,7 +157,7 @@ def deconv (signal):
     simple_deconv = SCD.norm(SCD.simple_deconvolution(signal))
     # Do more direct deconvolution by solving Fredholm equation with broadening kernel 
     t1 = time.time()
-    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=5000))
+    numerical_deconv  = SCD.norm(SCD.twomey_deconvolution(signal, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolution, num=1000))
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" deconvolution time, s: "+str((t2-t1)))
     return simple_deconv, numerical_deconv

@@ -5,7 +5,6 @@ from inteq import SolveFredholm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import scipy.signal
-import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 """
@@ -175,6 +174,7 @@ def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_typ
         g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,en[k])
         for i in range(max(0, k + 1 - Lg), min(k+Lg, Lf)):
             cnv[k] += f[i] * g[i]
+    cnv = norm(cnv)
     if doBroadeningConvNoise:
         #adding noise to the spectrum
         cnv+=np.random.normal(0,noise_power, len(cnv))
