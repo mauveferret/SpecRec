@@ -83,9 +83,9 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
-spectrum_path += "sim_Ne2keV45deg_HW.dat"
+#spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-#spectrum_path += "ex32_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
+spectrum_path += "ex41_sim_Ne2keV45deg_HDW"+os.sep+"H20W80.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]

@@ -21,7 +21,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 200
+SCD.filter_window_length = 50
 
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
@@ -48,7 +48,8 @@ data_numeric_deconv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1
 # calibration based on the linear fitting of peaks position in  H->WLi simulation
 def thick_calib(peak_pos):
     #peak_pos in eV, thickness in nm
-    return 78.15553-0.00324*peak_pos 
+    #return 78.15553-0.00324*peak_pos 
+    return 90.17442-0.01065*peak_pos+9.99068E-7*peak_pos**2-4.35214E-11*peak_pos**3+5.36148E-16*peak_pos**4
 
 #write X axis in data arrays
 for R in range(0,len(SCD.spectrometer_resolutions)):
