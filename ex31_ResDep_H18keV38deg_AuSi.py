@@ -1,10 +1,8 @@
-import os
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
-import numpy as np
-import spectraConvDeconvLib as SCD
 
 """
+This script is intended for generating dependency of Au film thickness and 
+error in its determination on the relative energy resolution of the spectrometer
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -15,6 +13,12 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
+
+import os
+# changing working directoru to the location of py file
+os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import numpy as np
+import spectraConvDeconvLib as SCD
 
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
@@ -50,7 +54,7 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
 
 for f in range(0, len(datas)):    
-    spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
+    spectrum_en, spectrum_int = SCD.import_data(spectra_path+os.sep+datas[f])
     step = SCD.step 
 
     Au_peak_max =  SCD.peak(spectrum_int)  
@@ -77,7 +81,7 @@ for f in range(0, len(datas)):
         
         # do convolution
         conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step)
+                                                          SCD.spectrometer_resolutions[R])
         Au_peak_max =  SCD.peak(conv)   
         Au_peak_pos = 15400 #approximate
         E1_FWHM = 0

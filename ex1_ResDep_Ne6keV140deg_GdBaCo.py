@@ -1,10 +1,17 @@
-import os
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
-import numpy as np
-import spectraConvDeconvLib as SCD
-
 """
+This scripts generates figure with estimated relative surface atomic concentrations
+of  Co in GdBaCo samples of different composition in dependence on the spectrometer 
+relative energy resolution. Data is provided for convoluted and deconvoluted signals 
+of simulated spectra of Ne with an energy of 6 keV scattered at an angle of 140° on
+the GdBaCo samples. 
+The determination of the relative surface concentration was provided by subtraction 
+the background from the peaks of elastic scattering and subsequent normalization of 
+its intensities by the corresponding differential scattering cross-sections. Points 
+at R=0 corresponds to estimations based on the original spectra (A).
+Absolute errors due to distortion and reconstruction procedures in the estimation 
+of the Co atomic concentrations  in dependence on the spectrometer resolution (B).  
+
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -16,6 +23,12 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
+import os
+# changing working directoru to the location of py file
+os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import numpy as np
+import spectraConvDeconvLib as SCD
+
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
@@ -25,11 +38,12 @@ SCD.filter_window_length = 50
 
 # add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
-# adding gauss noise where noise_power is a gauss sigma
-SCD.noise_power = 0.05
 
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
+
+# adding gauss noise where noise_power is a gauss sigma
+SCD.noise_power = 0.05
 
 # positions of elastic peaks in eV
 E_peak_Co = 1693
@@ -65,7 +79,7 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
 
 for f in range(0, len(datas)):    
-    spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
+    spectrum_en, spectrum_int = SCD.import_data(spectra_path+os.sep+datas[f])
     step = SCD.step
     Gd_peak = max(spectrum_int[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-spectrum_int[int(E_background/step)]
     Ba_peak = max(spectrum_int[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-spectrum_int[int(E_background/step)]
@@ -80,7 +94,7 @@ for f in range(0, len(datas)):
         
         # do broadening convolution
         conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step)
+                                                          SCD.spectrometer_resolutions[R])
 
         Gd_peak = max(conv[int((E_peak_Gd-50)/step):int((E_peak_Gd+50)/step)])-conv[int(E_background/step)]
         Ba_peak = max(conv[int((E_peak_Ba-50)/step):int((E_peak_Ba+50)/step)])-conv[int(E_background/step)]

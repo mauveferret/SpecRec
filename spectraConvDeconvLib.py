@@ -1,13 +1,10 @@
-import os
-import numpy as np
-from numpy.fft import fft, ifft   
-from inteq import SolveFredholm 
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
-import scipy.signal
-from matplotlib.lines import Line2D
-
 """
+This package can be used to postprocess experimental spectra measured by electrostatic
+or magnetic separators of charged particles. It allows to provide smoothing, 
+noising of the original spectra, it convolution and deconvolution with different kernel's 
+shapes (Gaussian, Triangle, Rectangle and arbitrary) with constant or broadening full width 
+at half maximum (FWHM). It thus can be useful in mass analysis and ion scattering spectroscopy. 
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -18,6 +15,16 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
+
+import os
+import numpy as np
+from numpy.fft import fft, ifft   
+from inteq import SolveFredholm 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import scipy.signal
+from matplotlib.lines import Line2D
+
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
@@ -28,6 +35,7 @@ filter_window_length = 100
 
 #add some noise to the convoluted sim spectrum
 doBroadeningConvNoise = False
+
 #adding gauss noise where noise_power is a gauss sigma
 noise_power = 0.02
 
@@ -55,14 +63,18 @@ spectrometer_resolution = 0.01
 
 # name for output
 calc_name = ""
+
 # additional info on the study for the iotput filenames and titles
 logging_options = ""
 
 ######################################    SOME FUNCTIONS     #######################################
 
-# creates array, representing kernel with arbitrary FWHM and form
-# FWHM is full width at half maximum
-def broadening_kernel(type, FWHM):
+
+def broadening_kernel(type: str, FWHM: int): 
+    """
+    method creates array, representing kernel with arbitrary FWHM and form ("gauss", "triangle", "rectangle" and custom "LMM")
+    FWHM is full width at half maximum
+    """
     if type=="gauss":
         def broadening_gauss_kernel(energies, shift):
             return np.exp(-((energies-shift)**2)/(2*(FWHM/2*shift)**2)) 
@@ -146,34 +158,43 @@ def broadening_kernel(type, FWHM):
 ######################################     CONVOLUTIONS     #######################################
 
 
-# based on https://inclab.ru/profi/realizaciya-svertki-v-scilab
-def basic_convolution(f,g):
-    Lf = len(f)
-    Lg = len(g)
+def basic_convolution(signal: np.array, kernel: np.array):
+    """
+    method for classical convolution
+    based on https://inclab.ru/profi/realizaciya-svertki-v-scilab
+    """
+    Lf = len(signal)
+    Lg = len(kernel)
     L = Lf + Lg - 1
     cnv = np.zeros(L)
     for k in range(L): 
         for j in range  (max(0, k-int(Lg/2) + 1), min(k+int(Lg/2), Lf)):      
-            cnv[k] += f[j] * g[k+int(Lg/2) - j]
+            cnv[k] += signal[j] * kernel[k+int(Lg/2) - j]
     return cnv
 
 
-# "convolution" with gauss kernel, whose sigma depends on energy 
-# (as do transmission function of electrostatic spectrometers)
-def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_type, deltaEtoE=spectrometer_resolution, step=step):
+def broadening_kernel_convolution(signal: np.array, en: np.array, kernel_type = broadening_kernel_type, deltaEtoE=spectrometer_resolution):
+    """
+    The "convolution" with gauss kernel, whose sigma depends on energy 
+    (as do transmission function of electrostatic spectrometers)
+    Accepts signal  and en as original signal intensity and energy arrays for convolution,
+    and optionally:
+    kernel type in form: "gauss", "triangle", "rectangle"
+    deltaEtoE as the relative energy resolution
+    """
     #we create this gauss array only to estimate max vicinity (energy width) we need to 
     # analyse during convolution for each point of raw signal
-    g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en)*step)
+    g = broadening_kernel(kernel_type, deltaEtoE)(en,len(en)*step)
     g = g[g>.001]
     Lg = len(g)
-    Lf = len(f)
-    en = np.arange(raw_en[0], (len(raw_en)+len(g))*step, step)
-    L = len(en)
+    Lf = len(signal)
+    new_en = np.arange(en[0], (len(en)+len(g))*step, step)
+    L = len(new_en)
     cnv = np.zeros(L)
     for k in range (1, L):
-        g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,en[k])
+        g = broadening_kernel(kernel_type, deltaEtoE)(en,new_en[k])
         for i in range(max(0, k + 1 - Lg), min(k+Lg, Lf)):
-            cnv[k] += f[i] * g[i]
+            cnv[k] += signal[i] * g[i]
     cnv = norm(cnv)
     if doBroadeningConvNoise:
         #adding noise to the spectrum
@@ -182,8 +203,13 @@ def broadening_kernel_convolution(f, raw_en, kernel_type = broadening_kernel_typ
 
 ####################################     DECONVOLUTIONS     #######################################
 
-# based on https://gist.github.com/danstowell/f2d81a897df9e23cc1da
-def wiener_deconvolution(signal, kernel, SNR=SNR):
+
+def wiener_deconvolution(signal: np.array, kernel: np.array, SNR=SNR):
+    """
+    method for Wiener deconvolution
+    based on https://gist.github.com/danstowell/f2d81a897df9e23cc1da
+    SNR is signal-to-noise ratio
+    """
     sequence  = np.hstack((kernel , np.zeros(len(signal) - len(kernel)))) 
     H = fft(sequence ) 
     deconvolved = np.real(ifft(fft(signal)*np.conj(H)/(H*np.conj(H) + SNR**2))) 
@@ -193,10 +219,12 @@ def wiener_deconvolution(signal, kernel, SNR=SNR):
     return norm(deconvolved)
 
 
-# method proposed in Zhabrev, G. I., & Zhdanov, S. K. (1979). 
-# Restoration of a real energy distribution of particles passed through a spectrometer with 
-# a given instrument function. Zhurnal Tekhnicheskoj Fiziki, 49(11), 2450–2454.
-def analitycal_deconvolution(signal, en, deltaEtoE=spectrometer_resolution):
+def analitycal_deconvolution(signal: np.array, en: np.array, deltaEtoE=spectrometer_resolution):
+    """
+    method of deconvolution proposed in Zhabrev, G. I., & Zhdanov, S. K. (1979). 
+    Restoration of a real energy distribution of particles passed through a spectrometer with 
+    a given instrument function. Zhurnal Tekhnicheskoj Fiziki, 49(11), 2450–2454.
+    """
     step = en[2]-en[1]
     shifted_signal = np.zeros(len(signal))
     for E in range (0,len(signal)-int((en[-1]*deltaEtoE)/step)-10):
@@ -208,17 +236,25 @@ def analitycal_deconvolution(signal, en, deltaEtoE=spectrometer_resolution):
     return norm(deconvoluted)
 
 
-#based on PhD dissertation of Urusov V.A.
-def simple_deconvolution(signal):
+def simple_deconvolution(signal: np.array):
+    """
+    method of decoonvolution based on PhD dissertation of Urusov V.A.
+    actually it is just a division of the signal by the energy, calculated 
+    with index of array's element and energy step
+    """
     simple_deconv = np.zeros(len(signal))
     for i in range (1,len(signal)):
         simple_deconv[i] = signal[i]/(step*i)
     return(norm(simple_deconv))
 
 
-# numerical solution of Fredholm integral equations of the first kind
-# based on https://doi.org/10.1145/321150.321157
-def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_type, deltaEtoE = spectrometer_resolution, num=1000):
+
+def  twomey_deconvolution(signal: np.array, spectrum_en: np.array, kernel_type = broadening_kernel_type,
+                          deltaEtoE = spectrometer_resolution, num=2000, gamma=0.5):
+    """
+    method for numerical solution of Fredholm integral equations of the first kind
+    based on https://doi.org/10.1145/321150.321157
+    """
     # define function to deconvolve
     def g(s):
         #Fredholm solver call this function with some s array, whose length can not be as high 
@@ -229,7 +265,7 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
     # apply the solver
     # larger parameter num may improve the solution: num=int(len(signal)//step)
     spectrum_en_deconv, numerical_deconv_local = SolveFredholm(broadening_kernel(kernel_type, deltaEtoE), 
-                                                               g, a=1, b=len(signal), gamma=1, num=num)
+                                                               g, a=1, b=len(signal), gamma=gamma, num=num)
     spectrum_en_deconv *=step
     numerical_deconv = np.interp(spectrum_en,spectrum_en_deconv, numerical_deconv_local)
     return norm(numerical_deconv)
@@ -238,31 +274,35 @@ def  twomey_deconvolution(signal, spectrum_en, kernel_type = broadening_kernel_t
 ####################################     GENERAL FUNCTIONS     #####################################
 
 
-def import_data(spectrum_file):  
+def import_data(spectrum_path: str):  
+    """
+    method to import energy spectrum from a file located at spectrum_path
+    """
     global logging_options
     if doInputSmooth and ("_Smooth="+str(filter_window_length)+" eV" not in logging_options):
         logging_options+="_Smooth="+str(filter_window_length)+" eV"
     if doBroadeningConvNoise  and ("_Noise="+str(noise_power)+"_"  not in logging_options):
         logging_options+="_Noise="+str(noise_power)+"_" 
-        
+    
+    spectrum_file = open(spectrum_path).read()
+    spectrum_file = spectrum_file.replace('\t'," ").replace(",", ".").replace("E","e")
     lines = spectrum_file.splitlines()
     
     __indexes_letter_strings = []
     #find letter strings and save its indexes
     for i in range(0, len(lines)):
-        if  any(c.isalpha() for c in lines[i]) or ("*" in lines[i]) or lines[i]=='':
+        if  any(c.isalpha() and not ("e" in c) for c in lines[i]) or ("*" in lines[i]) or lines[i]=='':
             __indexes_letter_strings.append(lines[i])
     
     #remove letter strings from lines
     for i in __indexes_letter_strings:
         lines.remove(i)
-        
     #create data arrays
     raw_spectrum_int = np.zeros(len(lines))
     raw_spectrum_en = np.zeros(len(lines))
 
     for i in range(0, len(lines)):
-        lines[i] = lines[i].replace('\t'," ").replace(",", ".").replace("E","e")
+        lines[i] = lines[i]
         data = lines[i].split(" ")
         raw_spectrum_en[i] = float(data[0])
         raw_spectrum_int[i] = float(data[1])
@@ -282,18 +322,26 @@ def import_data(spectrum_file):
     return spectrum_en, spectrum_int
 
 
-# spectrum normalization to 1 in range (Emin, Emax)
-def norm(arr):
-    return arr/max(arr[int(Emin/step):int(Emax/step)])
+def norm(signal: str):
+    """
+    method for spectrum normalization to 1 in range (Emin, Emax)
+    """
+    return signal/max(signal[int(Emin/step):int(Emax/step)])
 
-def peak(arr):
-    return max(arr[int(Emin/step):int(Emax/step)])
+
+def peak(signal: str):
+    """
+    method for finding maximum of the peak in range (Emin, Emax)
+    """
+    return max(signal[int(Emin/step):int(Emax/step)])
     
 #################################   SAVE TO OUTPUT AND CREATE PLOTS  ###############################
 
 
-# save results of dep of conc and thickness on resolution to file
 def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
+    """
+    method to save ave results of dep of conc and thickness on resolution to file
+    """
     save_path = 'out'+os.sep+calc_name
     if not os.path.exists(save_path):
         os.mkdir(save_path)
@@ -350,7 +398,10 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
 
     ax1.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax1.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.01, 0.01))
-    ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
+    if type=="conc":
+        ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
+    else:
+        ax1.set_ylabel(conc_element_name+' estimated thickness, nm', fontsize=13)
     ax1.set_yticks(np.arange(0, y_max, y1_step))
     ax1.set_ylim(0,y_max)
     ax1.set_xlim(-0.001, spectrometer_resolutions[-1]+0.001)
@@ -402,7 +453,10 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     plt.show()
     
     
-def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
+def create_animated_chart(signal: np.array, raw_en: str, kernel_type=broadening_kernel_type, deltaEtoE=spectrometer_resolution, step=step):
+    """
+    methods created gif animation of broadening kernel convolution process
+    """
     fig = plt.figure(figsize=(16, 10))
     ax = fig.add_subplot()
     energy_per_frame_scale = 20
@@ -410,7 +464,7 @@ def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
     g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,len(raw_en)*step)
     g = g[g>.001]
     Lg = len(g)
-    Lf = len(f)
+    Lf = len(signal)
     en = np.arange(raw_en[0]*step, (len(raw_en)+len(g))*step, step)
     L = len(en)
     cnv_matrix = np.zeros((L, L))
@@ -418,7 +472,7 @@ def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
         for j in range (1,k): cnv_matrix[k][j]=cnv_matrix[k-1][j]
         g = broadening_kernel(kernel_type, deltaEtoE)(raw_en,en[k])
         for i in range(max(0, k + 1 - Lg), min(k+Lg, Lf)):
-            cnv_matrix[k,k] += f[i] * g[i]
+            cnv_matrix[k,k] += signal[i] * g[i]
     cnv_matrix /= max(cnv_matrix[L-1][int(Emin/step):int(Emax/step)])
     
     def get_cnv_array(k):
@@ -441,7 +495,7 @@ def create_animated_chart(f, kernel_type, deltaEtoE, step,raw_en):
         plt.ylabel('intensity, a.u.', fontsize=13)
         
         en1=en/1000
-        f2 = np.interp(en,raw_en, f)
+        f2 = np.interp(en,raw_en, signal)
         ax.plot(en1, f2,  'b', label='Initial signal')
         ax.plot(en1, g, 'r', label='Kernel')
         ax.plot(en1[0:k], cnv, 'c--', label='Convoluted', linewidth=3.0)

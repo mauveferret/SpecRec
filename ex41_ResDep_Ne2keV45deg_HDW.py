@@ -41,8 +41,9 @@ E_background_of_H = 215
 
 #  elemental sensitivity in a form of difference of squares of impact parameters 
 # for a specific registration solid angle, Å^2
-crossSection_H = 0.0099122/E_peak_H
-crossSection_W = 0.0243854/E_peak_W
+crossSection_H = 0.0099122/E_width_H
+crossSection_W = 0.0243854/E_width_W
+
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -64,7 +65,7 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
 
 for f in range(0, len(datas)):    
-    spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
+    spectrum_en, spectrum_int = SCD.import_data(spectra_path+os.sep+datas[f])
     step = SCD.step
     W_peak = max(spectrum_int[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])
     without_background = spectrum_int - spectrum_int[int(E_background_of_H/step)]
@@ -79,7 +80,7 @@ for f in range(0, len(datas)):
         
         # do broadening convolution
         conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step)
+                                                          SCD.spectrometer_resolutions[R])
         W_peak = max(conv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = conv - conv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
@@ -96,7 +97,7 @@ for f in range(0, len(datas)):
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
-                                                              SCD.spectrometer_resolutions[R], num = 5000)
+                                                              SCD.spectrometer_resolutions[R], num = 1000)
         W_peak = max(numerical_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = numerical_deconv - numerical_deconv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])

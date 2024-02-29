@@ -1,9 +1,3 @@
-import os
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
-import numpy as np
-import spectraConvDeconvLib as SCD
-
 """
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -16,12 +10,21 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
+import os
+# changing working directoru to the location of py file
+os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import numpy as np
+import spectraConvDeconvLib as SCD
+
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
 SCD.filter_window_length = 50
+
+# type of kernel for broadening kernel: gauss, triangle or rectangle
+SCD.broadening_kernel_type = "gauss"
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -68,7 +71,7 @@ for R in range(0,len(SCD.spectrometer_resolutions)):
     data_numeric_deconv[R+1,0] = SCD.spectrometer_resolutions[R]
 
 for f in range(0, len(datas)):    
-    spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
+    spectrum_en, spectrum_int = SCD.import_data(spectra_path+os.sep+datas[f])
     step = SCD.step
     W_peak = max(spectrum_int[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])
     without_background = spectrum_int - spectrum_int[int(E_background_of_H/step)]
@@ -84,8 +87,7 @@ for f in range(0, len(datas)):
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
         # do broadening convolution
-        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step)
+        conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, SCD.spectrometer_resolutions[R])
         W_peak = max(conv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = conv - conv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])
@@ -106,7 +108,7 @@ for f in range(0, len(datas)):
         
         #Do more direct deconvolution by solving Fredholm equation with broadening kernel 
         numerical_deconv  = SCD.twomey_deconvolution(conv, spectrum_en, SCD.broadening_kernel_type, 
-                                                              SCD.spectrometer_resolutions[R], num = 5000)
+                                                              SCD.spectrometer_resolutions[R])
         W_peak = max(numerical_deconv[int((E_peak_W-E_width_W/2)/step):int((E_peak_W+E_width_W/2)/step)])  
         without_background = numerical_deconv - numerical_deconv[int(E_background_of_H/step)]
         H_peak = max(without_background[int((E_peak_H-E_width_H/2)/step):int((E_peak_H+E_width_H/2)/step)])

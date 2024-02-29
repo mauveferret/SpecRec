@@ -1,10 +1,13 @@
-import os
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
-import numpy as np
-import spectraConvDeconvLib as SCD
 
 """
+This scripts generates figure with estimated relative surface concentrations 
+of Cr in W-Cr samples of different composition in dependence on the spectrometer 
+resolution. Data is provided for convoluted and deconvoluted signals of simulated 
+spectra of Ne with an energy of 11 keV scattered at an angle of 32° on the W-Cr samples.
+Points at R=0 corresponds to estimations based on the raw spectra (A). Absolute errors due 
+to distortion and reconstruction procedures in the estimation of the Cr atomic concentrations 
+in dependence on the spectrometer resolution (B).
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -16,12 +19,21 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
+import os
+# changing working directoru to the location of py file
+os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import numpy as np
+import spectraConvDeconvLib as SCD
+
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
 SCD.filter_window_length = 100
+
+# type of kernel for broadening kernel: gauss, triangle or rectangle
+SCD.broadening_kernel_type = "gauss"
 
 # add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -69,7 +81,7 @@ for f in range(0, len(datas)):
     W_real =  int(datas[f].split("Cr")[0][1:])
     Cr_real = 100 - W_real
     
-    spectrum_en, spectrum_int = SCD.import_data(open(spectra_path+os.sep+datas[f]).read())
+    spectrum_en, spectrum_int = SCD.import_data(spectra_path+os.sep+datas[f])
     step = SCD.step
     
     if W_real == 100:
@@ -88,7 +100,7 @@ for f in range(0, len(datas)):
         energy_width=E_peak_W*SCD.spectrometer_resolutions[R]/2
         # do broadening convolution
         conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
-                                                          SCD.spectrometer_resolutions[R], step)     
+                                                          SCD.spectrometer_resolutions[R])     
         if W_real == 100:
             background_ref_conv[R][0:len(conv)] = conv
         W_peak = max(conv[int((E_peak_W-energy_width)/step):int((E_peak_W+energy_width)/step)])   

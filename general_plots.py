@@ -1,14 +1,9 @@
-import os, time
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
-import numpy as np
-import scipy.signal
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
-import spectraConvDeconvLib as SCD
+
 
 """
+This program allows to create charts for convolution and deconvolution of
+defferent types for one specific simulated or experimental spectrum
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -19,16 +14,28 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
+
+import os, time
+# changing working directoru to the location of py file
+os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import numpy as np
+import scipy.signal
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import spectraConvDeconvLib as SCD
     
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
+
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 50
+SCD.filter_window_length = 20
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
+
 #adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.08
 
@@ -67,7 +74,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
 
 #17.05.2018-12-06-Ar+ 18 keV  I~ 175 nA clean SI
-#spectrum_path += "exp_Ar18kev_Si.dat"
+spectrum_path += "exp_Ar18kev_Si.dat"
 
 # Spectra simulated in the SDTrimSP_6.02 code.
 
@@ -85,12 +92,12 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-spectrum_path += "ex41_sim_Ne2keV45deg_HDW"+os.sep+"H20W80.dat"
+#spectrum_path += "ex41_sim_Ne2keV45deg_HDW"+os.sep+"H60W40.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
 SCD.Emin = 100
-spectrum_en, spectrum_int = SCD.import_data(open(spectrum_path).read())
+spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
 do_gausses = False
@@ -165,7 +172,7 @@ def deconv (signal):
 
 def conv (signal):
     t1 = time.time()
-    broadening_gauss_convolution = SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution, step=SCD.step)
+    broadening_gauss_convolution = SCD.broadening_kernel_convolution(signal, spectrum_en,SCD.broadening_kernel_type, SCD.spectrometer_resolution)
     t2 = time.time()
     print ("Broadening "+SCD.broadening_kernel_type+" convolution time, s: "+str((t2-t1)))
     return broadening_gauss_convolution
@@ -348,7 +355,7 @@ with open(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadenin
 #####################  CREATE ANIMATED CHARTS #####################
 
 if SCD.doAnimation:
-    SCD.create_animated_chart(spectrum_int, SCD.broadening_kernel_type, SCD.spectrometer_resolution, SCD.step, spectrum_en)
+    SCD.create_animated_chart(spectrum_int, spectrum_en)
 
 #####################  CREATE PEAK INT DEPENDENCIES ON ENERGY #####################
 
