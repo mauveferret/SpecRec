@@ -28,10 +28,10 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = True
+SCD.doInputSmooth = False
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 20
+SCD.filter_window_length = 200
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -74,7 +74,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
 
 #17.05.2018-12-06-Ar+ 18 keV  I~ 175 nA clean SI
-spectrum_path += "exp_Ar18kev_Si.dat"
+#spectrum_path += "exp_Ar18kev_Si.dat"
 
 # Spectra simulated in the SDTrimSP_6.02 code.
 
@@ -92,7 +92,7 @@ spectrum_path += "exp_Ar18kev_Si.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-#spectrum_path += "ex41_sim_Ne2keV45deg_HDW"+os.sep+"H60W40.dat"
+spectrum_path += "ex32_sim_H25keV32deg_LiW"+os.sep+"Li5nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
