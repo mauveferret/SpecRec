@@ -40,6 +40,10 @@ SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
 
+# influence on search of the peaks maxima. True value alloes to minimaze error due to
+# peaks shifting
+doBroadeningVicinityFroMax = True
+
 # positions of elastic peaks: Scattering of Ne on Cr and W 
 E_peak_Cr = 9760
 E_peak_W = 10640
@@ -58,6 +62,8 @@ spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex2_sim_Ne11keV32deg_WCr"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
 datas = os.listdir(spectra_path)
+if doBroadeningVicinityFroMax:
+    SCD.logging_options+="_BroadenVicinity_"
 
 # arrays with backgrounds to subtract from E_peak1
 background_ref = np.zeros(12000)
@@ -97,7 +103,11 @@ for f in range(0, len(datas)):
     
     for R in range(0,len(SCD.spectrometer_resolutions)):
         
-        energy_width=E_peak_W*SCD.spectrometer_resolutions[R]/2
+        if doBroadeningVicinityFroMax:
+            energy_width=E_peak_W*SCD.spectrometer_resolutions[R]/2
+        else:
+            energy_width=E_peak_W*0.008/2 
+            
         # do broadening convolution
         conv = SCD.broadening_kernel_convolution(spectrum_int, spectrum_en, SCD.broadening_kernel_type, 
                                                           SCD.spectrometer_resolutions[R])     
