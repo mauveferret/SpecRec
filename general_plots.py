@@ -92,7 +92,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-spectrum_path += "ex32_sim_H25keV32deg_LiW"+os.sep+"Li5nmW.dat"
+spectrum_path += "ex41_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
@@ -296,7 +296,7 @@ if not isExp:
     plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-', linewidth=1.5, label='Numerical Deconvolution') 
     plt.legend(fontsize=8)
     plt.ylim(0,1)
-    plt.xlim(0, spectrum_en[-1]/1000)
+    plt.xlim(0, spectrum_en[-1]/1000+0.01)
     #plt.xticks(np.arange(1, spectrum_en[-1]/1000, ))
     plt.minorticks_on()
     plt.xlabel('energy, keV')

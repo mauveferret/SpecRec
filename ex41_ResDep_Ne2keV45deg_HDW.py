@@ -48,7 +48,7 @@ crossSection_W = 0.0243854/E_width_W
 #####################################    CHOOSE INPUT FILES    ######################################
 
 # choose data files
-spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex41_sim_Ne2keV45deg_HDW"
+spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex41_sim_Ne2keV45deg_HW"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
 datas = os.listdir(spectra_path)
