@@ -58,7 +58,7 @@ SNR = 10
 broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-spectrometer_resolutions = ( 0.002, 0.005, 0.008, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
+spectrometer_resolutions = ( 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
 spectrometer_resolution = 0.01
 
 # name for output
@@ -338,7 +338,7 @@ def peak(signal: str):
 #################################   SAVE TO OUTPUT AND CREATE PLOTS  ###############################
 
 
-def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
+def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv, type = "conc"):
     """
     method to save ave results of dep of conc and thickness on resolution to file
     """
@@ -346,7 +346,7 @@ def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
-    with open(save_path+os.sep+"conc_conv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options.replace(" ","")+".dat", "w",newline='\n') as f:   
+    with open(save_path+os.sep+type+"_conv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options.replace(" ","")+".dat", "w",newline='\n') as f:   
         f.write(("resolution").ljust(14))
         for data in range(0, len(datas)):
                 f.write((str(datas[data].split(".")[0])).ljust(14))
@@ -356,7 +356,7 @@ def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
                 f.write((str("{:.3e}".format(data_cnv[R,data])+"")).ljust(14)+" ")
             f.write("\n")
             
-    with open(save_path+os.sep+"conc_simple_deconv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".dat", "w",newline='\n') as f:   
+    with open(save_path+os.sep+type+"_simple_deconv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".dat", "w",newline='\n') as f:   
         f.write(("resolution").ljust(14))
         for data in range(0, len(datas)):
                 f.write((str(datas[data].split(".")[0])).ljust(14))
@@ -366,7 +366,7 @@ def save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv):
                 f.write((str("{:.3e}".format(data_simple_deconv[R,data])+"")).ljust(14)+" ")
             f.write("\n")
             
-    with open(save_path+os.sep+"conc_numeric_deconv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".dat", "w",newline='\n') as f:   
+    with open(save_path+os.sep+type+"_numeric_deconv_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".dat", "w",newline='\n') as f:   
         f.write(("resolution").ljust(14))
         for data in range(0, len(datas)):
                 f.write((str(datas[data].split(".")[0])).ljust(14))

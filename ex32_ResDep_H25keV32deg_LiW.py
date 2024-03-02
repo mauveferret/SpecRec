@@ -110,6 +110,6 @@ for f in range(0, len(datas)):
         data_numeric_deconv[R+1, f+1] = thick_calib(W_peak_pos)
         
 #save data to output and create plots
-SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
+SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv,type = "thickness")
 SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, type="thickness",
-                      conc_element_name="Li", y_max=101, y1_step=10, error_max=15) 
+                      conc_element_name="Li", y_max=85, y1_step=10, error_max=6) 

@@ -41,9 +41,8 @@ E_background_of_H = 215
 
 #  elemental sensitivity in a form of difference of squares of impact parameters 
 # for a specific registration solid angle, Å^2
-crossSection_H = 0.0099122/E_width_H
-crossSection_W = 0.0243854/E_width_W
-
+crossSection_H = 0.0099122
+crossSection_W = 0.0243854*0.5
 
 #####################################    CHOOSE INPUT FILES    ######################################
 

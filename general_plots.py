@@ -28,10 +28,10 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 200
+SCD.filter_window_length = 20
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -52,8 +52,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.01
-
+SCD.spectrometer_resolution = 0.001
 #####################################    CHOOSE INPUT FILE    ######################################
 
 # choose one data file
@@ -92,7 +91,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-spectrum_path += "ex41_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
+spectrum_path += "ex41_sim_Ne2keV45deg_HW"+os.sep+"H80W20.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
@@ -216,6 +215,7 @@ for row_id in range (1,len(signals)+1):
             x = spectrum_en,
             y = spectrum_int, 
             name = "Raw spectrum",
+            line={'width': 1, 'dash':'dot'},
             line_color="#000000",
             legendgroup = labels[row_id-1]
         ),
@@ -301,7 +301,7 @@ if not isExp:
     plt.minorticks_on()
     plt.xlabel('energy, keV')
     plt.ylabel('intensity, r.u.')
-    plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""))
+    plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.02)
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
 if isExp:
