@@ -36,11 +36,11 @@ SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
 SCD.filter_window_length = 50
 
-# add some noise to the convoluted sim spectrum
-SCD.doBroadeningConvNoise = False
-
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
+
+# add some noise to the convoluted sim spectrum
+SCD.doBroadeningConvNoise = False
 
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.05

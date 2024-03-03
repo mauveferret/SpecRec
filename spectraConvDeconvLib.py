@@ -58,7 +58,7 @@ SNR = 10
 broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-spectrometer_resolutions = ( 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
+spectrometer_resolutions = ( 0.001, 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05)
 spectrometer_resolution = 0.01
 
 # name for output
