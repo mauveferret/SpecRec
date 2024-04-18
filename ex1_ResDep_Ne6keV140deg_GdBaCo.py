@@ -45,6 +45,9 @@ SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.05
 
+
+SCD.spectrometer_resolutions = (  0.001, 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035)
+
 # positions of elastic peaks in eV
 E_peak_Co = 1693
 E_peak_Gd = 3803
@@ -120,4 +123,4 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, y_max=92, error_max=20) 
+SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, y_max=92, error_max=23) 

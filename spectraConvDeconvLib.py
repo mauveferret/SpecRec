@@ -326,7 +326,7 @@ def norm(signal: str):
     """
     method for spectrum normalization to 1 in range (Emin, Emax)
     """
-    return signal/max(signal[int(Emin/step):int(Emax/step)])
+    return signal/max(signal[int(3000/step):int(Emax/step)])
 
 
 def peak(signal: str):
@@ -419,22 +419,22 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     if type== "conc":
         # Create charts for dependence of error on resolution
         for data in range(0, len(datas)):
-            ax2.plot(data_cnv[1:,0], abs(data_cnv[1:,data+1]-data_cnv[0,data+1])*100, 'k:', marker=markers[data], markersize=5, linewidth=1, label=datas[data].split(".")[0]) 
+            ax2.plot(data_cnv[1:,0], abs(data_cnv[1:,data+1]-data_cnv[0,data+1])*100, 'k:', marker=markers[data], markersize=6, linewidth=1, label=datas[data].split(".")[0]) 
         for data in range(0, len(datas)):
-            ax2.plot(data_simple_deconv[1:,0], abs(data_simple_deconv[1:,data+1]-data_simple_deconv[0,data+1])*100, 'r--', marker=markers[data], markersize=5, linewidth=1) 
+            ax2.plot(data_simple_deconv[1:,0], abs(data_simple_deconv[1:,data+1]-data_simple_deconv[0,data+1])*100, 'r--', marker=markers[data], markersize=6, linewidth=1) 
         for data in range(0, len(datas)):
-            ax2.plot(data_numeric_deconv[1:,0], abs(data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])*100,  'b-', marker=markers[data], markersize=5, linewidth=1) 
+            ax2.plot(data_numeric_deconv[1:,0], abs(data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])*100,  'b-', marker=markers[data], markersize=6, linewidth=1) 
     if type == "thickness":
         # Create charts for dependence of error on resolution
         for data in range(0, len(datas)):
             ax2.plot(data_cnv[1:,0], abs((data_cnv[1:,data+1]-data_cnv[0,data+1])/(2*data_cnv[0,data+1]))*100, 
-                    'k-', marker=markers[data], markersize=5, linewidth=1, label=datas[data].split(".")[0]) 
+                    'k-', marker=markers[data], markersize=6, linewidth=1, label=datas[data].split(".")[0]) 
         for data in range(0, len(datas)):
             ax2.plot(data_simple_deconv[1:,0], abs((data_simple_deconv[1:,data+1]-data_simple_deconv[0,data+1])/(2*data_simple_deconv[0,data+1]))*100,
-                    'r-', marker=markers[data], markersize=5, linewidth=1) 
+                    'r-', marker=markers[data], markersize=6, linewidth=1) 
         for data in range(0, len(datas)):
             ax2.plot(data_numeric_deconv[1:,0], abs((data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])/(2*data_numeric_deconv[0,data+1]))*100,
-                    'b-', marker=markers[data], markersize=5, linewidth=1) 
+                    'b-', marker=markers[data], markersize=6, linewidth=1) 
 
     ax2.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax2.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.001, 0.01))
@@ -444,7 +444,8 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
         ax2.set_ylabel('film thickness error, %', fontsize=13)
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
-    ax2.legend(loc='upper left', fontsize=9)
+    #ax2.legend(loc='upper left', fontsize=9)
+    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.105), loc='upper center', ncol=3)
     ax2.minorticks_on()
     ax2.grid()
     ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')
