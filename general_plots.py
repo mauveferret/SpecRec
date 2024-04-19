@@ -290,7 +290,7 @@ if not os.path.exists(save_path):
 
 
 if not isExp:
-    plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1, label='Raw spectrum') 
+    plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1, label='Raw spectrum', alpha=0.7) 
     plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2,
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
     plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2, label='Simple Deconvolution') 

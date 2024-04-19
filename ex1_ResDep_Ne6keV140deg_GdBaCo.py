@@ -45,8 +45,9 @@ SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.05
 
+SCD.spectrometer_resolutions = ( 0.0008, 0.001, 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035)
 
-SCD.spectrometer_resolutions = (  0.001, 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035)
+concs_to_calculate = ("Co60","Co40","Co40", "Co20", "Co80")
 
 # positions of elastic peaks in eV
 E_peak_Co = 1693
@@ -68,7 +69,16 @@ crossSection_Gd = 0.00061/44
 spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex1_sim_Ne6kev140deg_GdBaCo"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
-datas = os.listdir(spectra_path)
+files = os.listdir(spectra_path)
+
+datas = []
+legend = []
+for file in files:
+    for conc in concs_to_calculate:
+        if conc in file:
+            datas.append(file)
+            legend.append(conc.replace("Co","Co=")+"%")
+            break;
 
 # arrays for output data
 data_cnv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1))
@@ -123,4 +133,4 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, y_max=92, error_max=23) 
+SCD.create_conc_plots(legend, data_cnv, data_simple_deconv, data_numeric_deconv, y_max=92, error_max=23) 

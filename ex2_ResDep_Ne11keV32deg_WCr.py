@@ -35,6 +35,9 @@ SCD.filter_window_length = 100
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
 
+SCD.spectrometer_resolutions = ( 0.0008, 0.001, 0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035)
+
+
 # add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
@@ -55,13 +58,25 @@ energy_width_original = E_peak_W*0.008/2
 crossSection_Cr = 0.00327
 crossSection_W = 0.00688
 
+
+concs_to_calculate = ("Cr0","Cr10","Cr30","Cr50", "Cr70", "Cr90")
+
 #####################################    CHOOSE INPUT FILES    ######################################
 
 # choose data files
 spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex2_sim_Ne11keV32deg_WCr"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
-datas = os.listdir(spectra_path)
+files = os.listdir(spectra_path)
+datas = []
+legend = []
+for file in files:
+    for conc in concs_to_calculate:
+        if conc in file:
+            datas.append(file)
+            legend.append(conc.replace("Cr","Cr=")+"%")
+            break;
+
 if doBroadeningVicinityFroMax:
     SCD.logging_options+="_BroadenVicinity_"
 
@@ -142,5 +157,5 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv,
-                      conc_element_name="Cr", y_max=101, error_max=11.2) 
+SCD.create_conc_plots(legend, data_cnv, data_simple_deconv, data_numeric_deconv,
+                      conc_element_name="Cr", y_max=101, error_max=6) 
