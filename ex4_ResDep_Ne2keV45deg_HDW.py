@@ -44,13 +44,26 @@ E_background_of_H = 215
 crossSection_H = 0.0099122
 crossSection_W = 0.0243854*0.5
 
+SCD.spectrometer_resolutions = (  0.002, 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035)
+
+concs_to_calculate = ("H20","H40","H60", "H80")
+
+
 #####################################    CHOOSE INPUT FILES    ######################################
 
 # choose data files
 spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex4_sim_Ne2keV45deg_HW"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
-datas = os.listdir(spectra_path)
+files = os.listdir(spectra_path)
+datas = []
+legend = []
+for file in files:
+    for conc in concs_to_calculate:
+        if conc in file:
+            datas.append(file)
+            legend.append(conc.replace("H","H=")+"%")
+            break;
 
 # arrays for output data
 data_cnv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1))
@@ -105,4 +118,4 @@ for f in range(0, len(datas)):
 
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=101, error_max=35) 
+SCD.create_conc_plots(legend, data_cnv, data_simple_deconv, data_numeric_deconv, conc_element_name="H", y_max=90, error_max=48) 

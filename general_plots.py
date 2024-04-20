@@ -28,16 +28,16 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = True
+SCD.doInputSmooth = False
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 10
+SCD.filter_window_length = 100
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
 
 #adding gauss noise where noise_power is a gauss sigma
-SCD.noise_power = 0.01
+SCD.noise_power = 0.02
 
 #create gif with animation of broadening convolution
 SCD.doAnimation = False
@@ -91,12 +91,12 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
+spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
 #spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H40W60.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
-SCD.Emin = 1000
+SCD.Emin = 100
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
@@ -290,14 +290,14 @@ if not os.path.exists(save_path):
 
 
 if not isExp:
-    plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1, label='Raw spectrum', alpha=0.7) 
-    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2,
+    plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1.5, label='Raw spectrum', alpha=0.7) 
+    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2, label='Simple Deconvolution') 
-    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g:', linewidth=3.5, label='Numerical Deconvolution') 
-    plt.legend(fontsize=8)
+    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.7, label='Simple Deconvolution') 
+    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.5, alpha=0.85, label='Numerical Deconvolution') 
+    plt.legend(fontsize=11,loc='upper center')
     plt.ylim(0,1.1)
-    plt.xlim(1, 4.5)
+    plt.xlim(0, spectrum_en[-1]/1000+0.2)
     #plt.xticks(np.arange(1, spectrum_en[-1]/1000, ))
     plt.minorticks_on()
     plt.xlabel('energy, keV')
@@ -316,7 +316,7 @@ if isExp:
     ax2.plot(spectrum_en/1000, broadening_convolution_of_numeric_deconv[0:len(spectrum_en)], 'k-',linewidth=1,
             label='Convolution of numerical deconvolution with dE/E='+str(SCD.spectrometer_resolution)) 
     ax1.set_ylim(0,1)
-    ax1.set_xlim(0, spectrum_en[-1]/1000)
+    ax1.set_xlim(0, spectrum_en[-1]/1000+0.1)
     ax1.set_xticks(np.arange(0, spectrum_en[-1]/1000+1, 1))
     ax1.minorticks_on()
     ax1.legend(fontsize=9)

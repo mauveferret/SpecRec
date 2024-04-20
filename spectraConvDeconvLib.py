@@ -326,7 +326,7 @@ def norm(signal: str):
     """
     method for spectrum normalization to 1 in range (Emin, Emax)
     """
-    return signal/max(signal[int(3000/step):int(Emax/step)])
+    return signal/max(signal[int(Emin/step):int(Emax/step)])
 
 
 def peak(signal: str):
@@ -445,7 +445,7 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
     #ax2.legend(loc='upper left', fontsize=9)
-    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.105), loc='upper center', ncol=4 )
+    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.105), loc='upper center', ncol=3 )
     ax2.minorticks_on()
     ax2.grid()
     ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')

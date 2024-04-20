@@ -158,4 +158,4 @@ for f in range(0, len(datas)):
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv)
 SCD.create_conc_plots(legend, data_cnv, data_simple_deconv, data_numeric_deconv,
-                      conc_element_name="Cr", y_max=101, error_max=6) 
+                      conc_element_name="Cr", y_max=101, error_max=7) 

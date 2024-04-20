@@ -25,7 +25,7 @@ import spectraConvDeconvLib as SCD
 # smooth of input spectra with a Savitzky-Golay filter 
 SCD.doInputSmooth = True
 # the width of the filter window for polynomial fitting, in eV
-SCD.filter_window_length = 200
+SCD.filter_window_length = 300
 
 # type of kernel for broadening kernel: gauss, triangle or rectangle
 SCD.broadening_kernel_type = "gauss"
@@ -34,6 +34,9 @@ SCD.broadening_kernel_type = "gauss"
 SCD.doBroadeningConvNoise = False
 # adding gauss noise where noise_power is a gauss sigma
 SCD.noise_power = 0.02
+SCD.spectrometer_resolutions = ( 0.005, 0.008, 0.01, 0.012,0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05)
+
+concs_to_calculate = ("Li20","Li30","Li40","Li50", "Li60", "Li80")
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -41,8 +44,16 @@ SCD.noise_power = 0.02
 spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex3_sim_H25keV32deg_LiW"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
-datas = os.listdir(spectra_path)
-
+files = os.listdir(spectra_path)
+datas = []
+legend = []
+for file in files:
+    for conc in concs_to_calculate:
+        if conc in file:
+            datas.append(file)
+            legend.append(conc.replace("Li","Li=")+" nm")
+            break;
+        
 # arrays for output data
 data_cnv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1))
 data_simple_deconv = np.zeros((len(SCD.spectrometer_resolutions)+1,len(datas)+1))
@@ -109,5 +120,5 @@ for f in range(0, len(datas)):
         
 #save data to output and create plots
 SCD.save_conc_tables(datas, data_cnv, data_simple_deconv, data_numeric_deconv,type = "thickness")
-SCD.create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, type="thickness",
+SCD.create_conc_plots(legend, data_cnv, data_simple_deconv, data_numeric_deconv, type="thickness",
                       conc_element_name="Li", y_max=85, y1_step=10, error_max=6) 
