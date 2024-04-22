@@ -21,6 +21,7 @@ This is a fully Python program, so you need it to be installed on your PC. If yo
 * inteq 
 * plotly
 * matplotlib
+* brokenaxes
 
 You can install it all with `pip install -r requirements.txt` command.  If you have problems with using `pip` please read [this](https://packaging.python.org/en/latest/tutorials/installing-packages/).
 

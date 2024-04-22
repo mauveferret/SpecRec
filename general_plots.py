@@ -23,6 +23,7 @@ import scipy.signal
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
+from brokenaxes import brokenaxes
 import spectraConvDeconvLib as SCD
     
 ##################################### PRESET SOME CALC PARAMS  #####################################
@@ -100,7 +101,7 @@ SCD.Emin = 100
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = False
+do_gausses = True
 
 # 1 two triangles
 """
@@ -123,7 +124,7 @@ if do_gausses:
         peaks_num+=1
         spectrum_int+=np.exp(-(spectrum_en-energy)**2/2/local_sigma**2)
     SCD.calc_name = "sim_sev_gausses_sigma="+str(local_sigma)
-
+    spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep+"sim_sev_gausses"
 # 3 rectangular pulse
 """
 spectrum_int = np.zeros(len(spectrum_int))
@@ -289,7 +290,25 @@ if not os.path.exists(save_path):
     os.mkdir(save_path)
 
 
-if not isExp:
+if do_gausses:
+        
+    baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)), hspace=0.5)
+    baxes.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1.5, label='Raw spectrum', alpha=0.6) 
+    baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
+            label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
+    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.7, label='Simple Deconvolution') 
+    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.0, alpha=0.85, label='Numerical Deconvolution') 
+    baxes.legend(frameon=False, bbox_to_anchor=(0.5, 1.107), loc='upper center', handlelength=2, ncol=2 )
+    
+    baxes.minorticks_on()
+    baxes.grid(axis='both', which='major', ls='-', alpha=0.5)
+    #baxes.grid(axis='both', which='major', ls='--', alpha=0.5)
+    baxes.set_xlabel('energy, keV')
+    baxes.set_ylabel('intensity, r.u.')
+    plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.08)
+    plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
+    plt.show()
+elif not isExp:
     plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1.5, label='Raw spectrum', alpha=0.7) 
     plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
@@ -305,7 +324,7 @@ if not isExp:
     plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.02)
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
-if isExp:
+elif isExp:
     fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True, figsize=(12, 6))
     ax1.plot(spectrum_en/1000, spectrum_int, 'b--',linewidth=1, label='Raw spectrum') 
     ax1.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=1, label='Simple Deconvolution') 
@@ -370,6 +389,7 @@ if do_gausses:
     gauss_num_deconv_intensity_dep = np.zeros(peaks_num+1)
     gauss_conv_intensity_dep = np.zeros(peaks_num+1)
     gauss_conv_area_dep = np.zeros(peaks_num+1)
+    gauss_deconv_area_dep = np.zeros(peaks_num+1)
 
     gauss_raw_width_dep = np.zeros(peaks_num+1)
     gauss_conv_width_dep = np.zeros(peaks_num+1)
@@ -383,6 +403,7 @@ if do_gausses:
         border2=False
         for i in range (int((peak*1000-500)//SCD.step),int((peak*1000+500)//SCD.step),1):
             gauss_conv_area_dep[peak]+=broadening_sim_convolution[i]
+            gauss_deconv_area_dep[peak] += numerical_deconv[i]
             if (broadening_sim_convolution[i]> gauss_conv_intensity_dep[peak]/2 and not border):
                 gauss_conv_width_dep[peak]=i*SCD.step
                 border = True
@@ -396,8 +417,9 @@ if do_gausses:
             if (spectrum_int[i]< 1/2 and border2):
                 gauss_raw_width_dep[peak]=i*SCD.step-gauss_raw_width_dep[peak]
                 border2 = False
-        gauss_conv_width_dep[peak]/=gauss_raw_width_dep[peak]
-        gauss_conv_width_dep[peak]-=1
+        #gauss_conv_width_dep[peak]/=gauss_raw_width_dep[peak]
+        #gauss_conv_width_dep[peak]-=1
+        
         
     with open(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+".dat", "w",newline='\n') as f:   
         f.write("Energy,keV ConvInt convWidth convArea NumDeconvInt SimDeconvInt"+"\n")
@@ -411,6 +433,9 @@ if do_gausses:
         f.close          
 
     gauss_conv_area_dep /= max(gauss_conv_area_dep) 
+    gauss_deconv_area_dep /= max(gauss_deconv_area_dep)
+    
+    gauss_conv_width_dep /=max(gauss_conv_width_dep)
     plt.show()
     plt.title('Demonstration of  distortion and reconstruction of \nGaussian peaks sigma='+str(local_sigma)+' and dE/E='+str(SCD.spectrometer_resolution), fontsize=10)
     plt.plot(gauss_energy[1:peaks_num], gauss_conv_intensity_dep[1:peaks_num],'*k-.',  label="conv. intensity", linewidth=1.5) 
@@ -418,10 +443,11 @@ if do_gausses:
     plt.plot(gauss_energy[1:peaks_num], gauss_conv_area_dep[1:peaks_num], 'sg-',  label="conv. area", linewidth=1.5) 
     plt.plot(gauss_energy[1:peaks_num], gauss_num_deconv_intensity_dep[1:peaks_num], '^b-',  label="num. deconv. intensity", linewidth=1.5) 
     plt.plot(gauss_energy[1:peaks_num], gauss_sim_deconv_intensity_dep[1:peaks_num], 'vm:',  label="simple deconv. intensity", linewidth=1.5) 
+        
     plt.legend( frameon=False, loc='lower right', fontsize=9)
     plt.xlim(0, spectrum_en[-1]/1000-2)
     plt.xticks(np.arange(0, spectrum_en[-1]/1000+1, 5))
-    plt.ylim(0,1)
+    plt.ylim(0,1.02)
     plt.minorticks_on()
     plt.xlabel('energy, keV')
     plt.ylabel('intensity, a.u.')   
