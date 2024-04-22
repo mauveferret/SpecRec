@@ -289,15 +289,14 @@ else:
 if not os.path.exists(save_path):
     os.mkdir(save_path)
 
-
 if do_gausses:
         
     baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)), hspace=0.5)
-    baxes.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1.5, label='Raw spectrum', alpha=0.6) 
+    baxes.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=2.0, label='Raw spectrum', alpha=0.8) 
     baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.7, label='Simple Deconvolution') 
-    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.0, alpha=0.85, label='Numerical Deconvolution') 
+    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.8, label='Simple Deconvolution') 
+    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.0, alpha=0.9, label='Numerical Deconvolution') 
     baxes.legend(frameon=False, bbox_to_anchor=(0.5, 1.107), loc='upper center', handlelength=2, ncol=2 )
     
     baxes.minorticks_on()
