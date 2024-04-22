@@ -29,10 +29,10 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 100
+SCD.filter_window_length = 10
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -92,16 +92,19 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
 #spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
+# paper examples
+
+#spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
 spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
-#spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H40W60.dat"
+#spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
-SCD.Emin = 100
+SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = True
+do_gausses = False
 
 # 1 two triangles
 """
@@ -289,14 +292,13 @@ else:
 if not os.path.exists(save_path):
     os.mkdir(save_path)
 
-if do_gausses:
-        
+if do_gausses:  
     baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)), hspace=0.5)
-    baxes.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=2.0, label='Raw spectrum', alpha=0.8) 
-    baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
+    baxes.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label='Raw spectrum', alpha=0.8) 
+    baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.9, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.8, label='Simple Deconvolution') 
-    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.0, alpha=0.9, label='Numerical Deconvolution') 
+    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=1.5, alpha=0.8, label='Simple Deconvolution') 
+    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=1.5, alpha=0.7, label='Numerical Deconvolution') 
     baxes.legend(frameon=False, bbox_to_anchor=(0.5, 1.107), loc='upper center', handlelength=2, ncol=2 )
     
     baxes.minorticks_on()
@@ -308,19 +310,26 @@ if do_gausses:
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     plt.show()
 elif not isExp:
-    plt.plot(spectrum_en/1000, spectrum_int, 'b-',linewidth=1.5, label='Raw spectrum', alpha=0.7) 
-    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k--',linewidth=2.5, alpha=0.9, 
+    plt.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label='Raw spectrum', alpha=0.7) 
+    plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.95, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r:', linewidth=2.5, alpha=0.7, label='Simple Deconvolution') 
-    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'g-.', linewidth=2.5, alpha=0.85, label='Numerical Deconvolution') 
-    plt.legend(fontsize=11,loc='upper center')
+    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=2, alpha=0.8, label='Simple Deconvolution') 
+    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=2, alpha=0.8, label='Numerical Deconvolution') 
+    #plt.legend(fontsize=11,loc='upper center')
+    plt.legend(frameon=False, bbox_to_anchor=(0.5, 1.12), loc='upper center', handlelength=2.5, ncol=2)
+    
     plt.ylim(0,1.1)
     plt.xlim(0, spectrum_en[-1]/1000+0.2)
+    #plt.xlim(1, 4.5)
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
     #plt.xticks(np.arange(1, spectrum_en[-1]/1000, ))
+    plt.grid(axis='both', which='major', ls='-', alpha=0.5)
     plt.minorticks_on()
     plt.xlabel('energy, keV')
     plt.ylabel('intensity, r.u.')
-    plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.02)
+    plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.09)
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
 elif isExp:
