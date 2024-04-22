@@ -104,7 +104,7 @@ SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = False
+do_gausses = True
 
 # 1 two triangles
 """
@@ -293,7 +293,7 @@ if not os.path.exists(save_path):
     os.mkdir(save_path)
 
 if do_gausses:  
-    baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)), hspace=0.5)
+    baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)),  despine=True)
     baxes.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label='Raw spectrum', alpha=0.8) 
     baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.9, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
