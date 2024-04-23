@@ -394,7 +394,7 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     for data in range(0, len(datas)):
         ax1.plot(data_simple_deconv[:,0], data_simple_deconv[:,data+1]*y1_coeff, 'r--', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
     for data in range(0, len(datas)):
-        ax1.plot(data_numeric_deconv[:,0], data_numeric_deconv[:,data+1]*y1_coeff,  'b-', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
+        ax1.plot(data_numeric_deconv[:,0], data_numeric_deconv[:,data+1]*y1_coeff,  'b-.', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
 
     ax1.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax1.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.01, 0.01))
@@ -409,7 +409,7 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax1.grid()
     ax1.text(.96, .98, "A", transform=ax1.transAxes, ha="right", va="top", size=15, weight='bold')
     colors = ['black', 'red', 'blue']
-    line_styles = [':','--','-']
+    line_styles = [':','-- ','-.']
     lines = [Line2D([0], [0], color=c, linewidth=1, linestyle='--') for c in colors]
     for i in range(3):
         lines[i] = Line2D([0], [0], color=colors[i], linewidth=1, linestyle=line_styles[i]) 
@@ -423,7 +423,7 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
         for data in range(0, len(datas)):
             ax2.plot(data_simple_deconv[1:,0], abs(data_simple_deconv[1:,data+1]-data_simple_deconv[0,data+1])*100, 'r--', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
         for data in range(0, len(datas)):
-            ax2.plot(data_numeric_deconv[1:,0], abs(data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])*100,  'b-', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
+            ax2.plot(data_numeric_deconv[1:,0], abs(data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])*100,  'b-.', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
     if type == "thickness":
         # Create charts for dependence of error on resolution
         for data in range(0, len(datas)):
@@ -445,7 +445,7 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
     #ax2.legend(loc='upper left', fontsize=9)
-    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.105), loc='upper center', ncol=3 )
+    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.08), loc='upper center', ncol=4 )
     ax2.minorticks_on()
     ax2.grid()
     ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')
