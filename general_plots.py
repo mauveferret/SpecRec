@@ -29,7 +29,7 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = True
+SCD.doInputSmooth = False
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
 SCD.filter_window_length = 10
@@ -53,7 +53,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.01
+SCD.spectrometer_resolution = 0.02
 #####################################    CHOOSE INPUT FILE    ######################################
 
 # choose one data file
@@ -95,8 +95,8 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 # paper examples
 
 #spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
-spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
-#spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
+#spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
+spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
@@ -104,7 +104,7 @@ SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = True
+do_gausses = False
 
 # 1 two triangles
 """
@@ -310,11 +310,11 @@ if do_gausses:
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     plt.show()
 elif not isExp:
-    plt.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label='Raw spectrum', alpha=0.7) 
+    plt.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=1.5, label='Raw spectrum', alpha=0.7) 
     plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.95, 
             label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=2, alpha=0.8, label='Simple Deconvolution') 
-    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=2, alpha=0.8, label='Numerical Deconvolution') 
+    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=2.5, alpha=0.8, label='Simple Deconvolution') 
+    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=2, alpha=0.7, label='Numerical Deconvolution') 
     #plt.legend(fontsize=11,loc='upper center')
     plt.legend(frameon=False, bbox_to_anchor=(0.5, 1.12), loc='upper center', handlelength=2.5, ncol=2)
     
