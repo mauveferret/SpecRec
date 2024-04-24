@@ -32,7 +32,7 @@ import spectraConvDeconvLib as SCD
 SCD.doInputSmooth = True
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 20
+SCD.filter_window_length = 400
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -68,7 +68,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "exp_H25keV32deg_W.dat"
 
 #29.12.2023-17-16-Ne+ 11 keV  500 nA smart alloy after 1e25 100eV D, another side, 19 uA sputter Ar gun
-#spectrum_path += "exp_Ne11keV32deg_WCrY.dat"
+spectrum_path += "exp_Ne11keV32deg_WCrY.dat"
 
 #26.12.2023-20-24-Ne+ 130nA smart 1e24 D 100eV +gun
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
@@ -97,7 +97,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
 #spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
 #spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
-spectrum_path += "ex2_sim_Ne11keV32deg_WCr"+os.sep+"W30Cr70.dat"
+#spectrum_path += "ex2_sim_Ne11keV32deg_WCr"+os.sep+"W30Cr70.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
