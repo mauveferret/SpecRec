@@ -29,10 +29,10 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = False
+SCD.doInputSmooth = True
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 10
+SCD.filter_window_length = 20
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -53,7 +53,7 @@ SCD.SNR = 10
 SCD.broadening_kernel_type = "gauss"
 
 # energy resolution (dE/E) of electrostatic energy analyzer for broadening kernel
-SCD.spectrometer_resolution = 0.02
+SCD.spectrometer_resolution = 0.01
 #####################################    CHOOSE INPUT FILE    ######################################
 
 # choose one data file
@@ -96,7 +96,8 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 
 #spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
 #spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
-spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
+#spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
+spectrum_path += "ex2_sim_Ne11keV32deg_WCr"+os.sep+"W30Cr70.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
 
 SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
@@ -319,7 +320,8 @@ elif not isExp:
     plt.legend(frameon=False, bbox_to_anchor=(0.5, 1.12), loc='upper center', handlelength=2.5, ncol=2)
     
     plt.ylim(0,1.1)
-    plt.xlim(0, spectrum_en[-1]/1000+0.2)
+    #plt.xlim(0, spectrum_en[-1]/1000+0.2)
+    plt.xlim(5, spectrum_en[-1]/1000+0.2)
     #plt.xlim(1, 4.5)
     ax = plt.gca()
     ax.spines['right'].set_color('none')
