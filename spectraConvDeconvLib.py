@@ -67,6 +67,9 @@ calc_name = ""
 # additional info on the study for the iotput filenames and titles
 logging_options = ""
 
+# en or ru
+language = "ru"
+
 ######################################    SOME FUNCTIONS     #######################################
 
 
@@ -396,12 +399,22 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     for data in range(0, len(datas)):
         ax1.plot(data_numeric_deconv[:,0], data_numeric_deconv[:,data+1]*y1_coeff,  'b-.', marker=markers[data], markersize=7, linewidth=1.5, alpha=0.7) 
 
-    ax1.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
+    if "ru" in language:
+        ax1.set_xlabel('относительное энергетическое разрешение, ΔE/E', fontsize=13)
+    else:
+        ax1.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
+
     ax1.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.01, 0.01))
     if type=="conc":
-        ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
+        if "ru" in language:
+            ax1.set_ylabel('Относительная атомарная концентрация '+conc_element_name+', %', fontsize=13)
+        else:
+            ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
     else:
-        ax1.set_ylabel(conc_element_name+' estimated thickness, nm', fontsize=13)
+        if "ru" in language:
+            ax1.set_ylabel('Толщина '+conc_element_name+', nm', fontsize=13)   
+        else:     
+            ax1.set_ylabel(conc_element_name+' estimated thickness, nm', fontsize=13)    
     ax1.set_yticks(np.arange(0, y_max, y1_step))
     ax1.set_ylim(0,y_max)
     ax1.set_xlim(-0.001, spectrometer_resolutions[-1]+0.001)
@@ -409,11 +422,14 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax1.grid()
     ax1.text(.96, .98, "A", transform=ax1.transAxes, ha="right", va="top", size=15, weight='bold')
     colors = ['black', 'red', 'blue']
-    line_styles = [':','-- ','-.']
+    line_styles = [':','--','-.']
     lines = [Line2D([0], [0], color=c, linewidth=1, linestyle='--') for c in colors]
     for i in range(3):
         lines[i] = Line2D([0], [0], color=colors[i], linewidth=1, linestyle=line_styles[i]) 
-    labels = ['convoluted', 'simple deconv', 'numerical deconv']
+    if "ru" in language:
+        labels = ['Конв.', 'Простая деконв.', 'Численная деконв.']
+    else:
+        labels = ['convoluted', 'simple deconv', 'numerical deconv']
     ax1.legend(lines, labels, frameon=False, bbox_to_anchor=(0.5, 1.08), loc='upper center', ncol=3)
 
     if type== "conc":
@@ -435,13 +451,21 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
         for data in range(0, len(datas)):
             ax2.plot(data_numeric_deconv[1:,0], abs((data_numeric_deconv[1:,data+1]-data_numeric_deconv[0,data+1])/(2*data_numeric_deconv[0,data+1]))*100,
                     'b-', marker=markers[data], markersize=6, linewidth=1) 
-
-    ax2.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
+    if "ru" in language:
+        ax2.set_xlabel('относительное энергетическое разрешение, ΔE/E', fontsize=13)
+    else:
+        ax2.set_xlabel('relative resolution of spectrometer, ΔE/E', fontsize=13)
     ax2.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.001, 0.01))
     if type== "conc":
-        ax2.set_ylabel('elemental composition error, %', fontsize=13)
+        if "ru" in language:
+            ax2.set_ylabel('Ошибка оценки концентрации, %', fontsize=13)
+        else:
+            ax2.set_ylabel('elemental composition error, %', fontsize=13)
     if type== "thickness":
-        ax2.set_ylabel('film thickness error, nm', fontsize=13)
+        if "ru" in language:
+            ax2.set_ylabel('Ошибка оценки толщины, нм', fontsize=13)
+        else:
+            ax2.set_ylabel('film thickness error, nm', fontsize=13)
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
     #ax2.legend(loc='upper left', fontsize=9)
@@ -449,8 +473,10 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax2.minorticks_on()
     ax2.grid()
     ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')
-
-    plt.savefig(save_path+os.sep+type+"_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".png", dpi=300)
+    if "ru" in language:
+        plt.savefig(save_path+os.sep+type+"_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+"_ru_"+".png", dpi=300)
+    else:
+        plt.savefig(save_path+os.sep+type+"_"+calc_name+"_with_"+broadening_kernel_type+"_kernel"+logging_options+".png", dpi=300)
     plt.show()
     
     

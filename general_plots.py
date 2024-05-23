@@ -29,7 +29,7 @@ import spectraConvDeconvLib as SCD
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
 #smooth of input spectra with a Savitzky-Golay filter 
-SCD.doInputSmooth = True
+SCD.doInputSmooth = False
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
 SCD.filter_window_length = 400
@@ -68,7 +68,7 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path += "exp_H25keV32deg_W.dat"
 
 #29.12.2023-17-16-Ne+ 11 keV  500 nA smart alloy after 1e25 100eV D, another side, 19 uA sputter Ar gun
-spectrum_path += "exp_Ne11keV32deg_WCrY.dat"
+#spectrum_path += "exp_Ne11keV32deg_WCrY.dat"
 
 #26.12.2023-20-24-Ne+ 130nA smart 1e24 D 100eV +gun
 #spectrum_path += "exp_Ne11keV32deg_WCrZr.dat"
@@ -95,7 +95,7 @@ spectrum_path += "exp_Ne11keV32deg_WCrY.dat"
 # paper examples
 
 #spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
-#spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
+spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
 #spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 #spectrum_path += "ex2_sim_Ne11keV32deg_WCr"+os.sep+"W30Cr70.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
@@ -311,17 +311,23 @@ if do_gausses:
     plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     plt.show()
 elif not isExp:
-    plt.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=1.5, label='Raw spectrum', alpha=0.7) 
+    if "ru" in SCD.language:
+        labels = ['Исходный спектр', 'Свёртка с dE/E=', 'Простая деконволюция', 'Численная деконволюция']
+    else:
+        labels = ['Raw spectrum','Convoluted with dE/E=', 'Simple Deconvolution', 'Numerical Deconvolution']
+
+    plt.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=1.5, label=labels[0], alpha=0.7) 
     plt.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.95, 
-            label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=2.5, alpha=0.8, label='Simple Deconvolution') 
-    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=2, alpha=0.7, label='Numerical Deconvolution') 
+            label=labels[1]+str(SCD.spectrometer_resolution)) 
+    plt.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=2.5, alpha=0.8, label=labels[2]) 
+    plt.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=2, alpha=0.7, label=labels[3]) 
+    
     #plt.legend(fontsize=11,loc='upper center')
     plt.legend(frameon=False, bbox_to_anchor=(0.5, 1.12), loc='upper center', handlelength=2.5, ncol=2)
     
     plt.ylim(0,1.1)
     #plt.xlim(0, spectrum_en[-1]/1000+0.2)
-    plt.xlim(5, spectrum_en[-1]/1000+0.2)
+    plt.xlim(0, spectrum_en[-1]/1000+0.2)
     #plt.xlim(1, 4.5)
     ax = plt.gca()
     ax.spines['right'].set_color('none')
@@ -329,10 +335,17 @@ elif not isExp:
     #plt.xticks(np.arange(1, spectrum_en[-1]/1000, ))
     plt.grid(axis='both', which='major', ls='-', alpha=0.5)
     plt.minorticks_on()
-    plt.xlabel('energy, keV')
-    plt.ylabel('intensity, r.u.')
+    if "ru" in SCD.language:
+        plt.xlabel('энергия, кэВ')
+        plt.ylabel('интенсивность, норм.')
+    else:
+        plt.xlabel('energy, keV')
+        plt.ylabel('intensity, r.u.')
     plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.09)
-    plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
+    if "ru" in SCD.language:
+        plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+"_ru_"+".png", dpi=400)
+    else:
+        plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     #plt.show()
 elif isExp:
     fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True, figsize=(12, 6))
