@@ -32,7 +32,7 @@ import spectraConvDeconvLib as SCD
 SCD.doInputSmooth = False
 
 #influence smoothing. A window on spectrum points for a 3rd order polynomic fitting 
-SCD.filter_window_length = 400
+SCD.filter_window_length = 20
 
 #add some noise to the convoluted sim spectrum
 SCD.doBroadeningConvNoise = False
@@ -292,23 +292,35 @@ else:
     save_path = 'out'+os.sep+SCD.calc_name
 if not os.path.exists(save_path):
     os.mkdir(save_path)
-
+    
+if "ru" in SCD.language:
+    labels = ['Исходный спектр', 'Свёртка с dE/E=', 'Простая деконволюция', 'Численная деконволюция']
+else:
+    labels = ['Raw spectrum','Convoluted with dE/E=', 'Simple Deconvolution', 'Numerical Deconvolution']
+        
 if do_gausses:  
     baxes = brokenaxes(xlims=((0.5,4.5),(20.5,24.5)),  despine=True)
-    baxes.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label='Raw spectrum', alpha=0.8) 
+    baxes.plot(spectrum_en/1000, spectrum_int, 'g-',linewidth=2.5, label=labels[0], alpha=0.8) 
     baxes.plot(spectrum_en/1000, broadening_sim_convolution[0:len(spectrum_en)], 'k:',linewidth=2.5, alpha=0.9, 
-            label='Convoluted with dE/E='+str(SCD.spectrometer_resolution)) 
-    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=1.5, alpha=0.8, label='Simple Deconvolution') 
-    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=1.5, alpha=0.7, label='Numerical Deconvolution') 
+            label=labels[1]+str(SCD.spectrometer_resolution)) 
+    baxes.plot(spectrum_en/1000, simple_deconv[0:len(spectrum_en)], 'r--', linewidth=1.5, alpha=0.8, label=labels[2]) 
+    baxes.plot(spectrum_en/1000, numerical_deconv[0:len(spectrum_en)], 'b-.', linewidth=1.5, alpha=0.7, label=labels[3]) 
     baxes.legend(frameon=False, bbox_to_anchor=(0.5, 1.107), loc='upper center', handlelength=2, ncol=2 )
     
     baxes.minorticks_on()
     baxes.grid(axis='both', which='major', ls='-', alpha=0.5)
     #baxes.grid(axis='both', which='major', ls='--', alpha=0.5)
-    baxes.set_xlabel('energy, keV')
-    baxes.set_ylabel('intensity, r.u.')
+    if "ru" in SCD.language:
+        baxes.set_xlabel('энергия, кэВ')
+        baxes.set_ylabel('интенсивность, норм.')
+    else:
+        baxes.set_xlabel('energy, keV')
+        baxes.set_ylabel('intensity, r.u.')
     plt.title("Energy spectra of "+SCD.calc_name+". "+SCD.logging_options.replace("_",""), y=1.08)
-    plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
+    if "ru" in SCD.language:
+        plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+"_ru_"+".png", dpi=400)
+    else:
+        plt.savefig(save_path+os.sep+"spec_reconstr_"+SCD.calc_name+"_with_"+SCD.broadening_kernel_type+"_kernel"+SCD.logging_options+".png", dpi=400)
     plt.show()
 elif not isExp:
     if "ru" in SCD.language:
@@ -460,21 +472,33 @@ if do_gausses:
     
     gauss_conv_width_dep /=max(gauss_conv_width_dep)
     plt.show()
+    if "ru" in SCD.language:
+        labels = ['интенсивность пика конв.', 'ширина пика конв.', 'площадь пика конв.', 'интенсивность пика численной деконв.', 'интенсивность пика простой деконв.']
+    else:
+        labels = ['conv. intensity','conv. width', 'conv. area', 'num. deconv. intensity', 'simple deconv. intensity']
+
     plt.title('Demonstration of  distortion and reconstruction of \nGaussian peaks sigma='+str(local_sigma)+' and dE/E='+str(SCD.spectrometer_resolution), fontsize=10)
-    plt.plot(gauss_energy[1:peaks_num], gauss_conv_intensity_dep[1:peaks_num],'*k:',  label="conv. intensity", markersize=8, linewidth=1.5) 
-    plt.plot(gauss_energy[1:peaks_num], gauss_conv_width_dep[1:peaks_num], '.k:',  label="conv. width",markersize=8, linewidth=1.5) 
-    plt.plot(gauss_energy[1:peaks_num], gauss_conv_area_dep[1:peaks_num], 'sk:',  label="conv. area", linewidth=1.5) 
-    plt.plot(gauss_energy[1:peaks_num], gauss_num_deconv_intensity_dep[1:peaks_num], '^b-.',  label="num. deconv. intensity", linewidth=1.5) 
-    plt.plot(gauss_energy[1:peaks_num], gauss_sim_deconv_intensity_dep[1:peaks_num], 'vr--',  label="simple deconv. intensity", linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_intensity_dep[1:peaks_num],'*k:',  label=labels[0], markersize=8, linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_width_dep[1:peaks_num], '.k:',  label=labels[1],markersize=8, linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_conv_area_dep[1:peaks_num], 'sk:',  label=labels[2], linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_num_deconv_intensity_dep[1:peaks_num], '^b-.',  label=labels[3], linewidth=1.5) 
+    plt.plot(gauss_energy[1:peaks_num], gauss_sim_deconv_intensity_dep[1:peaks_num], 'vr--',  label=labels[4], linewidth=1.5) 
         
     plt.legend( frameon=False, loc='lower right', fontsize=9)
     plt.xlim(0, spectrum_en[-1]/1000-2)
     plt.xticks(np.arange(0, spectrum_en[-1]/1000+1, 5))
     plt.ylim(0,1.02)
     plt.minorticks_on()
-    plt.xlabel('energy, keV')
-    plt.ylabel('intensity, r.u.')   
+    if "ru" in SCD.language:
+        plt.xlabel('энергия, кэВ')
+        plt.ylabel('интенсивность, норм.')
+    else:
+        plt.xlabel('energy, keV')
+        plt.ylabel('intensity, r.u.')   
     plt.grid(True, linestyle=':') 
-    plt.savefig(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+".png", dpi=300)
+    if "ru" in SCD.language:
+        plt.savefig(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+"_ru_.png", dpi=300)
+    else:
+        plt.savefig(save_path+os.sep+SCD.calc_name+"_dEtoE="+str(SCD.spectrometer_resolution)+".png", dpi=300)
     plt.show()
 

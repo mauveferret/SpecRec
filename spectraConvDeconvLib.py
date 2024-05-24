@@ -407,16 +407,16 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax1.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.01, 0.01))
     if type=="conc":
         if "ru" in language:
-            ax1.set_ylabel('Относительная атомарная концентрация '+conc_element_name+', %', fontsize=13)
+            ax1.set_ylabel('относительная атомарная концентрация '+conc_element_name+', %', fontsize=13)
         else:
             ax1.set_ylabel(conc_element_name+' estimated atomic concentration, %', fontsize=13)
     else:
         if "ru" in language:
-            ax1.set_ylabel('Толщина '+conc_element_name+', nm', fontsize=13)   
+            ax1.set_ylabel('толщина '+conc_element_name+', нм', fontsize=13)   
         else:     
             ax1.set_ylabel(conc_element_name+' estimated thickness, nm', fontsize=13)    
     ax1.set_yticks(np.arange(0, y_max, y1_step))
-    ax1.set_ylim(0,y_max)
+    ax1.set_ylim(10,y_max)
     ax1.set_xlim(-0.001, spectrometer_resolutions[-1]+0.001)
     ax1.minorticks_on()
     ax1.grid()
@@ -458,18 +458,18 @@ def create_conc_plots(datas, data_cnv, data_simple_deconv, data_numeric_deconv, 
     ax2.set_xticks(np.arange(0, spectrometer_resolutions[-1]+0.001, 0.01))
     if type== "conc":
         if "ru" in language:
-            ax2.set_ylabel('Ошибка оценки концентрации, %', fontsize=13)
+            ax2.set_ylabel('ошибка оценки концентрации, %', fontsize=13)
         else:
             ax2.set_ylabel('elemental composition error, %', fontsize=13)
     if type== "thickness":
         if "ru" in language:
-            ax2.set_ylabel('Ошибка оценки толщины, нм', fontsize=13)
+            ax2.set_ylabel('ошибка оценки толщины, нм', fontsize=13)
         else:
             ax2.set_ylabel('film thickness error, nm', fontsize=13)
     ax2.set_xlim(0, spectrometer_resolutions[-1]+0.001)
     ax2.set_ylim(0,error_max)
     #ax2.legend(loc='upper left', fontsize=9)
-    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.08), loc='upper center', ncol=4 )
+    ax2.legend(frameon=False, bbox_to_anchor=(0.5, 1.11), loc='upper center', ncol=3 )
     ax2.minorticks_on()
     ax2.grid()
     ax2.text(.93, .98,"B", transform=ax2.transAxes, ha="center", va="top", size=15, weight='bold')
