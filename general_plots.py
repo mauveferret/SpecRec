@@ -94,8 +94,8 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 
 # paper examples
 
-#spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
-spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
+spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
+#spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
 #spectrum_path += "ex3_sim_H25keV32deg_LiW"+os.sep+"Li20nmW.dat"
 #spectrum_path += "ex2_sim_Ne11keV32deg_WCr"+os.sep+"W30Cr70.dat"
 ##################################### GET DATA FROM INPUT FILE #####################################
@@ -105,7 +105,7 @@ SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = False
+do_gausses = True
 
 # 1 two triangles
 """

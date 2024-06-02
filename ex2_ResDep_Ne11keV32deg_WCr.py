@@ -59,7 +59,7 @@ crossSection_Cr = 0.00327
 crossSection_W = 0.00688
 
 
-concs_to_calculate = ("Cr0","Cr10","Cr30","Cr50", "Cr70", "Cr90")
+concs_to_calculate = ( "Cr0", "Cr10","Cr30","Cr50", "Cr70", "Cr90", "Cr100")
 
 #####################################    CHOOSE INPUT FILES    ######################################
 
@@ -70,9 +70,10 @@ SCD.calc_name = str(spectra_path.split(os.sep)[-1])
 files = os.listdir(spectra_path)
 datas = []
 legend = []
-for file in files:
-    for conc in concs_to_calculate:
-        if conc in file:
+
+for conc in concs_to_calculate:
+    for file in files:
+        if conc+".dat"  in file:
             datas.append(file)
             legend.append(conc.replace("Cr","Cr=")+"%")
             break;
