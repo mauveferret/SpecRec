@@ -23,12 +23,18 @@ import matplotlib.pyplot as plt
 import LEIS_tools as leis
 import spectraConvDeconv_tools as SCD
 
-
-
 spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
-spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
-SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
+#####################################    PRESETS      #####################################
 
+
+
+#spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
+spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
+
+dE=0.9
+
+#####################################    IMPORT DATA      #####################################
+SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
 SCD.Emin = 500
 SCD.filter_window_length = 10
 SCD.doInputSmooth = True
@@ -38,21 +44,33 @@ spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 leis.incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0])
 leis.E0 = int(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(leis.incident_atom)[1])*1000
 theta = int(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
-
 leis.set_elements_params()
+#####################################    DO PEAKS ANALYSIS    #####################################
+
 
 peaks, _ = find_peaks(spectrum_int, height=0.3, width=20)
-print(peaks*SCD.step)
 target_masses = [leis.get_target_mass_by_energy(theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
-print(target_masses)
 target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
-dBetas = [leis.get_dBeta(theta, mass/leis.M0, 1) for mass in target_masses]
+dBetas = [leis.get_dBeta(theta, mass/leis.M0, dE) for mass in target_masses]
+
+cross_sections = [leis.get_cross_section(leis.incident_atom,leis.E0, theta,1, component) for component in target_components]
+
+
+E0 = 15000  # Example: 6000 eV
+o1 = 140  # Example: 32 degrees
+od = 2  # Example: 2 degrees
 
 for i in range(len(peaks)): 
-    print(str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg")
-    
+    print(str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(cross_sections[i])[0:4]+" A2/sr")
 
-plt.plot(spectrum_en[SCD.Emin:]/1000, spectrum_int[SCD.Emin:], '-', linewidth=2, label="Ne -> WCr 15 keV") 
+if (len(peaks) == 2):
+    int1 = spectrum_int[peaks[0]]/(cross_sections[0]*dBetas[0]*spectrum_en[peaks[0]])
+    int2 = spectrum_int[peaks[1]]/(cross_sections[1]*dBetas[1]*spectrum_en[peaks[1]])
+    print ("Conc = "+str(int1/(int1+int2)*100)[0:4]+" %")
+
+#####################################    PLOT DATA      #####################################
+
+plt.plot(spectrum_en[SCD.Emin:]/1000, spectrum_int[SCD.Emin:], '-', linewidth=2, label=SCD.calc_name) 
 plt.plot(spectrum_en[peaks]/1000, spectrum_int[peaks], "x")
 
 i=0
@@ -70,6 +88,5 @@ plt.xlabel('energy, keV', fontsize=12)
 plt.ylabel('intensity, norm.',fontsize=12)
 #plt.title("Energy spectra of "+spectrum_path[:-4], y=1.01, fontsize=10)
 plt.minorticks_on()
-plt.legend( frameon=False, loc='upper left', fontsize=11)
-
+plt.legend( frameon=False, loc='lower right', fontsize=11)
 plt.show()
