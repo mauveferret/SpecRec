@@ -1,6 +1,12 @@
 # LEIS energy spectra reconstruction
 
-The program **SpecRec** is intended as supporting material to the scientific paper published in the Elsevier's journal: [`N. Efimov, D. Sinelnikov, D. Kolodko, M. Grishaev, and I. Nikitin, ‘On the reconstruction of LEIS spectra after distortion by an electrostatic energy analyzer’, Applied Surface Science, vol. 676, p. 161006, Dec. 2024, doi: 10.1016/j.apsusc.2024.161006`](https://doi.org/10.1016/j.apsusc.2024.161006)
+The program **SpecRec** is intended for the analysis of low-energy ions scattering spectroscopy data. In particular, for the transmission function consideration, automated elemental analysis and surface concentration estimations. 
+
+Its LEIS Spectra Convolution/Deconvolution module was written as part of a scientific paper published in the Elsevier's journal: 
+
+[`N. Efimov, D. Sinelnikov, D. Kolodko, M. Grishaev, and I. Nikitin, ‘On the reconstruction of LEIS spectra after distortion by an electrostatic energy analyzer’, Applied Surface Science, vol. 676, p. 161006, Dec. 2024, doi.org/10.1016/j.apsusc.2024.161006`](https://doi.org/10.1016/j.apsusc.2024.161006)
+
+Current work on the project involves writing a module for quantitative characterization of the surface using LEIS spectra and publishing a scientific paper on this topic.
 
 
 ![graphical_abstract](https://ars.els-cdn.com/content/image/1-s2.0-S0169433224017197-ga1.jpg)
@@ -36,6 +42,8 @@ As soon as  the program does not provide graphical user interface, the best way 
 ### File structure
 
 * `spectraConvDeconv_tools.py` contains all functions and global variables for the study and severs as library for another py executables. It doesn't do anything by itself.
+
+* 'LEIS_tools.py' contains methods for determinations of ions energy losses, scattering angles deviations, cross-sections, intensity correction factors etc.
 
 * `general_plots.py` allows to generate charts for single specific transmission function of the spectrometer, which is given via resolution (dE/E) and kernel type("gauss", "triangle", "rectangle", "LMM"). If the simulated charts are chosen, the program would firstly provide the convolution of the raw data, and then deconvolute it by two methods (analytical and numerical). If experimental data is chosen, it would be firstly deconvoluted by two methods and then both results would be convoluted.
 
