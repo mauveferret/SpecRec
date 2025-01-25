@@ -532,6 +532,6 @@ def create_animated_chart(signal: np.array, raw_en: str, kernel_type=broadening_
         
     anim = animation.FuncAnimation(fig, animate, frames=range(1,int(raw_en[-1]/(step*energy_per_frame_scale))), 
                                    interval=2*(25000/(raw_en[-1])), repeat=False)
-    anim.save('gifs'+os.sep+'animated_broad_conv_dEtoE='+str(deltaEtoE)+'_'+calc_name+'.gif')
+    anim.save('out'+os.sep+'gifs'+os.sep+'animated_broad_conv_dEtoE='+str(deltaEtoE)+'_'+calc_name+'.gif')
     #fig.show()
     plt.show()

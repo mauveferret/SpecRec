@@ -4,3 +4,4 @@ inteq
 plotly
 matplotlib
 brokenaxes
+mendeleev

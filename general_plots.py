@@ -1,8 +1,6 @@
-
-
 """
 This program allows to create charts for convolution and deconvolution of
-defferent types for one specific simulated or experimental spectrum
+different types for one specific simulated or experimental spectrum
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -24,7 +22,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
 from brokenaxes import brokenaxes
-import spectraConvDeconvLib as SCD
+import spectraConvDeconv_tools as SCD
     
 ##################################### PRESET SOME CALC PARAMS  #####################################
 
@@ -84,15 +82,12 @@ spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 
 #spectrum_path += "sim_Ne11keV32deg_HWCr.dat"
-#spectrum_path += "sim_Ne11keV32deg_WCrO.dat"
 
-#spectrum_path +="sim_Ar20keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDW.dat"
 #spectrum_path += "sim_Ne18keV32deg_HDWthin.dat"
 #spectrum_path += "sim_Ar20keV32deg_H10D10W80.dat"
-#spectrum_path += "sim_Ne2keV45deg_HW.dat"
 
-# paper examples
+# examples for paper doi.org/10.1016/j.apsusc.2024.161006
 
 spectrum_path += "ex1_sim_Ne6kev140deg_GdBaCo"+os.sep+"Gd20Ba20Co60.dat"
 #spectrum_path += "ex4_sim_Ne2keV45deg_HW"+os.sep+"H50W50.dat"
@@ -105,7 +100,7 @@ SCD.Emin = 1000
 spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
 
 # or test on input analytical specific curves instead of external spectrum_file
-do_gausses = True
+do_gausses = False
 
 # 1 two triangles
 """

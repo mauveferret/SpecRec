@@ -1,8 +1,11 @@
-import os
-# changing working directoru to the location of py file
-os.chdir(os.path.dirname(os.path.realpath(__file__))) 
+import os, sys
+# changing working directoru to the SpecRec dir
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+os.chdir(parent_dir) 
+# Add parent directory to sys.path
+sys.path.append(parent_dir)
 import numpy as np
-import spectraConvDeconvLib as SCD
+import spectraConvDeconv_tools as SCD
 
 """
 This program is free software: you can redistribute it and/or modify it under

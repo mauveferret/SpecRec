@@ -2,6 +2,9 @@
 
 The program **SpecRec** is intended as supporting material to the scientific paper published in the Elsevier's journal: [`N. Efimov, D. Sinelnikov, D. Kolodko, M. Grishaev, and I. Nikitin, ‘On the reconstruction of LEIS spectra after distortion by an electrostatic energy analyzer’, Applied Surface Science, vol. 676, p. 161006, Dec. 2024, doi: 10.1016/j.apsusc.2024.161006`](https://doi.org/10.1016/j.apsusc.2024.161006)
 
+
+![graphical_abstract](https://ars.els-cdn.com/content/image/1-s2.0-S0169433224017197-ga1.jpg)
+
 ## Description
 
 **SpecRec** can be used to postprocess experimental spectra measured by electrostatic or magnetic separators of charged particles. It allows to provide smoothing, noising of the original spectra, it convolution and deconvolution with different kernel's shapes (Gaussian, Triangle, Rectangle and arbitrary) with constant or broadening full width at half maximum (FWHM). It thus can be useful in mass analysis and ion scattering spectroscopy. 
@@ -32,17 +35,17 @@ As soon as  the program does not provide graphical user interface, the best way 
 
 ### File structure
 
-* `spectraConvDeconvLib.py` contains all functions and global variables for the study and severs as library for another py executables. It doesn't do anything by itself.
+* `spectraConvDeconv_tools.py` contains all functions and global variables for the study and severs as library for another py executables. It doesn't do anything by itself.
 
 * `general_plots.py` allows to generate charts for single specific transmission function of the spectrometer, which is given via resolution (dE/E) and kernel type("gauss", "triangle", "rectangle", "LMM"). If the simulated charts are chosen, the program would firstly provide the convolution of the raw data, and then deconvolute it by two methods (analytical and numerical). If experimental data is chosen, it would be firstly deconvoluted by two methods and then both results would be convoluted.
 
-* files `ex...` are the examples for different representative LEIS cases, which alloes to create dependencies of some qualitative estimations on the resolution of the spectrometer of specific kernel as well as the dependencies of errors.
+* files `examples` are the examples for different representative LEIS cases, which allows to create dependencies of some qualitative estimations on the resolution of the spectrometer of specific kernel as well as the dependencies of errors.
 
 * dir `raw_data` indeed contains raw data of computer simulations and experiments. The sorce of the data is described in paper, mentioned in the beginning of this readme.
 
 * dir `out` contain outputs of all python scripts, including figures and data files with spectra
 
-* dir gifs contain animated charts, that shows a process of convolution with broadening kernel. This charts can be created with `general_plots.py` script.
+* dir `out/gifs` contain animated charts, that shows a process of convolution with broadening kernel. This charts can be created with `general_plots.py` script.
 
 ### Recommendations
 
