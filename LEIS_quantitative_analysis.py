@@ -63,14 +63,16 @@ od = 2  # Example: 2 degrees
 for i in range(len(peaks)): 
     print(str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(cross_sections[i])[0:4]+" A2/sr")
 
+conc = 0
 if (len(peaks) == 2):
     int1 = spectrum_int[peaks[0]]/(cross_sections[0]*dBetas[0]*spectrum_en[peaks[0]])
     int2 = spectrum_int[peaks[1]]/(cross_sections[1]*dBetas[1]*spectrum_en[peaks[1]])
-    print ("Conc = "+str(int1/(int1+int2)*100)[0:4]+" %")
+    conc = int1/(int1+int2)*100
+    print ("Conc = "+str(conc)[0:4]+" %")
 
 #####################################    PLOT DATA      #####################################
 
-plt.plot(spectrum_en[SCD.Emin:]/1000, spectrum_int[SCD.Emin:], '-', linewidth=2, label=SCD.calc_name) 
+plt.plot(spectrum_en[SCD.Emin:]/1000, spectrum_int[SCD.Emin:], '-', linewidth=2, label=SCD.calc_name+"\n"+"conc="+str(conc)[0:4]) 
 plt.plot(spectrum_en[peaks]/1000, spectrum_int[peaks], "x")
 
 i=0
