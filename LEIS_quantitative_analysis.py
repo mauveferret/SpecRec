@@ -52,13 +52,7 @@ peaks, _ = find_peaks(spectrum_int, height=0.3, width=20)
 target_masses = [leis.get_target_mass_by_energy(theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
 target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
 dBetas = [leis.get_dBeta(theta, mass/leis.M0, dE) for mass in target_masses]
-
 cross_sections = [leis.get_cross_section(leis.incident_atom,leis.E0, theta,1, component) for component in target_components]
-
-
-E0 = 15000  # Example: 6000 eV
-o1 = 140  # Example: 32 degrees
-od = 2  # Example: 2 degrees
 
 for i in range(len(peaks)): 
     print(str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(cross_sections[i])[0:4]+" A2/sr")
