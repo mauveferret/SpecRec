@@ -18,18 +18,19 @@ import numpy as np
 import math
 from mendeleev import get_all_elements
 
-incident_atom = "Ne"
-target_atom1 = "Pd"
-target_atom2 = "Au"
+incident_atom = "H"
+target_atom1 = "H"
+target_atom2 = "H"
 
-E0=15000.0 #projectile enegy, eV
-theta=32.0 #scattering angle, deg
+E0=0.0 #projectile enegy, eV
+theta=0.0 #scattering angle, deg
+dBeta = 1.0
 
 e=1.6*10**(-19) #elementary charge, C
 k=9*10**9 #Coulomb constant, N*m^2*C^(-2)
 a_0=5.29*10**(-11) #Bohr radius, m
 
-
+# the most time consuming procedure, loads all data on the chemical elements
 elements = get_all_elements()
 
 def set_elements_params():
@@ -114,6 +115,13 @@ def get_element_by_mass(mass):
             element_name = name
     return element_name
 
+
+def get_mass_by_element(element_symbol):
+    """
+    returns atomic weight of chemical element by specified symbol 
+    """
+    return next((el for el in elements if el.symbol == element_symbol), None).atomic_weight 
+
 def get_dSigma(theta, mu, dE):
     """
     method return dOmega of scatted particles in steradians for 
@@ -131,6 +139,16 @@ def get_dBeta(theta, mu, dE):
     corresponding to mu==M_target/M_incident
     """
     return  dE/(get_energy_by_angle(theta, mu)*2*np.sin(theta*np.pi/180))*np.sqrt(mu**2-(np.sin(theta*np.pi/180))**2)*180/np.pi
+
+
+def get_dE(theta,mu, dB):
+    """
+    method return delta of energy in eV for 
+    specific detection angle of the analyzer at energy position
+    corresponding to mu==M_target/M_incident
+    """
+    return  dB*(get_energy_by_angle(theta, mu)*2*np.sin(theta*np.pi/180))/np.sqrt(mu**2-(np.sin(theta*np.pi/180))**2)/180*np.pi
+    
 
 def get_cross_section(theta):
     """
@@ -169,6 +187,56 @@ def get_intensity_corrections(mu1, mu2, theta = theta, R = -1):
         dBeta1 = (get_energy_by_angle(theta, mu1))**2*2*np.sin(theta*np.pi/180)/np.sqrt(mu1**2-(np.sin(theta*np.pi/180))**2)
     return dBeta2/dBeta1
 
+
+#########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################
+
+E01=0
+E02=0
+
+def Young(E, E0, A, R, FWHM, B, K):
+    #R=1
+    I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
+    I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
+    I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
+    return I_el+I_inel*I_tail
+
+def twoCompTargetFitting(E, A1, FWHM1, B1, K1, A2, FWHM2, B2, K2):
+    return Young(E, E01, A1, 1, FWHM1, B1, K1) + Young(E, E02, A2, 1, FWHM2, B2, K2)
+
+
+"""
+param_bounds = ([0,0,0,0,0,0,0,0],[np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf])
+pars, covariance = curve_fit(twoCompTargetFitting, spectrum_en, spectrum_int, method = 'dogbox', maxfev=500000, bounds=param_bounds, loss='linear', ftol=1E-9)
+    
+inel_Au = Young(spectrum_en, E02, 0, 1, pars[5], pars[6], pars[7])
+El_Au = Young(spectrum_en, E02, pars[4], 1, pars[5], 0, pars[7])
+inel_Pd = Young(spectrum_en, E01, 0, 1, pars[1], pars[2], pars[3])
+El_Pd = Young(spectrum_en, E01, pars[0], 1, pars[1], 0, pars[3])
+
+
+fitted = twoCompTargetFitting(spectrum_en, pars[0], pars[1],pars[2],pars[3], pars[4], pars[5], pars[6], pars[7])
+    
+Au_part = Young(spectrum_en, E02, pars[4], 1, pars[5], pars[6], pars[7])
+Au_part = norm (Au_part)
+
+Pd_part_fit = fitted - Au_part
+
+Au_conc_fit = calcConcFor2ElementsSpectrum(peak(Pd_part_fit), 1)
+
+Au_ref_interp = np.interp(spectrum_en,reference_en, reference_int)
+Au_ref_interp = norm(Au_ref_interp)
+
+Pd_part_ref = spectrum_int - Au_ref_interp
+
+Au_conc_ref = calcConcFor2ElementsSpectrum(peak(Pd_part_ref),1)  
+
+#Au_conc_ref = (1-peak(Pd_part_ref)*sigma_Au/sigma_Pd/(1+peak(Pd_part_ref)*sigma_Au/sigma_Pd))*100
+
+Au_conc_refByPseudoArea = calcConcFor2ElementsSpectrum(peak(Pd_part_ref)*dE_Pd,1*dE_Au)  
+
+syn_cons = calcConcFor2ElementsSpectrum(sum(El_Pd), sum(El_Au))
+    
+"""
 
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
@@ -287,7 +355,7 @@ def vybit(E0, o2, od):
     o1 = math.atan(m[1] * math.sin(hi) / (m[0] + m[1] * math.cos(hi)))
     if o1 < 0:
         o1 = math.pi + o1
-    print(f"Scattering angle: {o1 * 180 / math.pi:.4f} degrees")
+    #print(f"Scattering angle: {o1 * 180 / math.pi:.4f} degrees")
     if (m[1] / m[0]) < 1:
         if o2 > ((math.pi / 4) - (math.asin(m[1] / m[0])) / 2):
             E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + m[1] / m[0]), 2)
@@ -295,16 +363,16 @@ def vybit(E0, o2, od):
             E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + m[1] / m[0]), 2)
     else:
         E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + m[1] / m[0]), 2)
-    print(f"Energy loss: {E0 - E1:.0f} eV")
+    #print(f"Energy loss: {E0 - E1:.0f} eV")
     En1 = E0 - E1
     o = math.atan(math.sin(o1) * math.pow(2 * m[0] * E1, 0.5) / ((m[0] * (math.cos(o1) * math.pow(2 * m[0] * E1, 0.5) / m[0] - math.pow(2 * m[0] * E0, 0.5) / (m[0] + m[1])))))
     if o < 0:
         o = math.pi + o
-    print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
+    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
     r0 = approach(E0)
-    print(f"Approach distance: {r0 * 1e8:.5f} Å")
+    #print(f"Approach distance: {r0 * 1e8:.5f} Å")
     q = pric(r0)
-    print(f"Impact parameter: {B * a * 1e8:.5f} Å")
+    #print(f"Impact parameter: {B * a * 1e8:.5f} Å")
     orm = o2 - od / 2
     orp = o2 + od / 2
     if o2 + od / 2 > math.pi / 2 or orm <= 0:
@@ -345,12 +413,12 @@ def vybit(E0, o2, od):
         r0 = approach(E0)
         q = pric(r0)
         p2 = B * a * 1e8
-        print(f"Difference: {abs(p1**2 - p2**2):.7f}")
+       # print(f"Difference: {abs(p1**2 - p2**2):.7f}")
         dif1 = abs(p1**2 - p2**2)
 
 def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     
-    print ("--------------------------------")
+    #print ("--------------------------------")
     
     o1 = o1 * math.pi / 180
     od = od * math.pi / 180
@@ -358,7 +426,7 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     global o, En1, En2, dif1, dif2
     global C1, C2, C3, C4, C5, s1, s2, s3, s4, d1, d2, d3, d4
 
-    print (incident_symbol+" -> "+target_symbol)
+    #print (incident_symbol+" -> "+target_symbol)
     element(incident_symbol, 0)  # Example: Neon as projectile
     element(target_symbol, 1)  # Example: Tungsten as target
     
@@ -377,19 +445,19 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     
 
     E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + m[1] / m[0]), 2)
-    print(f"Energy after scattering: {E1:.0f} eV")
+    #print(f"Energy after scattering: {E1:.0f} eV")
     En1 = E1
     E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + m[1] / m[0]), 4)
-    print(f"Double scattering energy: {E2:.0f} eV")
+    #print(f"Double scattering energy: {E2:.0f} eV")
     o = math.atan(math.sin(o1) * math.pow(2 * m[0] * E1, 0.5) / ((m[0] * (math.cos(o1) * math.pow(2 * m[0] * E1, 0.5) / m[0] - math.pow(2 * m[0] * E0, 0.5) / (m[0] + m[1])))))
     if o < 0:
         o = math.pi + o
-    print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
+    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
     r0 = approach(E0)
-    print(f"Approach distance: {r0 * 1e8:.5f} Å")
+    #print(f"Approach distance: {r0 * 1e8:.5f} Å")
     q = pric(r0)
     pc1 = B * a * 1e8
-    print(f"Impact parameter: {pc1:.5f} Å")
+    #print(f"Impact parameter: {pc1:.5f} Å")
     if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(m[1] / m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
         print("No solution")
         dif1 = -1
@@ -410,7 +478,7 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
         r0 = approach(E0)
         q = pric(r0)
         p2 = B * a * 1e8
-        print(f"Difference: {abs(p1**2 - p2**2):.7f}")
+        #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
         dif1 = abs(p1**2 - p2**2)
 
     if (m[1] / m[0]) < 1:
@@ -490,8 +558,8 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     r0 = approach(E0)
     q = pric(r0)
     p2 = B * a * 1e8
-    print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-    print ("--------------------------------")
+    #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
+    #print ("--------------------------------")
     return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
 
 

@@ -23,56 +23,153 @@ import matplotlib.pyplot as plt
 import LEIS_tools as leis
 import spectraConvDeconv_tools as SCD
 
-spectrum_path = os.getcwd()+os.sep+"raw_data"+os.sep
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep
+dE=SCD.step
+
+
 #####################################    PRESETS      #####################################
 
 
-
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
-spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
+#spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
+spectrum_path0 +="intensVSareas_250126"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
 
-dE=0.9
 
-#####################################    IMPORT DATA      #####################################
-SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".")[0]
-SCD.Emin = 500
-SCD.filter_window_length = 10
-SCD.doInputSmooth = True
-spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
+#############################################################################################
 
-# get initial params from the filename
-leis.incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0])
-leis.E0 = int(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(leis.incident_atom)[1])*1000
-theta = int(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
-leis.set_elements_params()
+def get_standart_deviation(data):
+    n = len(data)
+    average = sum(data)/n
+    standart_deviation = 0
+    for value in data:
+        standart_deviation+=value**2
+    standart_deviation=1/n*np.sqrt(standart_deviation-n*average**2)
+    return average, standart_deviation
+
+def get_concentrations(calc_path):
+    spectrum_path=spectrum_path0+os.sep+calc_path
+    SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".dat")[0]
+    SCD.Emin = 1000
+    SCD.filter_window_length = 10
+    SCD.doInputSmooth = True
+    spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
+
+    # get initial params from the filename
+    leis.incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
+    leis.E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(leis.incident_atom)[1])*1000
+    leis.theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
+    
+    if leis.theta == 50:
+        leis.theta = 140
+    
+    leis.set_elements_params()
+
+    peaks, _ = find_peaks(spectrum_int, prominence=0.03, width=5, distance=100)
+    target_masses = [leis.get_target_mass_by_energy(leis.theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
+    target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
+
+    # mass resolution is not perfect and sometimes LEIS_tools give neighbor elements
+    # which is not favorable for quantitative estimations
+    for i in range (0,len(target_components)):
+        if "Ir" in target_components[i] or "At" in target_components[i]:
+            target_components[i]="Au"
+            target_masses[i] = leis.get_mass_by_element(target_components[i])
+        if "Cd" in target_components[i] or "Ag" in target_components[i]:
+            target_components[i]="Pd"
+            target_masses[i] = leis.get_mass_by_element(target_components[i])
+        if "Ta" in target_components[i] or "Hf" in target_components[i]:
+            target_components[i]="W"
+            target_masses[i] = leis.get_mass_by_element(target_components[i])
+
+
+    dBetas = [leis.get_dBeta(leis.theta, mass/leis.M0, dE) for mass in target_masses]
+    dEs = [leis.get_dE(leis.theta, mass/leis.M0, 1) for mass in target_masses]
+    cross_sections = [leis.get_cross_section(leis.incident_atom,leis.E0, leis.theta, leis.dBeta, component) for component in target_components]
+
+    for i in range(len(peaks)): 
+        print(str(SCD.calc_name)+" "+str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(dEs[i])[0:5]+" eV "+str(cross_sections[i])[0:4]+" A2/sr")
+
+    #print(spectrum_path.split(os.sep)[-1])
+    #print("conc by  Intens   Area   corrIntens, %")
+    conc_I = 0
+    conc_S = 0
+    conc_corrI =0
+    if (len(peaks) == 2):
+        int1 = spectrum_int[peaks[0]]/(cross_sections[0])
+        int2 = spectrum_int[peaks[1]]/(cross_sections[1])
+        conc_I = int1/(int1+int2)*100
+        
+        int1 = sum(spectrum_int[peaks[0]-int(dEs[0]/SCD.step*1.2):peaks[0]+int(dEs[0]/SCD.step*1.2)])/cross_sections[0]
+        int2 = sum(spectrum_int[peaks[1]-int(dEs[1]/SCD.step*1.2):peaks[1]+int(dEs[1]/SCD.step*1.2)])/cross_sections[1]
+        conc_S = int1/(int1+int2)*100
+        
+        int1 = spectrum_int[peaks[0]]/(cross_sections[0]*dBetas[0])
+        int2 = spectrum_int[peaks[1]]/(cross_sections[1]*dBetas[1])
+        conc_corrI = int1/(int1+int2)*100
+        
+        #print ("Conc = "+str(conc_I)[0:4]+" "+str(conc_S)[0:4]+" "+str(conc_corrI)[0:4]+" ")
+        return conc_I, conc_S, conc_corrI
+    print("ERROR in finding peaks!")
+    return 0,0,0
+
 #####################################    DO PEAKS ANALYSIS    #####################################
 
 
-peaks, _ = find_peaks(spectrum_int, height=0.3, width=20)
-target_masses = [leis.get_target_mass_by_energy(theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
-target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
-dBetas = [leis.get_dBeta(theta, mass/leis.M0, dE) for mass in target_masses]
-cross_sections = [leis.get_cross_section(leis.incident_atom,leis.E0, theta,1, component) for component in target_components]
+calcs = os.listdir(spectrum_path0)
 
-for i in range(len(peaks)): 
-    print(str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(cross_sections[i])[0:4]+" A2/sr")
 
-conc = 0
-if (len(peaks) == 2):
-    int1 = spectrum_int[peaks[0]]/(cross_sections[0]*dBetas[0]*spectrum_en[peaks[0]])
-    int2 = spectrum_int[peaks[1]]/(cross_sections[1]*dBetas[1]*spectrum_en[peaks[1]])
-    conc = int1/(int1+int2)*100
-    print ("Conc = "+str(conc)[0:4]+" %")
+
+concs = (30, 50, 70)
+
+for conc in concs: 
+    
+    concs_I = []
+    concs_S = []
+    concs_Icorr = []
+    
+    id=0
+    for calc in calcs:
+    
+        if str(conc) in calc[-6:-4]:  
+            id+=1        
+            conc_I, conc_S, conc_corrI = get_concentrations(calc)
+            if conc_I !=0:
+                concs_I.append(conc_I)
+                concs_S.append(conc_S)
+                concs_Icorr.append(conc_corrI)
+                
+            plt.plot(id, conc_I, "x", label = SCD.calc_name)
+            plt.plot(id, conc_S, "o", label = SCD.calc_name)
+            plt.plot(id, conc_corrI, "*", label = SCD.calc_name)
+
+        
+    plt.xlabel('energy, keV', fontsize=12)
+    plt.ylabel('intensity, norm.',fontsize=12)
+    #plt.title("Energy spectra of "+spectrum_path[:-4], y=1.01, fontsize=10)
+    plt.minorticks_on()
+    plt.legend( frameon=False, loc='lower right', fontsize=11)
+    plt.show()   
+    
+    print("$$$$$$$$$$$$$$$$$$$$$$$")
+    average, dev =  get_standart_deviation(concs_I)
+    print("concI     = "+str(average)[0:5]+"±"+str(dev)[0:4])
+    average, dev =  get_standart_deviation(concs_S)
+    print("concS     = "+str(average)[0:5]+"±"+str(dev)[0:4])
+    average, dev =  get_standart_deviation(concs_Icorr)
+    print("concIcorr = "+str(average)[0:5]+"±"+str(dev)[0:4])  
+    print("$$$$$$$$$$$$$$$$$$$$$$$")
 
 #####################################    PLOT DATA      #####################################
 
-plt.plot(spectrum_en[SCD.Emin:]/1000, spectrum_int[SCD.Emin:], '-', linewidth=2, label=SCD.calc_name+"\n"+"conc="+str(conc)[0:4]) 
+exit(0)
+
+plt.plot(spectrum_en[int(SCD.Emin/SCD.step):]/1000, spectrum_int[int(SCD.Emin/SCD.step):], '-', linewidth=2, label=SCD.calc_name+"\n"+"conc="+str(conc_corrI)[0:4]) 
 plt.plot(spectrum_en[peaks]/1000, spectrum_int[peaks], "x")
 
 i=0
 for x,y in zip(spectrum_en[peaks]/1000,spectrum_int[peaks]):
 
-    label = leis.get_element_by_mass( leis.get_target_mass_by_energy(theta, spectrum_en[peaks[i]]))
+    label = target_components[i]
     i+=1
     plt.annotate(label, # this is the text
                  (x,y), # these are the coordinates to position the label
