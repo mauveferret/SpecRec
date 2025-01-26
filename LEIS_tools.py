@@ -15,6 +15,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
 import numpy as np
+import matplotlib.pyplot  as plt    
 import math
 from mendeleev import get_all_elements
 
@@ -32,6 +33,7 @@ a_0=5.29*10**(-11) #Bohr radius, m
 
 # the most time consuming procedure, loads all data on the chemical elements
 elements = get_all_elements()
+print("periodic chemical elements database is LOADED")
 
 def set_elements_params():
     global Z0, M0, Z1, M1, Z2, M2, mu1, mu2
@@ -187,6 +189,50 @@ def get_intensity_corrections(mu1, mu2, theta = theta, R = -1):
         dBeta1 = (get_energy_by_angle(theta, mu1))**2*2*np.sin(theta*np.pi/180)/np.sqrt(mu1**2-(np.sin(theta*np.pi/180))**2)
     return dBeta2/dBeta1
 
+
+##########################################      PLOTS     ###################################################
+
+def plot_dBeta_map():
+    global E0
+    E0 = 10000
+    step_mu = 0.0005
+    min_value_mu = 0.5
+    max_value_mu = 20
+    number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
+
+    step_theta = 0.5 #0.5
+    min_value_theta = 10
+    max_value_theta = 170
+    number_of_points_theta = int((max_value_theta-min_value_theta)/step_theta)
+    
+    map0 = np.zeros((number_of_points_mu, number_of_points_theta))
+    angles = np.zeros(number_of_points_theta)
+    mu_values = np.zeros(number_of_points_mu)
+    #file = open('leis_out.txt', 'w')
+    for i_theta in range (0,number_of_points_theta):
+        theta = min_value_theta+i_theta*step_theta
+        angles[i_theta] = theta
+        min_value_mu = np.sin(theta*np.pi/180)
+        for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
+            mu = min_value_mu+i_mu*step_mu
+            mu_values[i_mu] = mu
+            map0[i_mu, i_theta] = get_dBeta(theta, mu, 2)/2
+            #print(str(map0[i_mu, i_theta])[0:5], end=" ")
+           # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
+        #file.write("\n")
+        #print("\n")
+    #file.close()
+
+    #nipy_spectral   gist_ncar
+    plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
+    plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=np.linspace(0.001, 0.35, 10))
+    plt.xlabel('scattering angle θ, degrees', fontsize=12)
+    plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
+    plt.clim(0.001, 0.35)
+    plt.show()
+
+#plot_dBeta_map()
 
 #########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################
 
