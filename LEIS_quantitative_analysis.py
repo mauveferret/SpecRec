@@ -32,7 +32,7 @@ dE=SCD.step
 
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 #spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
-spectrum_path0 +="intensVSareas_250126"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
+spectrum_path0 +="intensVSareas_250127"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
 
 
 #############################################################################################
@@ -61,13 +61,20 @@ def get_concentrations(calc_path):
     
     if leis.theta == 50:
         leis.theta = 140
+    if leis.theta == 80:
+        leis.theta = 100
+    #if leis.theta ==70:
+    #    leis.theta =90+20    
     
     leis.set_elements_params()
 
-    peaks, _ = find_peaks(spectrum_int, prominence=0.03, width=5, distance=100)
+    
+    peaks, _ = find_peaks(spectrum_int, prominence=0.04, width=5, distance=50)
     target_masses = [leis.get_target_mass_by_energy(leis.theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
     target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
 
+
+    
     # mass resolution is not perfect and sometimes LEIS_tools give neighbor elements
     # which is not favorable for quantitative estimations
     for i in range (0,len(target_components)):
@@ -80,7 +87,7 @@ def get_concentrations(calc_path):
         if "Ta" in target_components[i] or "Hf" in target_components[i]:
             target_components[i]="W"
             target_masses[i] = leis.get_mass_by_element(target_components[i])
-
+    
 
     dBetas = [leis.get_dBeta(leis.theta, mass/leis.M0, dE) for mass in target_masses]
     dEs = [leis.get_dE(leis.theta, mass/leis.M0, 1) for mass in target_masses]
@@ -89,6 +96,30 @@ def get_concentrations(calc_path):
     for i in range(len(peaks)): 
         print(str(SCD.calc_name)+" "+str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(dEs[i])[0:5]+" eV "+str(cross_sections[i])[0:4]+" A2/sr")
 
+    
+    """
+    plt.plot(spectrum_en[int(SCD.Emin/SCD.step):]/1000, spectrum_int[int(SCD.Emin/SCD.step):], '-', linewidth=2, label=SCD.calc_name) 
+    plt.plot(spectrum_en[peaks]/1000, spectrum_int[peaks], "x")
+
+    i=0
+    for x,y in zip(spectrum_en[peaks]/1000,spectrum_int[peaks]):
+
+        label = target_components[i]
+        i+=1
+        plt.annotate(label, # this is the text
+                    (x,y), # these are the coordinates to position the label
+                    textcoords="offset points", # how to position the text
+                    xytext=(10,0), # distance from text to points (x,y)
+                    ha='center') # horizontal alignment can be left, right or center
+
+    plt.xlabel('energy, keV', fontsize=12)
+    plt.ylabel('intensity, norm.',fontsize=12)
+    #plt.title("Energy spectra of "+spectrum_path[:-4], y=1.01, fontsize=10)
+    plt.minorticks_on()
+    plt.legend( frameon=False, loc='lower right', fontsize=11)
+    plt.show()
+    """
+    
     #print(spectrum_path.split(os.sep)[-1])
     #print("conc by  Intens   Area   corrIntens, %")
     conc_I = 0
@@ -115,7 +146,9 @@ def get_concentrations(calc_path):
 #####################################    DO PEAKS ANALYSIS    #####################################
 
 
+
 calcs = os.listdir(spectrum_path0)
+
 
 
 
@@ -160,6 +193,10 @@ for conc in concs:
     print("$$$$$$$$$$$$$$$$$$$$$$$")
 
 #####################################    PLOT DATA      #####################################
+
+exit(0)
+
+get_concentrations("sim_Ne15.0keV20.0deg2.0_Au50Pd50.dat")
 
 exit(0)
 
