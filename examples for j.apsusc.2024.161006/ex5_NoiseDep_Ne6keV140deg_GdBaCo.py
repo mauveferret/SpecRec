@@ -19,8 +19,11 @@ sys.path.append(parent_dir)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import spectraConvDeconv_tools as SCD
 
+BASE_LIB_PATH = "tools"
+sys.path.insert(1, os.getcwd()+os.sep+BASE_LIB_PATH)
+import LEIS_tools as leis
+import spectraConvDeconv_tools as SCD
 
 ##################################### PRESET SOME CALC PARAMS  #####################################
 

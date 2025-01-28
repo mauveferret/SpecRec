@@ -13,7 +13,7 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
-import os, time
+import os, time, importlib.util
 # changing working directoru to the location of py file
 os.chdir(os.path.dirname(os.path.realpath(__file__))) 
 import numpy as np
@@ -22,7 +22,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
 from brokenaxes import brokenaxes
-import spectraConvDeconv_tools as SCD
+
+BASE_LIB_PATH = "tools"
+spec =importlib.util.spec_from_file_location('spectraConvDeconv_tools', os.path.join(BASE_LIB_PATH, 'spectraConvDeconv_tools.py'))
+SCD = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(SCD)
     
 ##################################### PRESET SOME CALC PARAMS  #####################################
 

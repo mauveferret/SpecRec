@@ -5,6 +5,10 @@ os.chdir(parent_dir)
 # Add parent directory to sys.path
 sys.path.append(parent_dir)
 import numpy as np
+
+BASE_LIB_PATH = "tools"
+sys.path.insert(1, os.getcwd()+os.sep+BASE_LIB_PATH)
+import LEIS_tools as leis
 import spectraConvDeconv_tools as SCD
 
 """

@@ -23,13 +23,17 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
 
-import os, sys
+import os, sys, sys
 # changing working directoru to the SpecRec dir
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 os.chdir(parent_dir) 
 # Add parent directory to sys.path
 sys.path.append(parent_dir)
 import numpy as np
+
+BASE_LIB_PATH = "tools"
+sys.path.insert(1, os.getcwd()+os.sep+BASE_LIB_PATH)
+import LEIS_tools as leis
 import spectraConvDeconv_tools as SCD
 
 ##################################### PRESET SOME CALC PARAMS  #####################################

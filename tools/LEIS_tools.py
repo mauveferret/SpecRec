@@ -23,6 +23,8 @@ from mendeleev import get_all_elements
 
 ######################    GLOBAL SETTINGS   ############################
 
+
+
 step = 2.0 #energy step, eV
 Emin = 300.0 #minimal energy, eV
 Emax = 30000.0 #maximal energy, eV
@@ -74,7 +76,7 @@ class spectrum:
         """
         mass of insident atom in a.m.u.
         """
-        return get_mass_by_element(self.__incident_atom)
+        return self.__M0
     
     @property
     def theta(self):
@@ -89,8 +91,65 @@ class spectrum:
         Spread of scattering angle in degrees
         """
         return self.__dTheta
+    
+    @property
+    def peaks(self):
+        """
+        Peaks of the spectrum
+        """
+        return self.__peaks
+    
+    @property
+    def target_components(self):
+        """
+        Chemical elements of the peaks
+        """
+        return self.__target_components
+    
+    @property
+    def conc_corrI(self):
+        """
+        Concentration of the target element by intensity correction
+        """
+        return self.__conc_corrI
+    
+    @property
+    def cross_sections(self):
+        """
+        Cross sections of the peaks
+        """
+        return self.__cross_sections
+    
+    @property
+    def dBetas(self):    
+        """
+        Delta of scattering angle in degrees for specific bin size dE of the analyzer at energy position
+        corresponding to mu==M_target/M_incident
+        """
+        return self.__dBetas
+    
+    @property
+    def elem_conc_by_corrI(self):
+        """
+        Relative surface concentration of the component on the LEIS spectrum in %
+        """
+        return self.__elem_conc_by_corrI
+    
+    @property
+    def elem_conc_by_I(self):
+        """
+        Relative surface concentration of the component on the LEIS spectrum in %
+        """
+        return self.__elem_conc_by_I
+    
+    @property
+    def elem_conc_by_S(self):
+        """
+        Relative surface concentration of the component on the LEIS spectrum in %
+        """
+        return self.__elem_conc_by_S
 
-    def import_data(self, spectrum_path: str, filter_window_length=-1):  
+    def import_spectrum(self, spectrum_path: str, filter_window_length=-1):  
         """
         Method to import energy spectrum from a file located at spectrum_path
         filter windows length is used for smoothing of the spectrum. 
@@ -117,6 +176,8 @@ class spectrum:
         
         # get initial params from the filename
         self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
+        self.__M0 = get_mass_by_element(self.__incident_atom)
+        
         self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
         self.__theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
         try:
@@ -143,8 +204,8 @@ class spectrum:
         self.__spectrum_en = np.arange(0, raw_spectrum_en[-1], self.__step)
         # scaling range in eV (influence spectra normalization in Web charts and output files)
         self.__spectrum_int = np.interp(self.__spectrum_en,raw_spectrum_en, raw_spectrum_int)
-        #global Emax
-        # Emax = self.__spectrum_en[-1]-100
+        global Emax
+        Emax = self.__spectrum_en[-1]-100
         self.__spectrum_int /= max(self.__spectrum_int[int(Emin/step):int(self.__spectrum_en[-1]-100/step)])
         if filter_window_length > 0:
             self._smooth(filter_window_length)
@@ -152,7 +213,103 @@ class spectrum:
     def _smooth(self, filter_window_length: int):
             self.__spectrum_int = scipy.signal.savgol_filter(self.__spectrum_int, int(filter_window_length/self.__step), 3)
 
+    def get_target_mass_by_energy(self, E1: float):
+        """
+        Returns mass of the target element by energy of the scattered particle E1
+        """
+        return get_target_mass_by_energy(self.__theta, self.__M0, self.__E0, E1)
     
+    def get_element_by_mass(self, mass: float):
+        """
+        Returns Symbol of chemical element with the closest atomic weight to the given mass
+        """
+        return get_element_by_mass(mass)
+    
+    def get_dBeta(self, mu: float, dE: float):
+        """
+        Returns delta of scattering angle in degrees for specific bin size dE of the analyzer at energy position
+        corresponding to mu==M_target/M_incident
+        """
+        return get_dBeta(self.__E0, self.__theta, mu, dE)
+    
+    def get_dE(self, mu: float):
+        """
+        Returns delta of energy in eV for specific detection angle of the analyzer at energy position
+        corresponding to mu==M_target/M_incident
+        """
+        return get_dE(self.__E0, self.__theta, mu, self.dTheta)
+    
+    def get_cross_section(self, target_symbol: str):
+        """
+        Returns cross section of the target element by its symbol
+        """
+        return get_cross_section(self.__incident_atom, self.__E0, self.__theta, self.__dTheta, target_symbol)
+    
+    def do_elemental_analysis(self):
+        """
+        Method to find peaks and corresponding elements in the spectrum
+        """
+        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=50)
+        self.__peaks = peaks
+        target_masses = [self.get_target_mass_by_energy(peak) for peak in self.__spectrum_en[peaks]]
+        target_components = [self.get_element_by_mass(mass) for mass in target_masses]
+        
+        self.__dBetas = [ self.get_dBeta(mass/self.__M0, self.__step) for mass in target_masses]
+        dEs = [self.get_dE(mass/self.M0) for mass in target_masses]
+        self.__cross_sections = [self.get_cross_section(component) for component in target_components]
+        
+        for i in range (0,len(target_components)):
+            if "Ir" in target_components[i] or "At" in target_components[i] or "Re" in target_components[i]:
+                target_components[i]="Au"
+                target_masses[i] = get_mass_by_element(target_components[i])
+            if "Cd" in target_components[i] or "Ag" in target_components[i]:
+                target_components[i]="Pd"
+                target_masses[i] = get_mass_by_element(target_components[i])
+        
+        int_total = 0
+        for i in range (0,len(target_components)):          
+            int_total += self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])
+        
+        self.__elem_conc_by_corrI = np.zeros(len(target_components))
+        for i in range (0,len(target_components)):      
+            self.__elem_conc_by_corrI[i] = self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])/int_total*100
+            
+        int_total = 0
+        for i in range (0,len(target_components)):          
+            int_total += self.__spectrum_int[peaks[i]]/(self.__cross_sections[i])
+        
+        self.__elem_conc_by_I = np.zeros(len(target_components))
+        for i in range (0,len(target_components)):      
+            self.__elem_conc_by_I[i] = self.__spectrum_int[peaks[i]]/(self.__cross_sections[i])/int_total*100
+
+        area_total = 0
+        for i in range (0,len(target_components)):        
+            area_total += int(sum(self.__spectrum_int[int(peaks[i]-dEs[i]/2):int(peaks[i]+dEs[i]/2)]))/self.__cross_sections[i]
+        
+        self.__elem_conc_by_S = np.zeros(len(target_components))
+        for i in range (0,len(target_components)):      
+            self.__elem_conc_by_S[i] = sum(self.__spectrum_int[int(peaks[i]-dEs[i]/2):int(peaks[i]+dEs[i]/2)])/(self.__cross_sections[i])/area_total*100         
+            
+        self.__target_components = target_components
+        
+        return peaks, target_components
+
+#################################    COMMON  #####################################
+
+
+#     /$$$$$$   /$$$$$$  /$$      /$$ /$$      /$$  /$$$$$$  /$$   /$$
+#    /$$__  $$ /$$__  $$| $$$    /$$$| $$$    /$$$ /$$__  $$| $$$ | $$
+#   | $$  \__/| $$  \ $$| $$$$  /$$$$| $$$$  /$$$$| $$  \ $$| $$$$| $$
+#   | $$      | $$  | $$| $$ $$/$$ $$| $$ $$/$$ $$| $$  | $$| $$ $$ $$
+#   | $$      | $$  | $$| $$  $$$| $$| $$  $$$| $$| $$  | $$| $$  $$$$
+#   | $$    $$| $$  | $$| $$\  $ | $$| $$\  $ | $$| $$  | $$| $$\  $$$
+#   |  $$$$$$/|  $$$$$$/| $$ \/  | $$| $$ \/  | $$|  $$$$$$/| $$ \  $$
+#    \______/  \______/ |__/     |__/|__/     |__/ \______/ |__/  \__/
+                                                                  
+                                                                  
+#################################    COMMON  #####################################
+
+        
 def norm(signal: str):
     """
     method for spectrum normalization to 1 in range (Emin, Emax)
@@ -164,6 +321,19 @@ def peak(signal: str):
     method for finding maximum of the peak in range (Emin, Emax)
     """
     return max(signal[int(Emin/step):int(Emax/step)])
+
+def get_standart_deviation(data):
+    """
+    method for calculating average and standart deviation of the data
+    returns tuple (average, standart_deviation)
+    """
+    n = len(data)
+    average = sum(data)/n
+    standart_deviation = 0
+    for value in data:
+        standart_deviation+=value**2
+    standart_deviation=1/n*np.sqrt(standart_deviation-n*average**2)
+    return average, standart_deviation
 
 """
 def set_elements_params():
@@ -378,6 +548,36 @@ def plot_dBeta_map():
     plt.show()
 
 #plot_dBeta_map()
+
+
+def plot_spectrum(spectrum: spectrum, title = None):
+    """
+    Method to plot the spectrum
+    """
+    plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
+    plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "x")
+
+    i=0
+    for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
+
+
+        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+"%"
+        i+=1
+        plt.annotate(label, # this is the text
+                    (x,y), # these are the coordinates to position the label
+                    textcoords="offset points", # how to position the text
+                    xytext=(0,5), # distance from text to points (x,y)
+                    ha='center')
+    plt.xlabel('energy, keV', fontsize=12)
+    plt.xlim (Emin/1000, Emax/1000)
+    plt.ylabel('intensity, a.u.', fontsize=12)
+    plt.ylim(0, 1.1)
+    plt.minorticks_on
+    if title:
+        plt.title(title, y=1.01, fontsize=10)
+    plt.legend()
+    plt.show()
+
 
 #########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################
 
