@@ -29,11 +29,9 @@ dE=SCD.step
 
 #####################################    PRESETS      #####################################
 
-
 #spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
 #spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
-spectrum_path0 +="intensVSareas_250127"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
-
+spectrum_path0 +="temp"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
 
 #############################################################################################
 
@@ -48,33 +46,15 @@ def get_standart_deviation(data):
 
 def get_concentrations(calc_path):
     spectrum_path=spectrum_path0+os.sep+calc_path
-    SCD.calc_name = spectrum_path.split(os.sep)[-1].split(".dat")[0]
-    SCD.Emin = 1000
-    SCD.filter_window_length = 10
-    SCD.doInputSmooth = True
-    spectrum_en, spectrum_int = SCD.import_data(spectrum_path)
-
-    # get initial params from the filename
-    leis.incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
-    leis.E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(leis.incident_atom)[1])*1000
-    leis.theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
-    
-    if leis.theta == 50:
-        leis.theta = 140
-    if leis.theta == 80:
-        leis.theta = 100
-    #if leis.theta ==70:
-    #    leis.theta =90+20    
-    
-    leis.set_elements_params()
-
+    data = leis.spectrum(2.0)
+    data.import_data(spectrum_path, 10)
+    spectrum_en = data.spectrum_en
+    spectrum_int = data.spectrum_int
     
     peaks, _ = find_peaks(spectrum_int, prominence=0.04, width=5, distance=50)
-    target_masses = [leis.get_target_mass_by_energy(leis.theta, spectrum_en[peaks[i]]) for i in range(len(peaks))]
+    target_masses = [leis.get_target_mass_by_energy(data.theta, data.M0, data.E0, spectrum_en[peaks[i]]) for i in range(len(peaks))]
     target_components = [leis.get_element_by_mass(mass) for mass in target_masses]
 
-
-    
     # mass resolution is not perfect and sometimes LEIS_tools give neighbor elements
     # which is not favorable for quantitative estimations
     for i in range (0,len(target_components)):
@@ -89,14 +69,14 @@ def get_concentrations(calc_path):
             target_masses[i] = leis.get_mass_by_element(target_components[i])
     
 
-    dBetas = [leis.get_dBeta(leis.theta, mass/leis.M0, dE) for mass in target_masses]
-    dEs = [leis.get_dE(leis.theta, mass/leis.M0, 1) for mass in target_masses]
-    cross_sections = [leis.get_cross_section(leis.incident_atom,leis.E0, leis.theta, leis.dBeta, component) for component in target_components]
+    dBetas = [leis.get_dBeta(data.E0, data.theta, mass/data.M0, dE) for mass in target_masses]
+    dEs = [leis.get_dE(data.E0, data.theta, mass/data.M0, data.dTheta) for mass in target_masses]
+    cross_sections = [leis.get_cross_section(data.incident_atom,data.E0, data.theta, data.dTheta, component) for component in target_components]
 
     for i in range(len(peaks)): 
         print(str(SCD.calc_name)+" "+str(spectrum_en[peaks[i]])+" eV "+str(target_masses[i])[0:5]+" a.m.u. "+str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(dEs[i])[0:5]+" eV "+str(cross_sections[i])[0:4]+" A2/sr")
 
-    
+
     """
     plt.plot(spectrum_en[int(SCD.Emin/SCD.step):]/1000, spectrum_int[int(SCD.Emin/SCD.step):], '-', linewidth=2, label=SCD.calc_name) 
     plt.plot(spectrum_en[peaks]/1000, spectrum_int[peaks], "x")
@@ -139,19 +119,17 @@ def get_concentrations(calc_path):
         conc_corrI = int1/(int1+int2)*100
         
         #print ("Conc = "+str(conc_I)[0:4]+" "+str(conc_S)[0:4]+" "+str(conc_corrI)[0:4]+" ")
-        return conc_I, conc_S, conc_corrI
+        return conc_I, conc_S, conc_corrI, data.calc_name
     print("ERROR in finding peaks!")
-    return 0,0,0
+    return 0,0,0, 0
 
 #####################################    DO PEAKS ANALYSIS    #####################################
-
 
 
 calcs = os.listdir(spectrum_path0)
 
 
-
-
+# causes error due to 50 in angle!!!!
 concs = (30, 50, 70)
 
 for conc in concs: 
@@ -163,17 +141,17 @@ for conc in concs:
     id=0
     for calc in calcs:
     
-        if str(conc) in calc[-6:-4]:  
+        if str(conc) in calc[-6:-4] and not "50.0deg" in calc[-6:-4]:  
             id+=1        
-            conc_I, conc_S, conc_corrI = get_concentrations(calc)
+            conc_I, conc_S, conc_corrI, calc_name = get_concentrations(calc)
             if conc_I !=0:
                 concs_I.append(conc_I)
                 concs_S.append(conc_S)
                 concs_Icorr.append(conc_corrI)
                 
-            plt.plot(id, conc_I, "x", label = SCD.calc_name)
-            plt.plot(id, conc_S, "o", label = SCD.calc_name)
-            plt.plot(id, conc_corrI, "*", label = SCD.calc_name)
+            plt.plot(id, conc_I, "x", label = calc_name)
+            plt.plot(id, conc_S, "o", label = calc_name)
+            plt.plot(id, conc_corrI, "*", label = calc_name)
 
         
     plt.xlabel('energy, keV', fontsize=12)
