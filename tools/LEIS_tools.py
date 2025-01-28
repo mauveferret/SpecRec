@@ -40,6 +40,11 @@ class spectrum:
     
     def __init__(self, step: float):
         self.__step = step
+        
+    def __init__(self, step: float, spectrum_path: str, filter_window_length=-1):
+        self.__step = step
+        self.import_spectrum(spectrum_path, filter_window_length)
+        self.do_elemental_analysis()
     
     @property
     def spectrum_en(self):

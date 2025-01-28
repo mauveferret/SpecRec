@@ -58,9 +58,7 @@ for conc in concs:
             
             
             # TODO
-            data = leis.spectrum(2)
-            data.import_spectrum(spectrum_path0+os.sep+calc)
-            data.do_elemental_analysis()
+            data = leis.spectrum(2,spectrum_path0+os.sep+calc, 10)
             
             conc_I = data.elem_conc_by_I[-1]
             conc_S = data.elem_conc_by_S[-1]
