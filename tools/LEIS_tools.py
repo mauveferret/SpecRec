@@ -18,11 +18,9 @@ import numpy as np
 import matplotlib.pyplot  as plt    
 import scipy.signal
 import math, re, os
-from mendeleev import get_all_elements
-
+#from mendeleev import get_all_elements
 
 ######################    GLOBAL SETTINGS   ############################
-
 
 
 step = 2.0 #energy step, eV
@@ -31,17 +29,54 @@ Emax = 30000.0 #maximal energy, eV
 
 ######################    GLOBAL SETTINGS   ############################
 
+total_num_elem = 93
+def get_element_info_by_atomic_number(atomic_number: int):
+    """
+    Returns the mass and symbol (int, str) of the element given its atomic number.
+    """
+    
+    # Define a dictionary with atomic numbers as keys and tuples of (mass, symbol) as values
+    elements_data = {
+        1: (1.008, 'H'), 2: (4.0026, 'He'), 3: (6.94, 'Li'), 4: (9.0122, 'Be'), 5: (10.81, 'B'),
+        6: (12.011, 'C'), 7: (14.007, 'N'), 8: (15.999, 'O'), 9: (18.998, 'F'), 10: (20.180, 'Ne'),
+        11: (22.989, 'Na'), 12: (24.305, 'Mg'), 13: (26.982, 'Al'), 14: (28.085, 'Si'), 15: (30.974, 'P'),
+        16: (32.06, 'S'), 17: (35.45, 'Cl'), 18: (39.948, 'Ar'), 19: (39.098, 'K'), 20: (40.078, 'Ca'),
+        21: (44.956, 'Sc'), 22: (47.867, 'Ti'), 23: (50.942, 'V'), 24: (51.996, 'Cr'), 25: (54.938, 'Mn'),
+        26: (55.845, 'Fe'), 27: (58.933, 'Co'), 28: (58.693, 'Ni'), 29: (63.546, 'Cu'), 30: (65.38, 'Zn'),
+        31: (69.723, 'Ga'), 32: (72.63, 'Ge'), 33: (74.922, 'As'), 34: (78.971, 'Se'), 35: (79.904, 'Br'),
+        36: (83.798, 'Kr'), 37: (85.468, 'Rb'), 38: (87.62, 'Sr'), 39: (88.906, 'Y'), 40: (91.224, 'Zr'),
+        41: (92.906, 'Nb'), 42: (95.95, 'Mo'), 43: (98, 'Tc'), 44: (101.07, 'Ru'), 45: (102.91, 'Rh'),
+        46: (106.42, 'Pd'), 47: (107.87, 'Ag'), 48: (112.41, 'Cd'), 49: (114.82, 'In'), 50: (118.71, 'Sn'),
+        51: (121.76, 'Sb'), 52: (127.6, 'Te'), 53: (126.9, 'I'), 54: (131.29, 'Xe'), 55: (132.91, 'Cs'),
+        56: (137.33, 'Ba'), 57: (138.91, 'La'), 58: (140.12, 'Ce'), 59: (140.91, 'Pr'), 60: (144.24, 'Nd'),
+        61: (145, 'Pm'), 62: (150.36, 'Sm'), 63: (151.96, 'Eu'), 64: (157.25, 'Gd'), 65: (158.93, 'Tb'),
+        66: (162.5, 'Dy'), 67: (164.93, 'Ho'), 68: (167.26, 'Er'), 69: (168.93, 'Tm'), 70: (173.04, 'Yb'),
+        71: (174.97, 'Lu'), 72: (178.49, 'Hf'), 73: (180.95, 'Ta'), 74: (183.84, 'W'), 75: (186.21, 'Re'),
+        76: (190.23, 'Os'), 77: (192.22, 'Ir'), 78: (195.08, 'Pt'), 79: (196.97, 'Au'), 80: (200.59, 'Hg'),
+        81: (204.38, 'Tl'), 82: (207.2, 'Pb'), 83: (208.98, 'Bi'), 84: (209, 'Po'), 85: (210, 'At'),
+        86: (222, 'Rn'), 87: (223, 'Fr'), 88: (226, 'Ra'), 89: (227, 'Ac'), 90: (232.04, 'Th'),
+        91: (231.04, 'Pa'), 92: (238.03, 'U')
+    }
+    global total_num_elem 
+    total_num_elem = len(elements_data)
 
-# the most time consuming procedure, loads all data on the chemical elements
-elements = get_all_elements()
-print("periodic chemical elements database is LOADED")
+    return elements_data[atomic_number]
+
+#elements = get_all_elements()
+#print("periodic chemical elements database is LOADED")
 
 class spectrum:
     
-    def __init__(self, step: float):
+    def __init__(self, step: float = 2.0):
         self.__step = step
         
-    def __init__(self, step: float, spectrum_path: str, filter_window_length=-1):
+    def __init__(self, spectrum_path: str, filter_window_length: int=-1, step: float = 2.0):
+        """
+        Constructor of the spectrum class.
+        spectrum_path - path to the file with the spectrum
+        filter_window_length - length of the filter window for smoothing of the spectrum in eV
+        step - energy step in eV
+        """
         self.__step = step
         self.import_spectrum(spectrum_path, filter_window_length)
         self.do_elemental_analysis()
@@ -110,13 +145,6 @@ class spectrum:
         Chemical elements of the peaks
         """
         return self.__target_components
-    
-    @property
-    def conc_corrI(self):
-        """
-        Concentration of the target element by intensity correction
-        """
-        return self.__conc_corrI
     
     @property
     def cross_sections(self):
@@ -339,19 +367,6 @@ def get_standart_deviation(data):
         standart_deviation+=value**2
     standart_deviation=1/n*np.sqrt(standart_deviation-n*average**2)
     return average, standart_deviation
-
-"""
-def set_elements_params():
-    global Z0, M0, Z1, M1, Z2, M2, mu1, mu2
-    Z0=next((el for el in elements if el.symbol == incident_atom), None).atomic_number #projectile atomic number
-    M0=next((el for el in elements if el.symbol == incident_atom), None).atomic_weight #projectile atomic mass
-    Z1=next((el for el in elements if el.symbol == target_atom1), None).atomic_number #target atomic number
-    M1=next((el for el in elements if el.symbol == target_atom1), None).atomic_weight #target atomic mass
-    Z2=next((el for el in elements if el.symbol == target_atom2), None).atomic_number #target atomic number
-    M2=next((el for el in elements if el.symbol == target_atom2), None).atomic_weight #target atomic mass
-    mu1 = M1/M0
-    mu2 = M2/M0
-"""
  
 def get_angle_by_energy (E0:float, mu:float, E1:float):
     """
@@ -430,13 +445,13 @@ def get_target_mass_by_energy(theta:float, M0:float, E0:float, E1:float):
     print ("Some error occurred in get_mass_by_energy")
     return 0
     
-
 def get_element_by_mass(mass:float):
     """
     Return Symbol of chemical element with the closest atomic weight to the given mass
     """
-    masses = {el.symbol: el.atomic_weight for el in elements if el.atomic_weight}
-    
+    #masses = {el: el.atomic_weight for el in elements if el.atomic_weight}
+    masses = {get_element_info_by_atomic_number(i)[1]:get_element_info_by_atomic_number(i)[0] for i in range(1, total_num_elem)}
+
     min_diff = 1000
     element_name = None	
     for name, weight in masses.items():
@@ -446,12 +461,15 @@ def get_element_by_mass(mass:float):
             element_name = name
     return element_name
 
-
 def get_mass_by_element(element_symbol:str):
     """
     returns atomic weight of chemical element by specified symbol 
     """
-    return next((el for el in elements if el.symbol == element_symbol), None).atomic_weight 
+    #return next((el for el in elements if el.symbol == element_symbol), None).atomic_weight 
+    
+    return next((get_element_info_by_atomic_number(i)[0] for i in range(1, total_num_elem) 
+                 if get_element_info_by_atomic_number(i)[1] == element_symbol), None)
+    
 
 def get_dSigma(theta:float, mu:float, dE:float):
     """
@@ -513,6 +531,9 @@ def get_intensity_corrections(E0:float, mu1:float, mu2:float, theta:float, R = -
                                    
                                                  
 def plot_dBeta_map():
+    """
+    Method to plot the map of dBeta values in dependence of scattering angle and mu
+    """
     global E0
     E0 = 10000
     step_mu = 0.0005
@@ -554,13 +575,12 @@ def plot_dBeta_map():
 
 #plot_dBeta_map()
 
-
 def plot_spectrum(spectrum: spectrum, title = None):
     """
     Method to plot the spectrum
     """
     plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
-    plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "x")
+    plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "o", color='red')
 
     i=0
     for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
@@ -571,8 +591,9 @@ def plot_spectrum(spectrum: spectrum, title = None):
         plt.annotate(label, # this is the text
                     (x,y), # these are the coordinates to position the label
                     textcoords="offset points", # how to position the text
-                    xytext=(0,5), # distance from text to points (x,y)
-                    ha='center')
+                    xytext=(5,5), # distance from text to points (x,y)
+                    ha='center',
+                    color='black')
     plt.xlabel('energy, keV', fontsize=12)
     plt.xlim (Emin/1000, Emax/1000)
     plt.ylabel('intensity, a.u.', fontsize=12)
@@ -580,7 +601,7 @@ def plot_spectrum(spectrum: spectrum, title = None):
     plt.minorticks_on
     if title:
         plt.title(title, y=1.01, fontsize=10)
-    plt.legend()
+    #plt.legend()
     plt.show()
 
 
@@ -683,34 +704,13 @@ pot = 1  # Potential type
 
 def _element(ta, por):
     global m, z
+    #z[por]=next((el for el in get_element_info_by_atomic_number if el[1] == ta), None).atomic_number #projectile atomic number
     
-    """
-    elements = [
-        (1, 1), (2, 1), (3, 1), (4, 2), (3, 2), (6.94, 3), (9.01, 4), (10.81, 5),
-        (12.011, 6), (14, 7), (16, 8), (19, 9), (20.18, 10), (20, 10), (22.99, 11),
-        (24.305, 12), (26.9815, 13), (28.086, 14), (30.974, 15), (32.066, 16),
-        (35.4527, 17), (39.948, 18), (39.098, 19), (40.078, 20), (44.956, 21),
-        (47.867, 22), (50.941, 23), (51.996, 24), (54.938, 25), (55.845, 26),
-        (58.933, 27), (58.693, 28), (63.546, 29), (65.39, 30), (69.723, 31),
-        (72.61, 32), (74.922, 33), (78.96, 34), (79.904, 35), (83.8, 36),
-        (85.4678, 37), (87.62, 38), (88.906, 39), (91.224, 40), (92.906, 41),
-        (95.94, 42), (97, 43), (101.07, 44), (102.906, 45), (106.42, 46),
-        (107.868, 47), (112.411, 48), (114.818, 49), (118.71, 50), (121.76, 51),
-        (127.6, 52), (126.904, 53), (131.29, 54), (132.905, 55), (137.327, 56),
-        (138.906, 57), (140.116, 58), (140.908, 59), (144.24, 60), (145, 61),
-        (150.36, 62), (151.964, 63), (157.25, 64), (158.925, 65), (162.5, 66),
-        (164.93, 67), (167.26, 68), (168.934, 69), (173.04, 70), (174.967, 71),
-        (178.46, 72), (180.948, 73), (183.84, 74), (186.207, 75), (190.23, 76),
-        (192.217, 77), (195.078, 78), (196.967, 79), (200.59, 80), (204.383, 81),
-        (207.2, 82), (208.98, 83), (210, 84), (210, 85), (222, 86), (223, 87),
-        (226, 88), (227, 89), (232, 90), (231, 91), (238, 92)
-    ]
-    #m[por], z[por] = elements[ta]
-    """
-    
-    z[por]=next((el for el in elements if el.symbol == ta), None).atomic_number #projectile atomic number
-    m[por]=next((el for el in elements if el.symbol == ta), None).atomic_weight #projectile atomic mass
-    
+    z[por] = next((z for z in range (1, total_num_elem) 
+                   if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic number
+        
+    m[por]=next((get_element_info_by_atomic_number(z)[0] for z in range (1, total_num_elem) 
+                 if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic mass
 
 def _potenc(r0):
     global U, R
@@ -987,6 +987,3 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
     #print ("--------------------------------")
     return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
-
-
-
