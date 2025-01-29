@@ -531,7 +531,7 @@ def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, t
     Returns sensitivity factor for the given incident and target elements
     """
     mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
-    return get_dBeta(E0, theta, mu, get_dE(E0, theta, mu, dTheta))/get_cross_section(incident_element, E0, theta, dTheta, target_element)
+    return 1/(get_dBeta(E0, theta, mu, get_dE(E0, theta, mu, dTheta))*get_cross_section(incident_element, E0, theta, dTheta, target_element))
 
 ##########################################      PLOTS     ###################################################
 
