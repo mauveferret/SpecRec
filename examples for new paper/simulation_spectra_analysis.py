@@ -18,7 +18,6 @@ import os,  sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 os.chdir(parent_dir) 
 
-from scipy.signal import find_peaks
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -40,7 +39,6 @@ spectrum_path0 +="temp"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
 
 calcs = os.listdir(spectrum_path0)
 
-
 # causes error due to 50 in angle!!!!
 concs = (30, 50, 70)
 
@@ -55,10 +53,10 @@ for conc in concs:
     
         if str(conc) in calc[-6:-4] and not "50.0deg" in calc[-6:-4]:  
             id+=1        
-            
-            
+                        
             # TODO
             data = leis.spectrum(spectrum_path0+os.sep+calc, 10)
+            data.do_elemental_analysis()
             
             conc_I = data.elem_conc_by_I[-1]
             conc_S = data.elem_conc_by_S[-1]

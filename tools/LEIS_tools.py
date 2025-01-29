@@ -67,9 +67,6 @@ def get_element_info_by_atomic_number(atomic_number: int):
 
 class spectrum:
     
-    def __init__(self, step: float = 2.0):
-        self.__step = step
-        
     def __init__(self, spectrum_path: str, filter_window_length: int=-1, step: float = 2.0):
         """
         Constructor of the spectrum class.
@@ -79,7 +76,7 @@ class spectrum:
         """
         self.__step = step
         self.import_spectrum(spectrum_path, filter_window_length)
-        self.do_elemental_analysis()
+        #self.do_elemental_analysis()
     
     @property
     def spectrum_en(self):
@@ -201,28 +198,37 @@ class spectrum:
 
         lines = spectrum_file.splitlines()
         
+        #print(self.__calc_name)
+        
         # find letter strings and save its indexes
         __indexes_letter_strings = []
         for i in range(0, len(lines)):
             if  any(c.isalpha() and not ("e" in c) for c in lines[i]) or ("*" in lines[i]) or lines[i]=='':
                 __indexes_letter_strings.append(lines[i])
-        
-        # get initial params from the filename
-        self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
-        self.__M0 = get_mass_by_element(self.__incident_atom)
-        
-        self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
-        self.__theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
-        try:
-            self.__dTheta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[1])
-        except:
-            print("ERROR during spectrum import. Can't find dTheta in the filename")
-            self.__dTheta = 1.0
+        if "sim" in self.__calc_name:
+            # get initial params from the filename
+            self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
+            self.__M0 = get_mass_by_element(self.__incident_atom)
             
+            self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
+            self.__theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
+            try:
+                self.__dTheta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[1])
+            except:
+                print("ERROR during spectrum import. Can't find dTheta in the filename")
+                self.__dTheta = 1.0
+        elif ("exp" in self.__calc_name or "exp" in spectrum_path) and not "exp_ref" in self.__calc_name:
+            # parameters are valid ONLY for data obtained on
+            # the Large-mass monocromator "Mephi" aka "Crocodile" LEIS facility  
+            self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]
+            self.__M0 = get_mass_by_element(self.__incident_atom)
+            self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
+            self.__theta = 32 # scattering angle is usually fixed at 32 degrees
+            self.__dTheta = 1.0	
+        
         # remove letter strings from lines
         for i in __indexes_letter_strings:
             lines.remove(i)
-            
         # create data arrays
         raw_spectrum_int = np.zeros(len(lines))
         raw_spectrum_en = np.zeros(len(lines))
@@ -230,7 +236,10 @@ class spectrum:
         for i in range(0, len(lines)):
             lines[i] = lines[i]
             data = lines[i].split(" ")
-            raw_spectrum_en[i] = float(data[0])
+            if "sim" in self.__calc_name:
+                raw_spectrum_en[i] = float(data[0])
+            elif "exp" in self.__calc_name or "exp" in spectrum_path:
+                raw_spectrum_en[i] = float(data[0])*1000
             raw_spectrum_int[i] = float(data[1])
 
         # do interpolation with new energy step and normalization to 1 in range (Emin, Emax)
@@ -282,7 +291,7 @@ class spectrum:
         """
         Method to find peaks and corresponding elements in the spectrum
         """
-        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=50)
+        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=200)
         self.__peaks = peaks
         target_masses = [self.get_target_mass_by_energy(peak) for peak in self.__spectrum_en[peaks]]
         target_components = [self.get_element_by_mass(mass) for mass in target_masses]
@@ -292,7 +301,7 @@ class spectrum:
         self.__cross_sections = [self.get_cross_section(component) for component in target_components]
         
         for i in range (0,len(target_components)):
-            if "Ir" in target_components[i] or "At" in target_components[i] or "Re" in target_components[i]:
+            if "Ir" in target_components[i] or "At" in target_components[i] or "Re" in target_components[i] or "Pt" in target_components[i]:
                 target_components[i]="Au"
                 target_masses[i] = get_mass_by_element(target_components[i])
             if "Cd" in target_components[i] or "Ag" in target_components[i]:
@@ -302,11 +311,13 @@ class spectrum:
         int_total = 0
         for i in range (0,len(target_components)):          
             int_total += self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])
-        
+            #int_total += self.__spectrum_int[peaks[i]]*dEs[i]/(self.__cross_sections[i])
+
         self.__elem_conc_by_corrI = np.zeros(len(target_components))
         for i in range (0,len(target_components)):      
             self.__elem_conc_by_corrI[i] = self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])/int_total*100
-            
+            #self.__elem_conc_by_corrI[i] = self.__spectrum_int[peaks[i]]*dEs[i]/(self.__cross_sections[i])/int_total*100
+
         int_total = 0
         for i in range (0,len(target_components)):          
             int_total += self.__spectrum_int[peaks[i]]/(self.__cross_sections[i])
@@ -515,6 +526,12 @@ def get_intensity_corrections(E0:float, mu1:float, mu2:float, theta:float, R = -
         dBeta1 = (get_energy_by_angle(E0, theta, mu1))**2*2*np.sin(theta*np.pi/180)/np.sqrt(mu1**2-(np.sin(theta*np.pi/180))**2)
     return dBeta2/dBeta1
 
+def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float):
+    """
+    Returns sensitivity factor for the given incident and target elements
+    """
+    mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
+    return get_dBeta(E0, theta, mu, get_dE(E0, theta, mu, dTheta))/get_cross_section(incident_element, E0, theta, dTheta, target_element)
 
 ##########################################      PLOTS     ###################################################
 
@@ -575,9 +592,9 @@ def plot_dBeta_map():
 
 #plot_dBeta_map()
 
-def plot_spectrum(spectrum: spectrum, title = None):
+def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
-    Method to plot the spectrum
+    Method to plot the spectrum with quantified peaks
     """
     plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
     plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "o", color='red')
@@ -586,7 +603,7 @@ def plot_spectrum(spectrum: spectrum, title = None):
     for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
 
 
-        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+"%"
+        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+"% "+str(spectrum.elem_conc_by_S[i])[0:4]+"%"
         i+=1
         plt.annotate(label, # this is the text
                     (x,y), # these are the coordinates to position the label
@@ -603,7 +620,22 @@ def plot_spectrum(spectrum: spectrum, title = None):
         plt.title(title, y=1.01, fontsize=10)
     #plt.legend()
     plt.show()
+    
+def plot_spectrum(spectrum: spectrum, title = None):
+    """
+    Method to plot the spectrum with quantified peaks
+    """
+    plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
 
+    plt.xlabel('energy, keV', fontsize=12)
+    plt.xlim (Emin/1000, Emax/1000)
+    plt.ylabel('intensity, a.u.', fontsize=12)
+    plt.ylim(0, 1.1)
+    plt.minorticks_on
+    if title:
+        plt.title(title, y=1.01, fontsize=10)
+    plt.legend()
+    plt.show()
 
 #########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################
 
