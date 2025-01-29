@@ -17,6 +17,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 import numpy as np
 import matplotlib.pyplot  as plt    
 import scipy.signal
+from scipy.optimize import curve_fit
 import math, re, os
 #from mendeleev import get_all_elements
 
@@ -89,6 +90,10 @@ class spectrum:
     @property
     def calc_name(self):
         return self.__calc_name
+    
+    @calc_name.setter
+    def calc_name(self, value: str):
+        self.__calc_name = value
            
     @property
     def step(self):
@@ -650,53 +655,100 @@ def plot_spectrum(spectrum: spectrum, title = None):
                                                    
 #########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################                     
 
-E01=0
-E02=0
 
-def Young(E, E0, A, R, FWHM, B, K):
-    #R=1
-    I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
-    I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
-    I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
-    return I_el+I_inel*I_tail
-
-def twoCompTargetFitting(E, A1, FWHM1, B1, K1, A2, FWHM2, B2, K2):
-    return Young(E, E01, A1, 1, FWHM1, B1, K1) + Young(E, E02, A2, 1, FWHM2, B2, K2)
-
-
-"""
-param_bounds = ([0,0,0,0,0,0,0,0],[np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf])
-pars, covariance = curve_fit(twoCompTargetFitting, spectrum_en, spectrum_int, method = 'dogbox', maxfev=500000, bounds=param_bounds, loss='linear', ftol=1E-9)
+class fitted_spectrum:
     
-inel_Au = Young(spectrum_en, E02, 0, 1, pars[5], pars[6], pars[7])
-El_Au = Young(spectrum_en, E02, pars[4], 1, pars[5], 0, pars[7])
-inel_Pd = Young(spectrum_en, E01, 0, 1, pars[1], pars[2], pars[3])
-El_Pd = Young(spectrum_en, E01, pars[0], 1, pars[1], 0, pars[3])
+    __param_bounds = ([0,0,0,0,0,0,0,0],[np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf])
 
-
-fitted = twoCompTargetFitting(spectrum_en, pars[0], pars[1],pars[2],pars[3], pars[4], pars[5], pars[6], pars[7])
     
-Au_part = Young(spectrum_en, E02, pars[4], 1, pars[5], pars[6], pars[7])
-Au_part = norm (Au_part)
+    def __init__(self, spectrum:spectrum, target_element1:str, target_element2:str):
+        """
+        Constructor of the fitted spectrum class.
+        """
+        self.__spectrum = spectrum
+        self.__target_element1 = target_element1
+        self.__target_element2 = target_element2
+        self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.theta)
+        self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.theta)
+        
+        pars, covariance = curve_fit(self.__twoCompTargetFitting, 
+                                     spectrum.spectrum_en, spectrum.spectrum_int, 
+                                     method = 'dogbox', maxfev=500000, bounds=self.__param_bounds, loss='linear', ftol=1E-9)
 
-Pd_part_fit = fitted - Au_part
-
-Au_conc_fit = calcConcFor2ElementsSpectrum(peak(Pd_part_fit), 1)
-
-Au_ref_interp = np.interp(spectrum_en,reference_en, reference_int)
-Au_ref_interp = norm(Au_ref_interp)
-
-Pd_part_ref = spectrum_int - Au_ref_interp
-
-Au_conc_ref = calcConcFor2ElementsSpectrum(peak(Pd_part_ref),1)  
-
-#Au_conc_ref = (1-peak(Pd_part_ref)*sigma_Au/sigma_Pd/(1+peak(Pd_part_ref)*sigma_Au/sigma_Pd))*100
-
-Au_conc_refByPseudoArea = calcConcFor2ElementsSpectrum(peak(Pd_part_ref)*dE_Pd,1*dE_Au)  
-
-syn_cons = calcConcFor2ElementsSpectrum(sum(El_Pd), sum(El_Au))
+        self.__pars = pars
+        
+        
+    def __young( E, E0, A, R, FWHM, B, K):
+        #R=1
+        I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
+        I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
+        I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
+        return I_el+I_inel*I_tail
     
-"""
+    def __twoCompTargetFitting(self, E, A1, FWHM1, B1, K1, A2, FWHM2, B2, K2):
+        
+        def young2( E, E0, A, R, FWHM, B, K):
+            #R=1
+            I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
+            I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
+            I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
+            return I_el+I_inel*I_tail
+        
+        E01 = 14100
+        E02 = 14500
+        
+        # We specify R=1 to use Lorenzian distribution for elastic part of the spectrum
+        return young2(E, E01, A1, 1, FWHM1, B1, K1) + young2(E, E02, A2, 1, FWHM2, B2, K2)
+
+
+    def get_fitted_spectrum(self):
+        """
+        Method to get the fitted spectrum
+        """
+        return self.__twoCompTargetFitting(self.__spectrum.spectrum_en, self.__pars[0], self.__pars[1], self.__pars[2], self.__pars[3], self.__pars[4], self.__pars[5], self.__pars[6], self.__pars[7])
+
+    def get_elastic_part(self, element: str):
+        """
+        Method to get the elastic part of the fitted spectrum
+        """
+        if element in self.__target_element1:
+            return self.__young(self.__spectrum.spectrum_en, self.__E01, self.__pars[0], 1, self.__pars[1], 0, self.__pars[3]) 
+        elif element in self.__target_element2: 
+            return self.__young(self.__spectrum.spectrum_en, self.__E02, self.__pars[4], 1, self.__pars[5], 0, self.__pars[7])
+        else:
+            print("ERROR in get_elastic_part: element not found")
+            return None
+    
+    def get_inelastic_part(self, element: str):
+        """
+        Method to get the inelastic part of the fitted spectrum
+        """
+        if element in self.__target_element1:
+            return self.__young(self.__spectrum.spectrum_en, self.__E01, 0, 1, self.__pars[1], self.__pars[2], self.__pars[3])
+        elif element in self.__target_element2:
+            return self.__young(self.__spectrum.spectrum_en, self.__E02, 0, 1, self.__pars[5], self.__pars[6], self.__pars[7])
+        else:
+            print("ERROR in get_inelastic_part: element not found")
+            return None
+
+
+    def get_concentration(self):
+        """
+        Method to get the concentration of the more heavy element in the fitted spectrum
+        """
+        int1 = sum(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.__incident_atom, 
+                                                                                    self.__spectrum.__E0, 
+                                                                                    self.__spectrum.__theta, 
+                                                                                    self.__spectrum.__dTheta, 
+                                                                                    self.__target_element1)
+        int2 = sum(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.__incident_atom, 
+                                                                                    self.__spectrum.__E0, 
+                                                                                    self.__spectrum.__theta, 
+                                                                                    self.__spectrum.__dTheta, 
+                                                                                    self.__target_element2)
+
+        return int2/(int1+int2)*100
+        
 
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
