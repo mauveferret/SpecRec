@@ -31,9 +31,11 @@ This is a fully Python-based program, so you need Python installed on your PC. I
 * matplotlib
 * brokenaxes
 
-You can install them all with the `pip install -r requirements.txt` command. If you have problems using `pip`, please read [this](https://packaging.python.org/en/latest/tutorials/installing-packages/).
+You can install them all with the `pip install -r requirements.txt` command. If you have problems using `pip`, please read [this](https://packaging.python.org/en/latest/tutorials/installing-packages/). It was made with `uv` package manager, so you also can use it to get all dependencies instead of pip. To do it, just run `uv run` in the working directory  
 
 ### Executing the Program
+
+AS the entrypoint a ipynb [tutorial file](https://github.com/mauveferret/SpecRec/blob/main/main_example.ipynb) is highly recommended. It contains some basic theory and practical examples with the use of this package. 
 
 As the program does not provide a graphical user interface, the best way to launch it is with a text editor that has a built-in Python application launcher. A free, cross-platform, and open-source [Visual Studio Code](https://code.visualstudio.com/) is highly recommended. However, it's not strictly necessary, as the script can be launched as an executable without any IDE via the shell.
 
