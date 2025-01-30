@@ -50,6 +50,40 @@ for calc in calcs:
     axs[row , column].plot(data.scattering_angle, conc_I, "x", color="blue")
     axs[row , column].plot(data.scattering_angle, conc_S, "o", color="black")
     axs[row , column].plot(data.scattering_angle, conc_corrI, "*", color="red")
+   
+
+for row in range(0,3):
+    for column in range(0,3):
+        #axs[row, column].set_ylim(0, 100)
+        axs[row, column].set_xlim(20, 140)
+        if row==2 and column == 1:
+            axs[row, column].set_xlabel("Scattering angle, deg")
+        if column==0:
+            axs[row, column].set_ylabel(targets[row])
+        if row==0:
+            axs[row, column].set_title(incident_atoms[column])
+        axs[row, column].set_xticks(np.arange(20, 140, 20))
+        axs[row, column].minorticks_on()
+        #if column!=0:
+        #    axs[row , column].set_yticklabels([])
+        axs[row, column].axhline(y = int(targets[row][2:4]),
+                                 color = 'black', linestyle = '--', alpha = 0.8) 
+
+
+for i in range (0,3):
+    axs[0, i].set_ylim(10, 50)
+for i in range (0,3):
+    axs[1, i].set_ylim(30, 70)
+for i in range (0,3):
+    axs[2, i].set_ylim(50, 90)
+
+#for i in range (0,3):
+ #   axs[i, 0].set_ylabel(targets[i])
+    
+fig.suptitle("Au concenctration estimations based on peak Intensities (blue), areas (black), corr. int (red)")
+axs[0, 0].set_title('Ne')
+axs[0, 1].set_title('Ar')
+axs[0, 2].set_title('Kr')
 
 plt.show()
 
