@@ -609,6 +609,7 @@ def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
     Method to plot the spectrum with quantified peaks
     """
+    plt.figure(figsize=(12, 8))
     plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
     plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "o", color='red')
 
