@@ -121,11 +121,11 @@ class spectrum:
         return self.__M0
     
     @property
-    def theta(self):
+    def scattering_angle(self):
         """
         Scattering angle in degrees
         """
-        return self.__theta
+        return self.__scattering_angle
     
     @property
     def dTheta(self):
@@ -216,7 +216,7 @@ class spectrum:
             self.__M0 = get_mass_by_element(self.__incident_atom)
             
             self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
-            self.__theta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
+            self.__scattering_angle = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
             try:
                 self.__dTheta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[1])
             except:
@@ -228,7 +228,7 @@ class spectrum:
             self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]
             self.__M0 = get_mass_by_element(self.__incident_atom)
             self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
-            self.__theta = 32 # scattering angle is usually fixed at 32 degrees
+            self.__scattering_angle = 32 # scattering angle is usually fixed at 32 degrees
             self.__dTheta = 1.0	
         
         # remove letter strings from lines
@@ -264,7 +264,7 @@ class spectrum:
         """
         Returns mass of the target element by energy of the scattered particle E1
         """
-        return get_target_mass_by_energy(self.__theta, self.__M0, self.__E0, E1)
+        return get_target_mass_by_energy(self.__scattering_angle, self.__M0, self.__E0, E1)
     
     def get_element_by_mass(self, mass: float):
         """
@@ -277,20 +277,20 @@ class spectrum:
         Returns delta of scattering angle in degrees for specific bin size dE of the analyzer at energy position
         corresponding to mu==M_target/M_incident
         """
-        return get_dBeta(self.__E0, self.__theta, mu, dE)
+        return get_dBeta(self.__E0, self.__scattering_angle, mu, dE)
     
     def get_dE(self, mu: float):
         """
         Returns delta of energy in eV for specific detection angle of the analyzer at energy position
         corresponding to mu==M_target/M_incident
         """
-        return get_dE(self.__E0, self.__theta, mu, self.dTheta)
+        return get_dE(self.__E0, self.__scattering_angle, mu, self.dTheta)
     
     def get_cross_section(self, target_symbol: str):
         """
         Returns cross section of the target element by its symbol
         """
-        return get_cross_section(self.__incident_atom, self.__E0, self.__theta, self.__dTheta, target_symbol)
+        return get_cross_section(self.__incident_atom, self.__E0, self.__scattering_angle, self.__dTheta, target_symbol)
     
     def do_elemental_analysis(self):
         """
@@ -668,8 +668,8 @@ class fitted_spectrum:
         self.__spectrum = spectrum
         self.__target_element1 = target_element1
         self.__target_element2 = target_element2
-        self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.theta)
-        self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.theta)
+        self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.scattering_angle)
+        self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
         
         pars, covariance = curve_fit(self.__twoCompTargetFitting, 
                                      spectrum.spectrum_en, spectrum.spectrum_int, 
@@ -738,12 +738,12 @@ class fitted_spectrum:
         """
         int1 = sum(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.__incident_atom, 
                                                                                     self.__spectrum.__E0, 
-                                                                                    self.__spectrum.__theta, 
+                                                                                    self.__spectrum.__scattering_angle, 
                                                                                     self.__spectrum.__dTheta, 
                                                                                     self.__target_element1)
         int2 = sum(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.__incident_atom, 
                                                                                     self.__spectrum.__E0, 
-                                                                                    self.__spectrum.__theta, 
+                                                                                    self.__spectrum.__scattering_angle, 
                                                                                     self.__spectrum.__dTheta, 
                                                                                     self.__target_element2)
 

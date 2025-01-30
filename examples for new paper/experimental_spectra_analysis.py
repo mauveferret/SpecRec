@@ -46,8 +46,8 @@ for spectrum in exp_spectra:
         else:
             Pd_signal = data.spectrum_int
             print("No reference was found for the "+data.incident_atom+" incident atom")
-    int_Pd = leis.peak(Pd_signal)*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Pd", data.theta,data.dTheta)
-    int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.theta,data.dTheta)
+    int_Pd = leis.peak(Pd_signal)*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Pd", data.scattering_angle,data.dTheta)
+    int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta)
     print(data.calc_name[0:15]+" "+data.incident_atom+" "+" conc:"+str(int_Au/(int_Au+int_Pd)*100)[0:4]+"%")
     
 

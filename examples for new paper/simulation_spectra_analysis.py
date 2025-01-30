@@ -26,67 +26,110 @@ sys.path.insert(1, os.getcwd()+os.sep+BASE_LIB_PATH)
 import LEIS_tools as leis
 import spectraConvDeconv_tools as SCD
 
-spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep
-dE=SCD.step
-
 #####################################    PRESETS      #####################################
-
-#spectrum_path +="sim_Ne6keV140deg_BaCoGd.dat"
-#spectrum_path +="sim_Ne15keV32deg0.9dBeta_AuPdthin.dat"
-spectrum_path0 +="temp"#+os.sep+"sim_Ne11.0keV45.0deg1.0_W30Cr70.dat"
-
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"sim_AuPd"
+dE=SCD.step
 #############################################################################################
 
+fig, axs = plt.subplots(3, 3) # rows columns
+
 calcs = os.listdir(spectrum_path0)
+incident_atoms = ("Ne", "Ar", "Kr")
+targets = ("Au30Pd70", "Au50Pd50", "Au70Pd30")
 
-# causes error due to 50 in angle!!!!
-concs = (30, 50, 70)
-
-for conc in concs: 
+for calc in calcs:
+    data = leis.spectrum(spectrum_path0+os.sep+calc)
+    data.do_elemental_analysis()
     
+    conc_I = data.elem_conc_by_I[-1]
+    conc_S = data.elem_conc_by_S[-1]
+    conc_corrI = data.elem_conc_by_corrI[-1]
+
+    row = targets.index(calc.split("_")[-1].split(".")[0])
+    column = incident_atoms.index(data.incident_atom)
+    axs[row , column].plot(data.scattering_angle, conc_I, "x", color="blue")
+    axs[row , column].plot(data.scattering_angle, conc_S, "o", color="black")
+    axs[row , column].plot(data.scattering_angle, conc_corrI, "*", color="red")
+
+plt.show()
+
+
+exit(0)
+
+for calc in calcs:
     concs_I = []
     concs_S = []
     concs_Icorr = []
-    
-    id=0
-    for calc in calcs:
-    
-        if str(conc) in calc[-6:-4] and not "50.0deg" in calc[-6:-4]:  
-            id+=1        
-                        
-            # TODO
-            data = leis.spectrum(spectrum_path0+os.sep+calc, 10)
-            data.do_elemental_analysis()
-            
-            conc_I = data.elem_conc_by_I[-1]
-            conc_S = data.elem_conc_by_S[-1]
-            conc_corrI = data.elem_conc_by_corrI[-1]
-            
-            #print(str(data.calc_name)+" "+str(data.spectrum_en[data.peaks[-1]])+" eV "+str(data.target_masses[i])[0:5]+" a.m.u. "
-            #  +str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(dEs[i])[0:5]+" eV "+str(cross_sections[i])[0:4]+" A2/sr")
-            
-            if conc_I !=0:
-                concs_I.append(conc_I)
-                concs_S.append(conc_S)
-                concs_Icorr.append(conc_corrI)
+    id = []
+    for angle in angles:
+        for incident_atom in incident_atoms:
+            for target in targets:
+                id.append(str(angle)+incident_atom+target)
+                data = leis.spectrum(spectrum_path0+os.sep+calc, angle, incident_atom, target)
+                data.do_elemental_analysis()
                 
-            plt.plot(id, conc_I, "x", label = data.calc_name)
-            plt.plot(id, conc_S, "o", label = data.calc_name)
-            plt.plot(id, conc_corrI, "*", label = data.calc_name)
-
-        
-    plt.xlabel('energy, keV', fontsize=12)
-    plt.ylabel('intensity, norm.',fontsize=12)
-    #plt.title("Energy spectra of "+spectrum_path[:-4], y=1.01, fontsize=10)
-    plt.minorticks_on()
-    plt.legend( frameon=False, loc='lower right', fontsize=11)
-    plt.show()   
+                conc_I = data.elem_conc_by_I[-1]
+                conc_S = data.elem_conc_by_S[-1]
+                conc_corrI = data.elem_conc_by_corrI[-1]
+                
+                if conc_I !=0:
+                    concs_I.append(conc_I)
+                    concs_S.append(conc_S)
+                    concs_Icorr.append(conc_corrI)
+                    
+    axs[0, 0].plot(id, concs_I, "x", label = data.calc_name)
+    axs[0, 1].plot(id, concs_S, "o", label = data.calc_name)
+    axs[0, 2].plot(id, concs_Icorr, "*", label = data.calc_name)
     
-    print("$$$$$$$$$$$$$$$$$$$$$$$")
-    average, dev =  leis.get_standart_deviation(concs_I)
-    print("concI     = "+str(average)[0:5]+"±"+str(dev)[0:4])
-    average, dev =  leis.get_standart_deviation(concs_S)
-    print("concS     = "+str(average)[0:5]+"±"+str(dev)[0:4])
-    average, dev =  leis.get_standart_deviation(concs_Icorr)
-    print("concIcorr = "+str(average)[0:5]+"±"+str(dev)[0:4])  
-    print("$$$$$$$$$$$$$$$$$$$$$$$")
+    axs[1, 0].plot(id, concs_I, "x", label = data.calc_name)
+    axs[1, 1].plot(id, concs_S, "o", label = data.calc_name)
+    axs[1, 2].plot(id, concs_Icorr, "*", label = data.calc_name)
+    
+    axs[2, 0].plot(id, concs_I, "x", label = data.calc_name)
+    axs[2, 1].plot(id, concs_S, "o", label = data.calc_name)
+    axs[2, 2].plot(id, concs_Icorr, "*", label = data.calc_name)
+
+
+"""
+    fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot(x, y)
+axs[0, 0].set_title('Axis [0, 0]')
+axs[0, 1].plot(x, y, 'tab:orange')
+axs[0, 1].set_title('Axis [0, 1]')
+axs[1, 0].plot(x, -y, 'tab:green')
+axs[1, 0].set_title('Axis [1, 0]')
+axs[1, 1].plot(x, -y, 'tab:red')
+axs[1, 1].set_title('Axis [1, 1]')
+
+for ax in axs.flat:
+    ax.set(xlabel='x-label', ylabel='y-label')
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+for ax in axs.flat:
+    ax.label_outer()
+    
+"""
+
+
+
+# TODO
+data = leis.spectrum(spectrum_path0+os.sep+calc, 10)
+data.do_elemental_analysis()
+
+conc_I = data.elem_conc_by_I[-1]
+conc_S = data.elem_conc_by_S[-1]
+conc_corrI = data.elem_conc_by_corrI[-1]
+
+#print(str(data.calc_name)+" "+str(data.spectrum_en[data.peaks[-1]])+" eV "+str(data.target_masses[i])[0:5]+" a.m.u. "
+#  +str(target_components[i])+" "+str(dBetas[i])[0:5]+" deg "+str(dEs[i])[0:5]+" eV "+str(cross_sections[i])[0:4]+" A2/sr")
+
+if conc_I !=0:
+    concs_I.append(conc_I)
+    concs_S.append(conc_S)
+    concs_Icorr.append(conc_corrI)
+    
+plt.plot(id, conc_I, "x", label = data.calc_name)
+plt.plot(id, conc_S, "o", label = data.calc_name)
+plt.plot(id, conc_corrI, "*", label = data.calc_name)
+
+
