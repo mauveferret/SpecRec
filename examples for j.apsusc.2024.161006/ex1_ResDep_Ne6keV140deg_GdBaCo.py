@@ -73,7 +73,7 @@ crossSection_Gd = 0.00061/44
 #####################################    CHOOSE INPUT FILES    ######################################
 
 # choose data file
-spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex1_sim_Ne6kev140deg_GdBaCo"
+spectra_path = os.getcwd()+os.sep+"raw_data"+os.sep+"ex1_sim_Ne6keV140deg_GdBaCo"
 
 SCD.calc_name = str(spectra_path.split(os.sep)[-1])
 files = os.listdir(spectra_path)

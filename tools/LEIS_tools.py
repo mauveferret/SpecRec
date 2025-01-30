@@ -230,7 +230,13 @@ class spectrum:
             self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
             self.__scattering_angle = 32 # scattering angle is usually fixed at 32 degrees
             self.__dTheta = 1.0	
-        
+        elif "ex" in spectrum_path and "sim" in spectrum_path:
+            # get initial params from the filename
+            self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0]).replace(".","")
+            self.__M0 = get_mass_by_element(self.__incident_atom)
+            self.__E0 = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0].split(self.__incident_atom)[1])*1000
+            self.__scattering_angle = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[1].split("deg")[0])
+            self.__dTheta = 1.0
         # remove letter strings from lines
         for i in __indexes_letter_strings:
             lines.remove(i)
@@ -241,12 +247,11 @@ class spectrum:
         for i in range(0, len(lines)):
             lines[i] = lines[i]
             data = lines[i].split(" ")
-            if "sim" in self.__calc_name:
+            if "sim" in self.__calc_name or "sim" in spectrum_path:
                 raw_spectrum_en[i] = float(data[0])
             elif "exp" in self.__calc_name or "exp" in spectrum_path:
                 raw_spectrum_en[i] = float(data[0])*1000
             raw_spectrum_int[i] = float(data[1])
-
         # do interpolation with new energy step and normalization to 1 in range (Emin, Emax)
         self.__spectrum_en = np.arange(0, raw_spectrum_en[-1], self.__step)
         # scaling range in eV (influence spectra normalization in Web charts and output files)
@@ -298,7 +303,7 @@ class spectrum:
         """
         Method to find peaks and corresponding elements in the spectrum
         """
-        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=200)
+        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=int(self.E0/100))
         self.__peaks = peaks
         target_masses = [self.get_target_mass_by_energy(peak) for peak in self.__spectrum_en[peaks]]
         target_components = [self.get_element_by_mass(mass) for mass in target_masses]
@@ -610,7 +615,7 @@ def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
 
 
-        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+"% "+str(spectrum.elem_conc_by_S[i])[0:4]+"%"
+        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+" %"
         i+=1
         plt.annotate(label, # this is the text
                     (x,y), # these are the coordinates to position the label
