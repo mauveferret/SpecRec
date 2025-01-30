@@ -586,7 +586,7 @@ def plot_dBeta_map():
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
             mu_values[i_mu] = mu
-            map0[i_mu, i_theta] = get_dBeta(theta, mu, 2)/2
+            map0[i_mu, i_theta] = get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
            # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
         #file.write("\n")
@@ -594,8 +594,9 @@ def plot_dBeta_map():
     #file.close()
 
     #nipy_spectral   gist_ncar
+    plt.figure(figsize=(12, 8))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
-    plt.text(80, 0.5, '__restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
     plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=np.linspace(0.001, 0.35, 10))
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
     plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
