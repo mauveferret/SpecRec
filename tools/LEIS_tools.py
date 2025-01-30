@@ -277,7 +277,9 @@ class spectrum:
         Returns delta of scattering angle in degrees for specific bin size dE of the analyzer at energy position
         corresponding to mu==M_target/M_incident
         """
-        return get_dBeta(self.__E0, self.__scattering_angle, mu, dE)
+        #return get_dBeta(self.__E0, self.__scattering_angle, mu, dE)
+        return get_dSigma(self.E0, self.__scattering_angle, mu, dE)
+
     
     def get_dE(self, mu: float):
         """
@@ -487,14 +489,14 @@ def get_mass_by_element(element_symbol:str):
                  if get_element_info_by_atomic_number(i)[1] == element_symbol), None)
     
 
-def get_dSigma(theta:float, mu:float, dE:float):
+def get_dSigma(E0:float, theta:float, mu:float, dE:float):
     """
     method return dOmega of scatted particles in steradians for 
     specific bin size dE of the analyzer at energy position
     cor__responding to mu==M_target/M_incident
     """
-    theta10 = get_angle_by_energy(get_energy_by_angle(theta, mu)-dE/2, mu)
-    theta11 = get_angle_by_energy(get_energy_by_angle(theta, mu)+dE/2, mu)
+    theta10 = get_angle_by_energy(E0, mu, get_energy_by_angle(E0,mu, theta)-dE/2)
+    theta11 = get_angle_by_energy(E0, mu, get_energy_by_angle(E0, mu, theta)+dE/2)
     return np.abs(2*np.pi*(np.cos(theta10*np.pi/180)-np.cos(theta11*np.pi/180)))
 
 def get_dBeta(E0:float, theta:float, mu:float, dE:float): 
