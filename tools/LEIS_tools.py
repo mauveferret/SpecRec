@@ -164,11 +164,11 @@ class spectrum:
         return self.__dBetas
     
     @property
-    def elem_conc_by_corrI(self):
+    def elem_conc_by_Icorr(self):
         """
         Relative surface concentration of the component on the LEIS spectrum in %
         """
-        return self.__elem_conc_by_corrI
+        return self.__elem_conc_by_Icorr
     
     @property
     def elem_conc_by_I(self):
@@ -282,9 +282,7 @@ class spectrum:
         Returns delta of scattering angle in degrees for specific bin size dE of the analyzer at energy position
         corresponding to mu==M_target/M_incident
         """
-        #return get_dBeta(self.__E0, self.__scattering_angle, mu, dE)
-        return get_dSigma(self.E0, self.__scattering_angle, mu, dE)
-
+        return get_dBeta(self.__E0, self.__scattering_angle, mu, dE)
     
     def get_dE(self, mu: float):
         """
@@ -295,7 +293,7 @@ class spectrum:
     
     def get_cross_section(self, target_symbol: str):
         """
-        Returns cross section of the target element by its symbol
+        Returns cross section in steradians for scattering on specific target element specified by symbol
         """
         return get_cross_section(self.__incident_atom, self.__E0, self.__scattering_angle, self.__dTheta, target_symbol)
     
@@ -325,9 +323,9 @@ class spectrum:
             int_total += self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])
             #int_total += self.__spectrum_int[peaks[i]]*dEs[i]/(self.__cross_sections[i])
 
-        self.__elem_conc_by_corrI = np.zeros(len(target_components))
+        self.__elem_conc_by_Icorr = np.zeros(len(target_components))
         for i in range (0,len(target_components)):      
-            self.__elem_conc_by_corrI[i] = self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])/int_total*100
+            self.__elem_conc_by_Icorr[i] = self.__spectrum_int[peaks[i]]/(self.__cross_sections[i]*self.__dBetas[i])/int_total*100
             #self.__elem_conc_by_corrI[i] = self.__spectrum_int[peaks[i]]*dEs[i]/(self.__cross_sections[i])/int_total*100
 
         int_total = 0
@@ -510,7 +508,9 @@ def get_dBeta(E0:float, theta:float, mu:float, dE:float):
     specific bin size dE of the analyzer at energy position
     cor__responding to mu==M_target/M_incident
     """
-    return  dE/(get_energy_by_angle(E0,theta, mu)*2*np.sin(theta*np.pi/180))*np.sqrt(mu**2-(np.sin(theta*np.pi/180))**2)*180/np.pi
+    dEtodB =get_energy_by_angle(E0,mu, theta)*2*np.sin(theta*np.pi/180)
+    dEtodB/=np.sqrt(mu**2-(np.sin(theta*np.pi/180))**2)*180/np.pi
+    return  dE/dEtodB
 
 def get_dE(E0:float, theta:float, mu:float, dB:float):
     """
@@ -615,7 +615,7 @@ def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
 
 
-        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_corrI[i])[0:4]+" %"
+        label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_Icorr[i])[0:4]+" %"
         i+=1
         plt.annotate(label, # this is the text
                     (x,y), # these are the coordinates to position the label
