@@ -36,7 +36,7 @@ targets = ("Au30Pd70", "Au50Pd50", "Au70Pd30")
 
 # plot all point 
 for calc in calcs:
-    data = leis.spectrum(spectrum_path0+os.sep+calc)
+    data = leis.spectrum(spectrum_path0+os.sep+calc, 50)
     data.do_elemental_analysis()
     
     conc_I = data.elem_conc_by_I[-1]
@@ -71,7 +71,7 @@ for incident_atom in incident_atoms:
                     conc_I_all.append(data.elem_conc_by_I[-1])
                 if 10<data.elem_conc_by_S[-1]<90:
                     conc_S_all.append(data.elem_conc_by_S[-1])
-                if 10<data.elem_conc_by_Icorr[-1]<90:
+                if 10<data.elem_conc_by_Icorr[-1]<90 and data.elem_conc_by_Icorr[-1]>0:
                     conc_corrI_all.append(data.elem_conc_by_Icorr[-1])
 
         avg_conc_I = np.mean(conc_I_all) if conc_I_all else 0
@@ -133,9 +133,9 @@ for row in range(0,3):
 for i in range (0,3):
     axs[0, i].set_ylim(10, 50)
 for i in range (0,3):
-    axs[1, i].set_ylim(30, 70)
+    axs[1, i].set_ylim(10, 70)
 for i in range (0,3):
-    axs[2, i].set_ylim(50, 90)
+    axs[2, i].set_ylim(10, 90)
 
 #for i in range (0,3):
  #   axs[i, 0].set_ylabel(targets[i])
