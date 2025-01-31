@@ -301,7 +301,7 @@ class spectrum:
         """
         Method to find peaks and corresponding elements in the spectrum
         """
-        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.04, width=5, distance=int(self.E0/100))
+        peaks, _ = scipy.signal.find_peaks(self.__spectrum_int, prominence=0.05, width=5, distance=60)
         self.__peaks = peaks
         target_masses = [self.get_target_mass_by_energy(peak) for peak in self.__spectrum_en[peaks]]
         target_components = [self.get_element_by_mass(mass) for mass in target_masses]

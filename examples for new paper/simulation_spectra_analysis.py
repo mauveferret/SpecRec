@@ -71,7 +71,7 @@ for incident_atom in incident_atoms:
                     conc_I_all.append(data.elem_conc_by_I[-1])
                 if 10<data.elem_conc_by_S[-1]<90:
                     conc_S_all.append(data.elem_conc_by_S[-1])
-                if 10<data.elem_conc_by_Icorr[-1]<90 and data.elem_conc_by_Icorr[-1]>0:
+                if 10<data.elem_conc_by_Icorr[-1]<90:
                     conc_corrI_all.append(data.elem_conc_by_Icorr[-1])
 
         avg_conc_I = np.mean(conc_I_all) if conc_I_all else 0
