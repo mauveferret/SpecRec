@@ -603,8 +603,6 @@ def plot_dBeta_map():
     plt.clim(0.001, 0.35)
     plt.show()
 
-#plot_dBeta_map()
-
 def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
     Method to plot the spectrum with quantified peaks
