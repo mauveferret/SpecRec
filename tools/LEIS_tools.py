@@ -597,7 +597,7 @@ def plot_dBeta_map():
     #file.close()
 
     #nipy_spectral   gist_ncar
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(10, 6))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
     plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
     plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=np.linspace(0.001, 0.35, 10))
@@ -610,7 +610,7 @@ def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
     Method to plot the spectrum with quantified peaks
     """
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(10, 6))
     plt.plot(spectrum.spectrum_en[int(Emin/spectrum.step):]/1000, spectrum.spectrum_int[int(Emin/spectrum.step):], '-', linewidth=2, label=spectrum.calc_name) 
     plt.plot(spectrum.spectrum_en[spectrum.peaks]/1000, spectrum.spectrum_int[spectrum.peaks], "o", color='red')
 
