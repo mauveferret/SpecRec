@@ -256,9 +256,12 @@ class spectrum:
         self.__spectrum_en = np.arange(0, raw_spectrum_en[-1], self.__step)
         # scaling range in eV (influence spectra normalization in Web charts and output files)
         self.__spectrum_int = np.interp(self.__spectrum_en,raw_spectrum_en, raw_spectrum_int)
-        global Emax
-        Emax = self.__spectrum_en[-1]-100
-        self.__spectrum_int /= max(self.__spectrum_int[int(Emin/step):int(self.__spectrum_en[-1]-100/step)])
+        try:
+            global Emax
+            Emax = self.__spectrum_en[-1]-100
+            self.__spectrum_int /= max(self.__spectrum_int[int(Emin/step):int(self.__spectrum_en[-1]-100/step)])
+        except:
+            print("ERROR during spectrum import. File not found: "+spectrum_path)
         if filter_window_length > 0:
             self._smooth(filter_window_length)
    
