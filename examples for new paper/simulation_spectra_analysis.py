@@ -24,20 +24,23 @@ import LEIS_tools as leis
 
 #####################################    PRESETS      #####################################
 spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"sim_AuPd"
+leis.Emin = 10
 dE = 2
 #############################################################################################
 
 fig, axs = plt.subplots(3, 3, figsize=(20, 20))
-plt.subplots_adjust(wspace=0.03, hspace=0.03) # Adjust the width and height space between subplots
+plt.subplots_adjust(wspace=0.032, hspace=0.032) # Adjust the width and height space between subplots
 
 calcs = os.listdir(spectrum_path0)
 incident_atoms = ("Ne", "Ar", "Kr")
 targets = ("Au30Pd70", "Au50Pd50", "Au70Pd30")
+datas: list[leis.spectrum] = []
 
 # plot all point 
 for calc in calcs:
     data = leis.spectrum(spectrum_path0+os.sep+calc, 50)
     data.do_elemental_analysis()
+    datas.append(data)
     
     conc_I = data.elem_conc_by_I[-1]
     conc_S = data.elem_conc_by_S[-1]
@@ -62,18 +65,16 @@ for incident_atom in incident_atoms:
         conc_S_all = []
         conc_corrI_all = []
 
-        for calc in calcs:
-            if incident_atom in calc and target in calc:
-                data = leis.spectrum(spectrum_path0+os.sep+calc)
-                data.do_elemental_analysis()
-                
-                if 10<data.elem_conc_by_I[-1]<90:
-                    conc_I_all.append(data.elem_conc_by_I[-1])
-                if 10<data.elem_conc_by_S[-1]<90:
+        for data in datas:
+            if incident_atom in data.spectrum_path and target in data.spectrum_path:
+                conc_I_all.append(data.elem_conc_by_I[-1])
+                if 10<data.elem_conc_by_S[-1]<90: 
+                    #due to incorrect automated analysis in case of large angles
                     conc_S_all.append(data.elem_conc_by_S[-1])
-                if 10<data.elem_conc_by_Icorr[-1]<90:
-                    conc_corrI_all.append(data.elem_conc_by_Icorr[-1])
-
+                conc_corrI_all.append(data.elem_conc_by_Icorr[-1])
+                #if "Au70Pd30" in target and "Kr" in incident_atom and data.dTheta == 1.0:
+                #    print(f"{data.scattering_angle} {data.elem_conc_by_S[-1]}")
+                
         avg_conc_I = np.mean(conc_I_all) if conc_I_all else 0
         std_conc_I = np.std(conc_I_all) if conc_I_all else 0
 
@@ -91,6 +92,7 @@ for incident_atom in incident_atoms:
             'avg_conc_corrI': avg_conc_corrI,
             'std_conc_corrI': std_conc_corrI
         }
+
 """
 for key, value in results.items():
     incident_atom, target = key
@@ -100,7 +102,7 @@ for key, value in results.items():
     print(f"  Average conc_corrI: {value['avg_conc_corrI']}, Deviation: {value['std_conc_corrI']}")
 """
 
-# configure plot
+# configure plots
 for row in range(0,3):
     for column in range(0,3):
         avg_conc_I = results[(incident_atoms[column], targets[row])]['avg_conc_I']
@@ -113,8 +115,9 @@ for row in range(0,3):
         std_conc_corrI = results[(incident_atoms[column], targets[row])]['std_conc_corrI']
         box += f'C_Icorr={avg_conc_corrI:.1f}±{std_conc_corrI:.1f} %'
         
-        axs[row, column].text(25, int(targets[row][2:4])-15, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-        axs[row, column].set_xlim(20, 140)
+        legend_y_position = 8 if row == 0 or row == 1 else 17
+        axs[row, column].text(23, int(targets[row][2:4])-legend_y_position, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+        axs[row, column].set_xlim(20, 161)
         if row==2 and column == 1:
             axs[row, column].set_xlabel("Scattering angle, deg",  fontsize=14)
         if row!=2:
@@ -123,7 +126,7 @@ for row in range(0,3):
             axs[row, column].set_ylabel(targets[row]+'\nAu, conc, %', fontsize=14)
         if row==0:
             axs[row, column].set_title(incident_atoms[column], fontsize=16)
-        axs[row, column].set_xticks(np.arange(20, 140, 20))
+        axs[row, column].set_xticks(np.arange(20, 161, 20))
         axs[row, column].minorticks_on()
         if column!=0:
             axs[row , column].set_yticklabels([])
@@ -131,18 +134,18 @@ for row in range(0,3):
                      color='black', linestyle=':', alpha=0.7, linewidth=2)
     
 for i in range (0,3):
-    axs[0, i].set_ylim(10, 50)
+    axs[0, i].set_ylim(20, 50)
 for i in range (0,3):
-    axs[1, i].set_ylim(10, 70)
+    axs[1, i].set_ylim(40, 70)
 for i in range (0,3):
-    axs[2, i].set_ylim(10, 90)
+    axs[2, i].set_ylim(50, 90)
 
 #for i in range (0,3):
  #   axs[i, 0].set_ylabel(targets[i])
     
 fig.suptitle("Au concenctration estimations based on peak Intensities (crosses), Areas (circles) and corrected Intensities (stars)", fontsize=20)
-axs[0, 0].set_title('Ne')
-axs[0, 1].set_title('Ar')
-axs[0, 2].set_title('Kr')
+axs[0, 0].set_title('Ne', fontsize=16)
+axs[0, 1].set_title('Ar', fontsize=16)
+axs[0, 2].set_title('Kr', fontsize=16)
 
 plt.show()
