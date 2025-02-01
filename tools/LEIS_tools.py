@@ -669,11 +669,16 @@ def plot_spectrum(spectrum: spectrum, title = None):
                                                    
 #########################   YOUNG'S EMPIRICAL LEIS SPECTRA APPROXIMATION  #####################################                     
 
+def _young( E, E0, A, R, FWHM, B, K):
+    #R=1
+    I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
+    I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
+    I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
+    return I_el+I_inel*I_tail
 
 class fitted_spectrum:
     
     __param_bounds = ([0,0,0,0,0,0,0,0],[np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf])
-
     
     def __init__(self, spectrum:spectrum, target_element1:str, target_element2:str):
         """
@@ -682,8 +687,20 @@ class fitted_spectrum:
         self.__spectrum = spectrum
         self.__target_element1 = target_element1
         self.__target_element2 = target_element2
-        self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.scattering_angle)
-        self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
+        
+        try:
+            self.__spectrum.do_elemental_analysis()
+        except:
+            print("ERROR in fitted_spectrum constructor: spectrum is not analyzed")
+        
+        # for better fitting real peak positions are better than calculated ones
+        # due to some small inelastic shifts
+        # Additioanlly, we shift the position of the first peak to the left by 20 eV
+        # as it is located on the left slope of the more energetic one
+        self.__E01 = spectrum.peaks[0]*spectrum.step-20
+        self.__E02 = spectrum.peaks[1]*spectrum.step
+        #self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.scattering_angle)
+        #self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
         
         pars, covariance = curve_fit(self.__twoCompTargetFitting, 
                                      spectrum.spectrum_en, spectrum.spectrum_int, 
@@ -692,73 +709,66 @@ class fitted_spectrum:
         self.__pars = pars
         
         
-    def __young( E, E0, A, R, FWHM, B, K):
-        #R=1
-        I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
-        I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
-        I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
-        return I_el+I_inel*I_tail
-    
     def __twoCompTargetFitting(self, E, A1, FWHM1, B1, K1, A2, FWHM2, B2, K2):
-        
-        def young2( E, E0, A, R, FWHM, B, K):
-            #R=1
-            I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
-            I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
-            I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
-            return I_el+I_inel*I_tail
-        
-        E01 = 14100
-        E02 = 14500
-        
+
         # We specify R=1 to use Lorenzian distribution for elastic part of the spectrum
-        return young2(E, E01, A1, 1, FWHM1, B1, K1) + young2(E, E02, A2, 1, FWHM2, B2, K2)
+        return _young(E, self.__E01, A1, 1, FWHM1, B1, K1) + _young(E, self.__E02, A2, 1, FWHM2, B2, K2)
 
 
     def get_fitted_spectrum(self):
         """
         Method to get the fitted spectrum
         """
-        return self.__twoCompTargetFitting(self.__spectrum.spectrum_en, self.__pars[0], self.__pars[1], self.__pars[2], self.__pars[3], self.__pars[4], self.__pars[5], self.__pars[6], self.__pars[7])
-
+        fitted_spectrum_int = self.__twoCompTargetFitting(self.__spectrum.spectrum_en, self.__pars[0], self.__pars[1], self.__pars[2], self.__pars[3], self.__pars[4], self.__pars[5], self.__pars[6], self.__pars[7])
+        return norm(fitted_spectrum_int)
+    
+    
     def get_elastic_part(self, element: str):
         """
         Method to get the elastic part of the fitted spectrum
         """
-        if element in self.__target_element1:
-            return self.__young(self.__spectrum.spectrum_en, self.__E01, self.__pars[0], 1, self.__pars[1], 0, self.__pars[3]) 
-        elif element in self.__target_element2: 
-            return self.__young(self.__spectrum.spectrum_en, self.__E02, self.__pars[4], 1, self.__pars[5], 0, self.__pars[7])
-        else:
+        
+        if element not in self.__target_element1 and element not in self.__target_element2:
             print("ERROR in get_elastic_part: element not found")
             return None
+        if element in self.__target_element1:
+            peak_position = self.__E01
+            elastic_part_int = [_young(E, peak_position, self.__pars[0], 1, self.__pars[1], 0, 0) for E in self.__spectrum.spectrum_en]
+            return elastic_part_int
+        if element in self.__target_element2:
+            peak_position = self.__E02
+            elastic_part_int = [_young(E, peak_position, self.__pars[4], 1, self.__pars[5], 0, 0) for E in self.__spectrum.spectrum_en]
+            return elastic_part_int
     
     def get_inelastic_part(self, element: str):
         """
         Method to get the inelastic part of the fitted spectrum
         """
-        if element in self.__target_element1:
-            return self.__young(self.__spectrum.spectrum_en, self.__E01, 0, 1, self.__pars[1], self.__pars[2], self.__pars[3])
-        elif element in self.__target_element2:
-            return self.__young(self.__spectrum.spectrum_en, self.__E02, 0, 1, self.__pars[5], self.__pars[6], self.__pars[7])
-        else:
-            print("ERROR in get_inelastic_part: element not found")
+        if element not in self.__target_element1 and element not in self.__target_element2:
+            print("ERROR in get_elastic_part: element not found")
             return None
-
+        if element in self.__target_element1:
+            peak_position = self.__E01
+            inelastic_part_int = [_young(E, peak_position, 0, 1, self.__pars[1], self.__pars[2], self.__pars[3]) for E in self.__spectrum.spectrum_en]   
+            return inelastic_part_int
+        if element in self.__target_element2:
+            peak_position = self.__E02
+            inelastic_part_int = [_young(E, peak_position, 0, 1, self.__pars[5], self.__pars[6], self.__pars[7]) for E in self.__spectrum.spectrum_en]
+            return inelastic_part_int
 
     def get_concentration(self):
         """
         Method to get the concentration of the more heavy element in the fitted spectrum
         """
-        int1 = sum(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.__incident_atom, 
-                                                                                    self.__spectrum.__E0, 
-                                                                                    self.__spectrum.__scattering_angle, 
-                                                                                    self.__spectrum.__dTheta, 
+        int1 = sum(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.incident_atom, 
+                                                                                    self.__spectrum.E0, 
+                                                                                    self.__spectrum.scattering_angle, 
+                                                                                    self.__spectrum.dTheta, 
                                                                                     self.__target_element1)
-        int2 = sum(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.__incident_atom, 
-                                                                                    self.__spectrum.__E0, 
-                                                                                    self.__spectrum.__scattering_angle, 
-                                                                                    self.__spectrum.__dTheta, 
+        int2 = sum(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.incident_atom, 
+                                                                                    self.__spectrum.E0, 
+                                                                                    self.__spectrum.scattering_angle, 
+                                                                                    self.__spectrum.dTheta, 
                                                                                     self.__target_element2)
 
         return int2/(int1+int2)*100

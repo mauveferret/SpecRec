@@ -1,6 +1,6 @@
 # LEIS Energy Spectra Reconstruction
 
-The program **SpecRec** is intended for the analysis of low-energy ion scattering spectroscopy data. In particular, it considers the transmission function, automated elemental analysis, and surface concentration estimations.
+The program **SpecRec** is intended for the analysis of low-energy ion scattering spectroscopy data. In particular, it considers the transmission function, provides automated elemental analysis, and surface concentration estimations.
 
 Its LEIS Spectra Convolution/Deconvolution module was written as part of a scientific paper published in Elsevier's journal:
 
@@ -11,6 +11,8 @@ Current work on the project involves writing a module for quantitative character
 ![graphical_abstract](https://ars.els-cdn.com/content/image/1-s2.0-S0169433224017197-ga1.jpg)
 
 ## Description
+
+\>>>>>>>>>>> **BRIEFLY**: just look at this [tutorial file](https://github.com/mauveferret/SpecRec/blob/main/main_example.ipynb)  <<<<<<<<<<<<
 
 **SpecRec** can be used to post-process experimental spectra measured by electrostatic or magnetic separators of charged particles. It allows for smoothing, adding noise to the original spectra, and convolution and deconvolution with different kernel shapes (Gaussian, Triangle, Rectangle, and arbitrary) with constant or broadening full width at half maximum (FWHM). It can thus be useful in mass analysis and ion scattering spectroscopy.
 
@@ -39,7 +41,7 @@ AS the entrypoint a ipynb [tutorial file](https://github.com/mauveferret/SpecRec
 
 As the program does not provide a graphical user interface, the best way to launch it is with a text editor that has a built-in Python application launcher. A free, cross-platform, and open-source [Visual Studio Code](https://code.visualstudio.com/) is highly recommended. However, it's not strictly necessary, as the script can be launched as an executable without any IDE via the shell.
 
-### File Structure
+### File Structure (the information is little bit out of date, look example file)
 
 * `spectraConvDeconv_tools.py` contains all functions and global variables for the study and serves as a library for other Python executables. It doesn't do anything by itself.
 
@@ -65,7 +67,8 @@ If you have questions regarding this program or any execution problems, please c
 
 ## License
 
-This project is licensed under the GNU License - see the LICENSE.md file for details.
+This project is licensed under the GNU License - see the [this](https://github.com/mauveferret/SpecRec/blob/main/LICENSE.md)
+ file for details.
 
 ## Acknowledgements
 
