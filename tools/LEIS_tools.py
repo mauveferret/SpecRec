@@ -545,12 +545,12 @@ def get_intensity_corrections(E0:float, mu1:float, mu2:float, theta:float, R = -
         dBeta1 = (get_energy_by_angle(E0, theta, mu1))**2*2*np.sin(theta*np.pi/180)/np.sqrt(mu1**2-(np.sin(theta*np.pi/180))**2)
     return dBeta2/dBeta1
 
-def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float):
+def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float, dE: float = 1):
     """
     Returns sensitivity factor for the given incident and target elements
     """
     mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
-    return 1/(get_dBeta(E0, theta, mu, get_dE(E0, theta, mu, dTheta))*get_cross_section(incident_element, E0, theta, dTheta, target_element))
+    return 1/(get_dBeta(E0, theta, mu, dE)*get_cross_section(incident_element, E0, theta, dTheta, target_element))
 
 ##########################################      PLOTS     ###################################################
 

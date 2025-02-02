@@ -50,6 +50,26 @@ for spectrum in exp_spectra:
     int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta)
     print(data.calc_name[0:15]+" "+data.incident_atom+" "+" conc:"+str(int_Au/(int_Au+int_Pd)*100)[0:4]+"%")
     
+    # Create a figure for plotting
+    plt.figure(figsize=(10, 6))
 
+    # Plot reference spectra
+    if 'ref_Ne_Au' in locals():
+        plt.plot(ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int, label='Ne-Au reference')
+    if 'ref_Ar_Au' in locals():
+        plt.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int, label='Ar-Au reference')
+
+    # Plot data spectra
+    for spectrum in exp_spectra:
+        if not "ref" in spectrum:
+            data = leis.spectrum(spectrum_path0+os.sep+spectrum, 20)
+            plt.plot(data.spectrum_en, data.spectrum_int, label=data.calc_name[:15])
+
+    plt.xlabel('Energy (eV)')
+    plt.ylabel('Intensity (a.u.)')
+    plt.title('LEIS Spectra')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 #leis.plot_spectrum(ref_Ar_Au)
 
