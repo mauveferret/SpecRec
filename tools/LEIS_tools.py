@@ -560,7 +560,8 @@ def get_intensity_corrections(E0:float, mu1:float, mu2:float, theta:float, R = -
 
 def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float, R : float = -1,  dE: float = 1):
     """
-    Returns sensitivity factor for the given incident and target elements
+    Returns sensitivity factor for the given incident and target elements.
+    The intensity of the peak should be MULTIPLIED by this factor
     if R > 0, dE is considered as R*E1 and the transmission function
     is considered as a linear function of energy
     """
@@ -800,7 +801,14 @@ class fitted_spectrum:
 
         return int2/(int1+int2)*100
         
-
+    def get_conc_by_inten(self, R):
+        int1 = max(self.get_elastic_part(self.__target_element1))*get_sensitivity_factor(self.__spectrum.E0, self.__spectrum.incident_atom,
+                                                                                         self.__target_element1, self.__spectrum.scattering_angle,
+                                                                                         self.__spectrum.dTheta, R)
+        int2 = max(self.get_elastic_part(self.__target_element2))*get_sensitivity_factor(self.__spectrum.E0, self.__spectrum.incident_atom,
+                                                                                         self.__target_element2, self.__spectrum.scattering_angle,
+                                                                                         self.__spectrum.dTheta, R)
+        return int2/(int1+int2)*100
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
 #     /$$$$$$  /$$$$$$$   /$$$$$$   /$$$$$$   /$$$$$$           /$$$$$$  /$$$$$$$$  /$$$$$$  /$$$$$$$$ /$$$$$$  /$$$$$$  /$$   /$$

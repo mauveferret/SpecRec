@@ -60,6 +60,7 @@ for spectrum in exp_spectra:
     # spectra are normalized to the 1 and as soon as the Au peal is the most intense, we know it is 1
     int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta, R = 0.01)
     conc_Au_semiRef = int_Au/(int_Au+int_Pd)*100
+    
     # Calculate the concentration of Au and Pd based on the Young's fitting model 
     young_fitting = leis.fitted_spectrum(data, "Pd", "Au")
     conc_Au_fitting = young_fitting.get_concentration()
