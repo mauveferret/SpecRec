@@ -24,13 +24,14 @@ import LEIS_tools as leis
 #import spectraConvDeconv_tools as SCD
 
 # Presets
-
 spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd"
 leis.Emin = 5000 # eV
 leis.Emax = 15000 # eV
 dE = 2 # eV
 # SCD.step = dE # eV
 filter_window = 50 # eV
+# R - relative energy resolution of spectrometer
+R = 0.01
 plt.figure(figsize=(12, 8))
 
 # Load reference spectra
@@ -55,9 +56,9 @@ for spectrum in exp_spectra:
             print(f"No reference was found for the {data.incident_atom} incident atom")
             
     # Calculate the concentration of Au and Pd based on the SemiRef approach and the sensitivity factors
-    int_Pd = leis.peak(Pd_signal)*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Pd", data.scattering_angle, data.dTheta, 2)
+    int_Pd = leis.peak(Pd_signal)*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Pd", data.scattering_angle, data.dTheta, R = 0.01)
     # spectra are normalized to the 1 and as soon as the Au peal is the most intense, we know it is 1
-    int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta, 2)
+    int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta, R = 0.01)
     conc_Au_semiRef = int_Au/(int_Au+int_Pd)*100
     # Calculate the concentration of Au and Pd based on the Young's fitting model 
     young_fitting = leis.fitted_spectrum(data, "Pd", "Au")

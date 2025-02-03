@@ -383,6 +383,19 @@ def peak(signal: str):
     """
     return max(signal[int(Emin/step):int(Emax/step)])
 
+def peak_pos(signal: str):
+    """
+    """
+    min = 0
+    i_min = 0
+    for i in range(0,len(signal)):
+        if signal[i]>min:
+            min = signal[i]
+            i_min = i
+            
+    return i_min
+        
+
 def get_standart_deviation(data):
     """
     method for calculating average and standart deviation of the data
@@ -545,13 +558,20 @@ def get_intensity_corrections(E0:float, mu1:float, mu2:float, theta:float, R = -
         dBeta1 = (get_energy_by_angle(E0, theta, mu1))**2*2*np.sin(theta*np.pi/180)/np.sqrt(mu1**2-(np.sin(theta*np.pi/180))**2)
     return dBeta2/dBeta1
 
-def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float, dE: float = 1):
+def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, theta:float, dTheta:float, R : float = -1,  dE: float = 1):
     """
     Returns sensitivity factor for the given incident and target elements
+    if R > 0, dE is considered as R*E1 and the transmission function
+    is considered as a linear function of energy
     """
     mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
-    return 1/(get_dBeta(E0, theta, mu, dE)*get_cross_section(incident_element, E0, theta, dTheta, target_element))
-
+    if R > 0:
+        dE = R*get_energy_by_angle(E0, theta, mu)   
+    sensitivity_factor = 1/(get_dBeta(E0, theta, mu, dE)*get_cross_section(incident_element, E0, theta, dTheta, target_element))
+    if R > 0:
+        return sensitivity_factor/get_energy_by_angle(E0, theta, mu)   
+    else:
+        return sensitivity_factor
 ##########################################      PLOTS     ###################################################
 
 #    /$$$$$$$  /$$        /$$$$$$  /$$$$$$$$ /$$$$$$ 
@@ -697,11 +717,18 @@ class fitted_spectrum:
         # due to some small inelastic shifts
         # Additioanlly, we shift the position of the first peak to the left by 20 eV
         # as it is located on the left slope of the more energetic one
-        self.__E01 = spectrum.peaks[0]*spectrum.step-20
-        self.__E02 = spectrum.peaks[1]*spectrum.step
-        #self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.scattering_angle)
-        #self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
+        #self.__E01 = spectrum.peaks[0]*spectrum.step-20
+        #self.__E02 = spectrum.peaks[1]*spectrum.step
         
+        # TODO refactor !
+        # Yet another way to find peaks
+        
+        self.__E01 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element1)/spectrum.M0, spectrum.scattering_angle)
+        self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
+        
+        self.__E01 = int((self.__E01-100))+peak_pos(spectrum.spectrum_int[int((self.__E01-100)/spectrum.step):int((self.__E01+100)/spectrum.step)])*spectrum.step-20
+        self.__E02 = int((self.__E02-100))+peak_pos(spectrum.spectrum_int[int((self.__E02-100)/spectrum.step):int((self.__E02+100)/spectrum.step)])*spectrum.step
+
         pars, covariance = curve_fit(self.__twoCompTargetFitting, 
                                      spectrum.spectrum_en, spectrum.spectrum_int, 
                                      method = 'dogbox', maxfev=500000, bounds=self.__param_bounds, loss='linear', ftol=1E-9)
