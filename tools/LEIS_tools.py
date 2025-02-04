@@ -595,7 +595,7 @@ def plot_dBeta_map():
     E0 = 10000
     step_mu = 0.0005
     min_value_mu = 0.5
-    max_value_mu = 20
+    max_value_mu = 21
     number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
 
     step_theta = 0.5 #0.5
@@ -625,11 +625,14 @@ def plot_dBeta_map():
     plt.figure(figsize=(10, 6))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
     plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
-    plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=np.linspace(0.001, 0.35, 10))
+    plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35])
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
+    plt.yticks(np.arange(0, max_value_mu, 2))
     plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
     plt.clim(0.001, 0.35)
+    plt.minorticks_on()
     plt.show()
+
 
 def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
