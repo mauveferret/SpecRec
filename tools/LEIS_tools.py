@@ -633,6 +633,54 @@ def plot_dBeta_map():
     plt.minorticks_on()
     plt.show()
 
+def plot_CrossSection_map():
+    """
+    Method to plot the map of dSidma/dOmega values in dependence of scattering angle and mu
+    """
+    global E0
+    E0 = 10000
+    step_mu = 1#0.0005
+    min_value_mu = 1
+    max_value_mu = 22
+    number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
+
+    incident_atom = "Ne"
+    incident_mass = get_mass_by_element(incident_atom)
+    step_theta = 1 #0.5
+    min_value_theta = 10
+    max_value_theta = 170
+    number_of_points_theta = int((max_value_theta-min_value_theta)/step_theta)
+    
+    map0 = np.zeros((number_of_points_mu, number_of_points_theta))
+    angles = np.zeros(number_of_points_theta)
+    mu_values = np.zeros(number_of_points_mu)
+    #file = open('leis_out.txt', 'w')
+    for i_theta in range (0,number_of_points_theta):
+        theta = min_value_theta+i_theta*step_theta
+        angles[i_theta] = theta
+        min_value_mu = np.sin(theta*np.pi/180)
+        for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
+            mu = min_value_mu+i_mu*step_mu
+            mu_values[i_mu] = mu
+            map0[i_mu, i_theta] =  np.log10(get_cross_section(incident_atom, E0, theta, 2, get_element_by_mass(mu*incident_mass)))  #get_dBeta(E0, theta, mu, 2)/2
+            #print(str(map0[i_mu, i_theta])[0:5], end=" ")
+           # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
+        #file.write("\n")
+        #print("\n")
+    #file.close()
+
+    #nipy_spectral   gist_ncar
+    plt.figure(figsize=(10, 6))
+    plt.contourf(angles,mu_values, map0, cmap='Spectral', levels=np.linspace(-3, 0.5, 200))
+    #plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr')
+    plt.xlabel('scattering angle θ, degrees', fontsize=12)
+    plt.yticks(np.arange(0, max_value_mu, 2))
+    plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
+   # plt.clim(0.001, 0.35)
+    plt.minorticks_on()
+    plt.show()
+
 
 def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
