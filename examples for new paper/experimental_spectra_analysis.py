@@ -54,28 +54,34 @@ for spectrum in exp_spectra:
         else:
             Pd_signal = data.spectrum_int
             print(f"No reference was found for the {data.incident_atom} incident atom")
-            
-    # Calculate the concentration of Au and Pd based on the SemiRef approach and the sensitivity factors
+       # Calculate the concentration of Au and Pd based on the SemiRef approach and the sensitivity factors
     int_Pd = leis.peak(Pd_signal)*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Pd", data.scattering_angle, data.dTheta, R = 0.01)
     # spectra are normalized to the 1 and as soon as the Au peal is the most intense, we know it is 1
     int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta, R = 0.01)
     conc_Au_semiRef = int_Au/(int_Au+int_Pd)*100
+    
+    int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, data.dTheta, "Pd")
+    int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, data.dTheta, "Au")
+    
+    conc_Au_semiRef_cross = int_Au/(int_Au+int_Pd)*100
     
     # Calculate the concentration of Au and Pd based on the Young's fitting model 
     young_fitting = leis.fitted_spectrum(data, "Pd", "Au")
     conc_Au_fitting = young_fitting.get_concentration()
     
     print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef:.2f} % {conc_Au_fitting:.2f} %")
-    plt.plot(i, conc_Au_semiRef, "x", color="red" if data.incident_atom == "Ne" else "green")
+    plt.plot(i, conc_Au_semiRef, "*", color="red" if data.incident_atom == "Ne" else "green")
+    plt.plot(i, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
     plt.plot(i, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
+
     i+=1
 
 plt.axhline(y=50, color='black', linestyle=':', alpha=0.7, linewidth=2)
-plt.ylim(20, 80)
+plt.ylim(30, 75)
 plt.xlabel('spectrum number')
 plt.ylabel('concentration of Au, %')
-plt.title('Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra')
+plt.title('Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. Ne - RED, Ar - GREEN')
 plt.grid(True)
 plt.minorticks_on()
-plt.legend(["SemiRef", "Fitting"])
+plt.legend(["SemiRef by corrInt", "SemiRef by Int", "by Fitting"])
 plt.show()
