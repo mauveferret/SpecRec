@@ -9,7 +9,7 @@ Foundation, either version 3 of the License, or (at your option) any later
 version.
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+FOR _A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 If you have questions regarding this program, please contact NEEfimov@mephi.ru
 """
@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib.pyplot  as plt    
 import scipy.signal
 from scipy.optimize import curve_fit
+from matplotlib.colors import LogNorm
 import math, re, os
 #from mendeleev import get_all_elements
 
@@ -36,7 +37,7 @@ def get_element_info_by_atomic_number(atomic_number: int):
     Returns the mass and symbol (int, str) of the element given its atomic number.
     """
     
-    # Define a dictionary with atomic numbers as keys and tuples of (mass, symbol) as values
+    # Define _a dictionary with atomic numbers as keys and tuples of (mass, symbol) as values
     elements_data = {
         1: (1.008, 'H'), 2: (4.0026, 'He'), 3: (6.94, 'Li'), 4: (9.0122, 'Be'), 5: (10.81, 'B'),
         6: (12.011, 'C'), 7: (14.007, 'N'), 8: (15.999, 'O'), 9: (18.998, 'F'), 10: (20.180, 'Ne'),
@@ -122,7 +123,7 @@ class spectrum:
         """
         mass of insident atom in a.m.u.
         """
-        return self.__M0
+        return self._M0
     
     @property
     def scattering_angle(self):
@@ -190,9 +191,9 @@ class spectrum:
 
     def import_spectrum(self, spectrum_path: str, filter_window_length=-1):  
         """
-        Method to import energy spectrum from a file located at spectrum_path
+        Method to import energy spectrum from _a file located at spectrum_path
         filter windows length is used for smoothing of the spectrum. 
-        It has a default value of -1, which means no smoothing. The positive
+        It has _a default value of -1, which means no smoothing. The positive
         value of filter_window_length will apply Savitzky-Golay filter with 
         polynoms of the 3d order. Filter window length has dimension of energy step [eV].
         """
@@ -217,7 +218,7 @@ class spectrum:
         if "sim" in self.__calc_name:
             # get initial params from the filename
             self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
-            self.__M0 = get_mass_by_element(self.__incident_atom)
+            self._M0 = get_mass_by_element(self.__incident_atom)
             
             self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
             self.__scattering_angle = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
@@ -230,14 +231,14 @@ class spectrum:
             # parameters are valid ONLY for data obtained on
             # the Large-mass monocromator "Mephi" aka "Crocodile" LEIS facility  
             self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]
-            self.__M0 = get_mass_by_element(self.__incident_atom)
+            self._M0 = get_mass_by_element(self.__incident_atom)
             self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
             self.__scattering_angle = 32 # scattering angle is usually fixed at 32 degrees
             self.__dTheta = 1.0	
         elif "ex" in spectrum_path and "sim" in spectrum_path:
             # get initial params from the filename
             self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0]).replace(".","")
-            self.__M0 = get_mass_by_element(self.__incident_atom)
+            self._M0 = get_mass_by_element(self.__incident_atom)
             self.__E0 = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0].split(self.__incident_atom)[1])*1000
             self.__scattering_angle = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[1].split("deg")[0])
             self.__dTheta = 1.0
@@ -276,7 +277,7 @@ class spectrum:
         """
         Returns mass of the target element by energy of the scattered particle E1
         """
-        return get_target_mass_by_energy(self.__scattering_angle, self.__M0, self.__E0, E1)
+        return get_target_mass_by_energy(self.__scattering_angle, self._M0, self.__E0, E1)
     
     def get_element_by_mass(self, mass: float):
         """
@@ -313,7 +314,7 @@ class spectrum:
         target_masses = [self.get_target_mass_by_energy(peak) for peak in self.__spectrum_en[peaks]]
         target_components = [self.get_element_by_mass(mass) for mass in target_masses]
         
-        self.__dBetas = [ self.get_dBeta(mass/self.__M0, self.__step) for mass in target_masses]
+        self.__dBetas = [ self.get_dBeta(mass/self._M0, self.__step) for mass in target_masses]
         dEs = [self.get_dE(mass/self.M0) for mass in target_masses]
         self.__cross_sections = [self.get_cross_section(component) for component in target_components]
         
@@ -563,7 +564,7 @@ def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, t
     Returns sensitivity factor for the given incident and target elements.
     The intensity of the peak should be MULTIPLIED by this factor
     if R > 0, dE is considered as R*E1 and the transmission function
-    is considered as a linear function of energy
+    is considered as _a linear function of energy
     """
     mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
     if R > 0:
@@ -633,22 +634,24 @@ def plot_dBeta_map():
     plt.minorticks_on()
     plt.show()
 
-def plot_CrossSection_map():
+def plot_CrossSection_map(type="scat"):
     """
     Method to plot the map of dSidma/dOmega values in dependence of scattering angle and mu
     """
     global E0
     E0 = 10000
-    step_mu = 1#0.0005
+    step_mu = 1
     min_value_mu = 1
-    max_value_mu = 22
+    max_value_mu = total_num_elem-10
     number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
 
     incident_atom = "Ne"
     incident_mass = get_mass_by_element(incident_atom)
-    step_theta = 1 #0.5
+    step_theta = 0.5 #0.5
     min_value_theta = 10
     max_value_theta = 170
+    if "rec" in type:
+        max_value_theta = 80
     number_of_points_theta = int((max_value_theta-min_value_theta)/step_theta)
     
     map0 = np.zeros((number_of_points_mu, number_of_points_theta))
@@ -658,29 +661,31 @@ def plot_CrossSection_map():
     for i_theta in range (0,number_of_points_theta):
         theta = min_value_theta+i_theta*step_theta
         angles[i_theta] = theta
-        min_value_mu = np.sin(theta*np.pi/180)
+        # TODO fix bug with arcsin 
+        min_value_mu_string = get_element_by_mass(np.sin(theta*np.pi/180)*incident_mass)
+        min_value_mu = next (i for i in range(1, total_num_elem) if get_element_info_by_atomic_number(i)[1] == min_value_mu_string)
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
-            mu_values[i_mu] = mu
-            map0[i_mu, i_theta] =  np.log10(get_cross_section(incident_atom, E0, theta, 2, get_element_by_mass(mu*incident_mass)))  #get_dBeta(E0, theta, mu, 2)/2
+            mu_values[i_mu] = get_element_info_by_atomic_number(int(mu))[0]
+            #print(get_element_info_by_atomic_number(int(mu))[1])
+            map0[i_mu, i_theta] = (get_cross_section(incident_atom, E0, theta, 2, get_element_info_by_atomic_number(int(mu))[1],  type))  #get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
            # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
         #file.write("\n")
         #print("\n")
     #file.close()
 
-    #nipy_spectral   gist_ncar
     plt.figure(figsize=(10, 6))
-    plt.contourf(angles,mu_values, map0, cmap='Spectral', levels=np.linspace(-3, 0.5, 200))
-    #plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
-    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr')
+    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(-6, 1, 100), norm=LogNorm())
+    plt.text(60, 16, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr', ticks=[1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10])
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
-    plt.yticks(np.arange(0, max_value_mu, 2))
-    plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
+    plt.yticks(np.arange(10, 201, 10))
+    plt.ylabel('target atom mass, a.m.u.',fontsize=12)
+    plt.ylim(10, 210)
    # plt.clim(0.001, 0.35)
     plt.minorticks_on()
     plt.show()
-
 
 def plot_spectrum_with_concs(spectrum: spectrum, title = None):
     """
@@ -692,7 +697,6 @@ def plot_spectrum_with_concs(spectrum: spectrum, title = None):
 
     i=0
     for x,y in zip(spectrum.spectrum_en[spectrum.peaks]/1000,spectrum.spectrum_int[spectrum.peaks]):
-
 
         label = str(spectrum.target_components[i])+"\n"+str(spectrum.elem_conc_by_Icorr[i])[0:4]+" %"
         i+=1
@@ -973,74 +977,119 @@ def _approach( E0):
     y = (x1 + x2) / 2
     return y
 
-def __vybit( E0, o2, od):
-    global _o, En1, dif1
+def _vybit(E0, o2, od):
+    global En1, _B, a, q, cr1, dif1, _o 
     hi = math.pi - 2 * o2
     o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
     if o1 < 0:
         o1 = math.pi + o1
-    #print(f"Scattering angle: {o1 * 180 / math.pi:.4f} degrees")
+    #labelugolv.setText(f"{(o1 * 180 / math.pi):.4f}")
     if (_m[1] / _m[0]) < 1:
-        if o2 > ((math.pi / 4) - (math.asin(_m[1] / _m[0])) / 2):
-            E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        if o2 > (((math.pi / 4) - (math.asin(_m[1] / _m[0])) / 2)):
+            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
         else:
-            E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     else:
-        E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    #print(f"Energy loss: {E0 - E1:.0f} eV")
+        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
+    # labelEnergyv.setText(f"{(E0 - E1):.0f}")
     En1 = E0 - E1
-    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
-    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
+    #labelAnglev.setText(f"{(o * 180 / math.pi):.2f}")
     r0 = _approach(E0)
-    #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
+    #print(r0)
+    #labelapproachv.setText(f"{(r0 * math.pow(10, 8)):.5f}")
     q = _pric(r0)
-    #print(f"Impact parameter: {B * a * 1e8:.5f} Å")
+    #labelparamv.setText(f"{(B * _a * math.pow(10, 8)):.5f}")
     orm = o2 - od / 2
     orp = o2 + od / 2
     if o2 + od / 2 > math.pi / 2 or orm <= 0:
-        print("No solution")
+        #labelraznv.setText("нет решения")
         dif1 = -1
+    hi = math.pi - 2 * orm
+    o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
+    if o1 < 0:
+        o1 = math.pi + o1
+    if (_m[1] / _m[0]) < 1:
+        if orm > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
+            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
+        else:
+            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     else:
-        hi = math.pi - 2 * orm
-        o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-        if o1 < 0:
-            o1 = math.pi + o1
-        if (_m[1] / _m[0]) < 1:
-            if orm > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-                E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            else:
-                E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    if o2 == 0:
+        _B = 0
+    p1 = _B * _a * math.pow(10, 8)
+    hi = math.pi - 2 * (orp)
+    o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
+    if o1 < 0:
+        o1 = math.pi + o1
+    if (_m[1] / _m[0]) < 1:
+        if orp > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
+            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
         else:
-            E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p1 = _B * _a * 1e8
-        hi = math.pi - 2 * orp
-        o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-        if o1 < 0:
-            o1 = math.pi + o1
-        if (_m[1] / _m[0]) < 1:
-            if orp > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-                E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            else:
-                E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p2 = _B * _a * 1e8
-       # print(f"Difference: {abs(p1**2 - p2**2):.7f}")
-        dif1 = abs(p1**2 - p2**2)
+            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
+    else:
+        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
+    #print(str(math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))) 
+    print (f"{_m[0]} {_m[1]} {o2*180/math.pi} {od*180/math.pi} {E0} {E1} {p1:.7f}")
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    p2 = _B * _a * math.pow(10, 8)
+    #print(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
+    #labelraznv.setText(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
+    #cr1 = f"{math.fabs((p1 - p2) * (p1 + p2)):.7f}"
 
-def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
+    hi = math.pi - 2 * (o2 - 0.000001)
+    orm = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
+    hi = math.pi - 2 * (o2 + 0.000001)
+    orp = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
+    if orp < 0:
+        orp = math.pi + orp
+    if orm < 0:
+        orm = math.pi + orm
+    if _m[1] / _m[0] < 1:
+        if orm > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
+            E1 = E0 * math.pow((math.cos(orm) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
+        else:
+            E1 = E0 * math.pow((math.cos(orm) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
+    else:
+        E1 = E0 * math.pow((math.cos(orm) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
+    _o = math.atan(math.sin(orm) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(orm) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    if o2 == 0:
+        _B = 0
+    p1 = _B * _a * math.pow(10, 8)
+    if _m[1] / _m[0] < 1:
+        if orp > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
+            E1 = E0 * math.pow((math.cos(orp) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
+        else:
+            E1 = E0 * math.pow((math.cos(orp) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
+    else:
+        E1 = E0 * math.pow((math.cos(orp) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
+    _o = math.atan(math.sin(orp) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(orp) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    p2 = _B * _a * math.pow(10, 8)
+    # labeldsdov.setText(f"{(math.fabs(math.fabs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))):.7f}")
+    #print(f"{ abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002)):.7f}")
+    return abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))
+
+def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scat"):
     
     """
     returns cross section of the scattering process for given incident and target elements
@@ -1074,12 +1123,11 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
         _d1, _d2, _d3, _d4 = 0.278544, 0.637174, 1.919249, 0
         _C1, _C2, _C3, _C4, _C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
     
-
     E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
     #print(f"Energy after scattering: {E1:.0f} eV")
     En1 = E1
-    E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-    #print(f"Double scattering energy: {E2:.0f} eV")
+    #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
+    #print(f"Double scattering energy: {E2:.0f} eV"
     _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
     if _o < 0:
         _o = math.pi + _o
@@ -1112,7 +1160,7 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
         #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
         dif1 = abs(p1**2 - p2**2)
 
-    if (_m[1] / _m[0]) < 1:
+    if (_m[1] / _m[0]) < 1 and False:
         E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
         print(f"Complementary energy: {E1:.0f} eV")
         En2 = E1
@@ -1191,4 +1239,11 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol):
     p2 = _B * _a * 1e8
     #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
     #print ("--------------------------------")
-    return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
+    if "scat" in type :
+        return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
+    elif "rec" in type:
+        return _vybit(E0, o1, od)
+    
+    
+    
+plot_CrossSection_map("scat")
