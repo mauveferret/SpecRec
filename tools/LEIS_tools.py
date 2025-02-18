@@ -28,6 +28,7 @@ import math, re, os
 step = 2.0 #energy step, eV
 Emin = 300.0 #minimal energy, eV
 Emax = 30000.0 #maximal energy, eV
+language = "ru" #language of the output
 
 ######################    GLOBAL SETTINGS   ############################
 
@@ -634,42 +635,44 @@ def plot_dBeta_map():
     plt.minorticks_on()
     plt.show()
 
-def plot_CrossSection_map(type="scat"):
+def plot_CrossSection_map(type="scatter"):
     """
     Method to plot the map of dSidma/dOmega values in dependence of scattering angle and mu
+    type = "scatter" or "recoil" for scattering or recoils
     """
     global E0
     E0 = 10000
     step_mu = 1
-    min_value_mu = 1
+    min_value_mu = 0
     max_value_mu = total_num_elem-10
     number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
 
     incident_atom = "Ne"
     incident_mass = get_mass_by_element(incident_atom)
-    step_theta = 0.5 #0.5
+    step_theta = 0.5
     min_value_theta = 10
     max_value_theta = 178
-    if "rec" in type:
-        max_value_theta = 40
+    if "recoil" in type:
+        max_value_theta = 88
     number_of_points_theta = int((max_value_theta-min_value_theta)/step_theta)
     
     map0 = np.zeros((number_of_points_mu, number_of_points_theta))
     angles = np.zeros(number_of_points_theta)
     mu_values = np.zeros(number_of_points_mu)
-    #file = open('leis_out.txt', 'w')
+
     for i_theta in range (0,number_of_points_theta):
         theta = min_value_theta+i_theta*step_theta
         angles[i_theta] = theta
+        # for escaping zone restricted by kinematics laws
         if theta<90:
             min_value_mu_string = get_element_by_mass(np.sin(theta*np.pi/180)*incident_mass)
         else:
             min_value_mu_string= incident_atom
-        min_value_mu = next (i for i in range(1, total_num_elem) if get_element_info_by_atomic_number(i)[1] == min_value_mu_string)
+        if "scatter" in type:
+            min_value_mu = next (i for i in range(1, total_num_elem) if get_element_info_by_atomic_number(i)[1] == min_value_mu_string)
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
             mu_values[i_mu] = get_element_info_by_atomic_number(int(mu))[0]
-            #print(get_element_info_by_atomic_number(int(mu))[1])
             map0[i_mu, i_theta] = (get_cross_section(incident_atom, E0, theta, 2, get_element_info_by_atomic_number(int(mu))[1],  type))  #get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
            # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
@@ -678,14 +681,33 @@ def plot_CrossSection_map(type="scat"):
     #file.close()
 
     plt.figure(figsize=(10, 6))
-    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(-3.5, 1, 100), norm=LogNorm())
-    plt.text(60, 16, 'restricted zone: μ> sin(θ)', fontsize = 13)
-    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr', ticks=[ 1e-3, 1e-2, 1e-1, 1, 10])
-    plt.xlabel('scattering angle θ, degrees', fontsize=12)
-    plt.yticks(np.arange(10, 201, 10))
-    plt.ylabel('target atom mass, a.m.u.',fontsize=12)
-    plt.ylim(10, 210)
-   # plt.clim(0.001, 0.35)
+    restricted_zone = ('restricted zone: ' if language=='eng' else 'запрещённая зона ')+'μ> sin(θ)' 
+    if "recoil" in type:
+        start_log = -5
+        end_log = 1
+        ticks=[1E-4,1E-3, 1E-2, 1E-1, 1E0, 1E1]
+        start_y_tick = 0
+        end_y_tick = 201
+    else:
+        start_log = -3.2
+        end_log = 1
+        ticks=[1E-4, 1E-3, 1E-2, 1E-1, 1E0, 1E1]
+        start_y_tick = 10
+        end_y_tick = 210
+        plt.text(60, 20, restricted_zone, fontsize = 13)
+    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(start_log, end_log, 200), norm=LogNorm())
+    plt.yticks(np.arange(start_y_tick, end_y_tick, 10))
+    plt.ylim(start_y_tick, end_y_tick)
+    if language=='eng':
+        plt.ylabel('target atom mass, a.m.u.',fontsize=12)
+        plt.xlabel('scattering angle θ, degrees', fontsize=12)
+        plt.colorbar(label=f'cross-section for {incident_atom} incident atom, Å2/sr', ticks=ticks)
+
+    else:
+        plt.ylabel('масса атома мишени, а.е.м.',fontsize=12)
+        plt.xlabel('угол рассеяния θ, градусы', fontsize=12)
+        plt.colorbar(label=f'сечение для налетающего {incident_atom}, Å2/ср', ticks=ticks)
+    #plt.clim(0.001, 0.35)
     plt.minorticks_on()
     plt.show()
 
@@ -981,6 +1003,8 @@ def _approach( E0):
 
 def _vybit(E0, o2, od):
     global En1, _B, a, q, cr1, dif1, _o 
+    """
+    constant_against_wrong_rounding = 0.00001
     hi = math.pi - 2 * o2
     o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
     if o1 < 0:
@@ -995,7 +1019,8 @@ def _vybit(E0, o2, od):
         E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     # labelEnergyv.setText(f"{(E0 - E1):.0f}")
     En1 = E0 - E1
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    # 0.00001 is added due to some strange roundind bug leading to dividing by zero in several cases
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1+constant_against_wrong_rounding) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
     #labelAnglev.setText(f"{(o * 180 / math.pi):.2f}")
@@ -1020,7 +1045,7 @@ def _vybit(E0, o2, od):
             E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     else:
         E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1+constant_against_wrong_rounding) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
     r0 = _approach(E0)
@@ -1040,8 +1065,8 @@ def _vybit(E0, o2, od):
     else:
         E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     #print(str(math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))) 
-    #print (f"{_m[0]} {_m[1]} {o2*180/math.pi} {od*180/math.pi} {E0} {E1} {p1:.7f}")
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    
+    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(float(o1+constant_against_wrong_rounding)) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
     r0 = _approach(E0)
@@ -1050,7 +1075,7 @@ def _vybit(E0, o2, od):
     #print(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
     #labelraznv.setText(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
     #cr1 = f"{math.fabs((p1 - p2) * (p1 + p2)):.7f}"
-
+    """
     hi = math.pi - 2 * (o2 - 0.000001)
     orm = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
     hi = math.pi - 2 * (o2 + 0.000001)
@@ -1087,11 +1112,9 @@ def _vybit(E0, o2, od):
     r0 = _approach(E0)
     q = _pric(r0)
     p2 = _B * _a * math.pow(10, 8)
-    # labeldsdov.setText(f"{(math.fabs(math.fabs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))):.7f}")
-    #print(f"{ abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002)):.7f}")
     return abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))
 
-def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scat"):
+def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"):
     
     """
     returns cross section of the scattering process for given incident and target elements
@@ -1124,27 +1147,108 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scat"):
         _s1, _s2, _s3, _s4 = 0.190945, 0.473674, 0.335381, 0
         _d1, _d2, _d3, _d4 = 0.278544, 0.637174, 1.919249, 0
         _C1, _C2, _C3, _C4, _C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
-    
-    E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    #print(f"Energy after scattering: {E1:.0f} eV")
-    En1 = E1
-    #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-    #print(f"Double scattering energy: {E2:.0f} eV"
-    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
-    r0 = _approach(E0)
-    #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
-    q = _pric(r0)
-    pc1 = _B * _a * 1e8
-    #print(f"Impact parameter: {pc1:.5f} Å")
-    if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-        print("No solution")
-        dif1 = -1
-    else:
-        orm = o1 - od / 2
-        orp = o1 + od / 2
+        
+    if "scatter" in type :      
+        E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        #print(f"Energy after scattering: {E1:.0f} eV")
+        En1 = E1
+        #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
+        #print(f"Double scattering energy: {E2:.0f} eV"
+        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+        if _o < 0:
+            _o = math.pi + _o
+        #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
+        r0 = _approach(E0)
+        #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
+        q = _pric(r0)
+        pc1 = _B * _a * 1e8
+        #print(f"Impact parameter: {pc1:.5f} Å")
+        if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
+            print("No solution")
+            dif1 = -1
+        else:
+            orm = o1 - od / 2
+            orp = o1 + od / 2
+            E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p1 = _B * _a * 1e8
+            E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p2 = _B * _a * 1e8
+            #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
+            dif1 = abs(p1**2 - p2**2)
+
+        if (_m[1] / _m[0]) < 1 and False:
+            E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            print(f"Complementary energy: {E1:.0f} eV")
+            En2 = E1
+            E2 = E0 * math.pow((math.cos(o1 / 2) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
+            print(f"Complementary double scattering energy: {E2:.0f} eV")
+            _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            print(f"Complementary scattering angle: {_o * 180 / math.pi:.2f} degrees")
+            r0 = _approach(E0)
+            print(f"Complementary __approach distance: {r0 * 1e8:.5f} Å")
+            q = _pric(r0)
+            pc2 = _B * _a * 1e8
+            print(f"Complementary impact parameter: {pc2:.5f} Å")
+
+            if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
+                print("No solution")
+                dif2 = -1
+            else:
+                orm = o1 - od / 2
+                orp = o1 + od / 2
+                if orp >= 180:
+                    orp = 360 - orp
+                E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+                _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+                if _o < 0:
+                    _o = math.pi + _o
+                r0 = _approach(E0)
+                q = _pric(r0)
+                p1 = _B * _a * 1e8
+                E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+                _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+                if _o < 0:
+                    _o = math.pi + _o
+                r0 = _approach(E0)
+                q = _pric(r0)
+                p2 = _B * _a * 1e8
+                print(f"Complementary difference: {abs(p1**2 - p2**2):.7f}")
+                dif2 = abs(p1**2 - p2**2)
+
+                orm = o1 - 0.00001
+                orp = o1 + 0.00001
+                E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+                _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+                if _o < 0:
+                    _o = math.pi + _o
+                r0 = _approach(E0)
+                q = _pric(r0)
+                p1 = _B * _a * 1e8
+                E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+                _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+                if _o < 0:
+                    _o = math.pi + _o
+                r0 = _approach(E0)
+                q = _pric(r0)
+                p2 = _B * _a * 1e8
+                print(f"Complementary differential cross-section: {abs((p2 - p1) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
+        else:
+            En2 = -1
+
+        orm = o1 - 0.00001
+        orp = o1 + 0.00001
         E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
         _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
         if _o < 0:
@@ -1159,93 +1263,13 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scat"):
         r0 = _approach(E0)
         q = _pric(r0)
         p2 = _B * _a * 1e8
-        #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
-        dif1 = abs(p1**2 - p2**2)
+        #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
+        #print ("--------------------------------")
 
-    if (_m[1] / _m[0]) < 1 and False:
-        E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        print(f"Complementary energy: {E1:.0f} eV")
-        En2 = E1
-        E2 = E0 * math.pow((math.cos(o1 / 2) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-        print(f"Complementary double scattering energy: {E2:.0f} eV")
-        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        print(f"Complementary scattering angle: {_o * 180 / math.pi:.2f} degrees")
-        r0 = _approach(E0)
-        print(f"Complementary __approach distance: {r0 * 1e8:.5f} Å")
-        q = _pric(r0)
-        pc2 = _B * _a * 1e8
-        print(f"Complementary impact parameter: {pc2:.5f} Å")
-
-        if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-            print("No solution")
-            dif2 = -1
-        else:
-            orm = o1 - od / 2
-            orp = o1 + od / 2
-            if orp >= 180:
-                orp = 360 - orp
-            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p1 = _B * _a * 1e8
-            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p2 = _B * _a * 1e8
-            print(f"Complementary difference: {abs(p1**2 - p2**2):.7f}")
-            dif2 = abs(p1**2 - p2**2)
-
-            orm = o1 - 0.00001
-            orp = o1 + 0.00001
-            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p1 = _B * _a * 1e8
-            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p2 = _B * _a * 1e8
-            print(f"Complementary differential cross-section: {abs((p2 - p1) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-    else:
-        En2 = -1
-
-    orm = o1 - 0.00001
-    orp = o1 + 0.00001
-    E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p1 = _B * _a * 1e8
-    E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p2 = _B * _a * 1e8
-    #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-    #print ("--------------------------------")
-    if "scat" in type :
         return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
-    elif "rec" in type:
+    elif "recoil" in type:
         return _vybit(E0, o1, od)
     
     
     
-plot_CrossSection_map("rec")
+plot_CrossSection_map("recoil")
