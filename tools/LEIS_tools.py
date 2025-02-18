@@ -643,7 +643,7 @@ def plot_CrossSection_map(type="scatter"):
     global E0
     E0 = 10000
     step_mu = 1
-    min_value_mu = 0
+    min_value_mu = 1 if "scatter" in type else 0
     max_value_mu = total_num_elem-10
     number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
 
@@ -695,7 +695,7 @@ def plot_CrossSection_map(type="scatter"):
         start_y_tick = 10
         end_y_tick = 210
         plt.text(60, 20, restricted_zone, fontsize = 13)
-    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(start_log, end_log, 200), norm=LogNorm())
+    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(start_log, end_log, 300), norm=LogNorm())
     plt.yticks(np.arange(start_y_tick, end_y_tick, 10))
     plt.ylim(start_y_tick, end_y_tick)
     if language=='eng':
@@ -1001,8 +1001,11 @@ def _approach( E0):
     y = (x1 + x2) / 2
     return y
 
-def _vybit(E0, o2, od):
-    global En1, _B, a, q, cr1, dif1, _o 
+# aka vybit
+def _recoil(E0, o2, od):
+    
+    global En1, En2, dif1, dif2, _B, a, q, cr1, _o 
+    
     """
     constant_against_wrong_rounding = 0.00001
     hi = math.pi - 2 * o2
@@ -1114,6 +1117,128 @@ def _vybit(E0, o2, od):
     p2 = _B * _a * math.pow(10, 8)
     return abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))
 
+# aka rassey
+def scatter(E0, o1, od):
+    global En1, En2, dif1, dif2, _B, a, q, cr1, _o 
+    E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+    #print(f"Energy after scattering: {E1:.0f} eV")
+    En1 = E1
+    #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
+    #print(f"Double scattering energy: {E2:.0f} eV"
+    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+    if _o < 0:
+        _o = math.pi + _o
+    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
+    r0 = _approach(E0)
+    #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
+    q = _pric(r0)
+    pc1 = _B * _a * 1e8
+    #print(f"Impact parameter: {pc1:.5f} Å")
+    if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
+        print("No solution")
+        dif1 = -1
+    else:
+        orm = o1 - od / 2
+        orp = o1 + od / 2
+        E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+        if _o < 0:
+            _o = math.pi + _o
+        r0 = _approach(E0)
+        q = _pric(r0)
+        p1 = _B * _a * 1e8
+        E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+        if _o < 0:
+            _o = math.pi + _o
+        r0 = _approach(E0)
+        q = _pric(r0)
+        p2 = _B * _a * 1e8
+        #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
+        dif1 = abs(p1**2 - p2**2)
+
+    if (_m[1] / _m[0]) < 1 and False:
+        E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+        print(f"Complementary energy: {E1:.0f} eV")
+        En2 = E1
+        E2 = E0 * math.pow((math.cos(o1 / 2) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
+        print(f"Complementary double scattering energy: {E2:.0f} eV")
+        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+        if _o < 0:
+            _o = math.pi + _o
+        print(f"Complementary scattering angle: {_o * 180 / math.pi:.2f} degrees")
+        r0 = _approach(E0)
+        print(f"Complementary __approach distance: {r0 * 1e8:.5f} Å")
+        q = _pric(r0)
+        pc2 = _B * _a * 1e8
+        print(f"Complementary impact parameter: {pc2:.5f} Å")
+
+        if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
+            print("No solution")
+            dif2 = -1
+        else:
+            orm = o1 - od / 2
+            orp = o1 + od / 2
+            if orp >= 180:
+                orp = 360 - orp
+            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p1 = _B * _a * 1e8
+            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p2 = _B * _a * 1e8
+            print(f"Complementary difference: {abs(p1**2 - p2**2):.7f}")
+            dif2 = abs(p1**2 - p2**2)
+
+            orm = o1 - 0.00001
+            orp = o1 + 0.00001
+            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p1 = _B * _a * 1e8
+            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+            if _o < 0:
+                _o = math.pi + _o
+            r0 = _approach(E0)
+            q = _pric(r0)
+            p2 = _B * _a * 1e8
+            print(f"Complementary differential cross-section: {abs((p2 - p1) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
+    else:
+        En2 = -1
+
+    orm = o1 - 0.00001
+    orp = o1 + 0.00001
+    E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+    _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    p1 = _B * _a * 1e8
+    E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
+    _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
+    if _o < 0:
+        _o = math.pi + _o
+    r0 = _approach(E0)
+    q = _pric(r0)
+    p2 = _B * _a * 1e8
+    #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
+    #print ("--------------------------------")
+
+    return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
+
 def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"):
     
     """
@@ -1128,7 +1253,6 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"
     o1 = o1 * math.pi / 180
     od = od * math.pi / 180
     
-    global _o, En1, En2, dif1, dif2
     global _C1, _C2, _C3, _C4, _C5, _s1, _s2, _s3, _s4, _d1, _d2, _d3, _d4
 
     #print (incident_symbol+" -> "+target_symbol)
@@ -1149,127 +1273,6 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"
         _C1, _C2, _C3, _C4, _C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
         
     if "scatter" in type :      
-        E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        #print(f"Energy after scattering: {E1:.0f} eV")
-        En1 = E1
-        #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-        #print(f"Double scattering energy: {E2:.0f} eV"
-        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
-        r0 = _approach(E0)
-        #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
-        q = _pric(r0)
-        pc1 = _B * _a * 1e8
-        #print(f"Impact parameter: {pc1:.5f} Å")
-        if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-            print("No solution")
-            dif1 = -1
-        else:
-            orm = o1 - od / 2
-            orp = o1 + od / 2
-            E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p1 = _B * _a * 1e8
-            E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p2 = _B * _a * 1e8
-            #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
-            dif1 = abs(p1**2 - p2**2)
-
-        if (_m[1] / _m[0]) < 1 and False:
-            E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            print(f"Complementary energy: {E1:.0f} eV")
-            En2 = E1
-            E2 = E0 * math.pow((math.cos(o1 / 2) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-            print(f"Complementary double scattering energy: {E2:.0f} eV")
-            _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            print(f"Complementary scattering angle: {_o * 180 / math.pi:.2f} degrees")
-            r0 = _approach(E0)
-            print(f"Complementary __approach distance: {r0 * 1e8:.5f} Å")
-            q = _pric(r0)
-            pc2 = _B * _a * 1e8
-            print(f"Complementary impact parameter: {pc2:.5f} Å")
-
-            if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-                print("No solution")
-                dif2 = -1
-            else:
-                orm = o1 - od / 2
-                orp = o1 + od / 2
-                if orp >= 180:
-                    orp = 360 - orp
-                E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-                _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-                if _o < 0:
-                    _o = math.pi + _o
-                r0 = _approach(E0)
-                q = _pric(r0)
-                p1 = _B * _a * 1e8
-                E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-                _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-                if _o < 0:
-                    _o = math.pi + _o
-                r0 = _approach(E0)
-                q = _pric(r0)
-                p2 = _B * _a * 1e8
-                print(f"Complementary difference: {abs(p1**2 - p2**2):.7f}")
-                dif2 = abs(p1**2 - p2**2)
-
-                orm = o1 - 0.00001
-                orp = o1 + 0.00001
-                E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-                _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-                if _o < 0:
-                    _o = math.pi + _o
-                r0 = _approach(E0)
-                q = _pric(r0)
-                p1 = _B * _a * 1e8
-                E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-                _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-                if _o < 0:
-                    _o = math.pi + _o
-                r0 = _approach(E0)
-                q = _pric(r0)
-                p2 = _B * _a * 1e8
-                print(f"Complementary differential cross-section: {abs((p2 - p1) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-        else:
-            En2 = -1
-
-        orm = o1 - 0.00001
-        orp = o1 + 0.00001
-        E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p1 = _B * _a * 1e8
-        E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p2 = _B * _a * 1e8
-        #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-        #print ("--------------------------------")
-
-        return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
+        return scatter(E0, o1, od)
     elif "recoil" in type:
-        return _vybit(E0, o1, od)
-    
-    
-    
-plot_CrossSection_map("recoil")
+        return _recoil(E0, o1, od)
