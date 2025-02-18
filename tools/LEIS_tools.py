@@ -705,8 +705,12 @@ def plot_CrossSection_map(type="scatter"):
 
     else:
         plt.ylabel('масса атома мишени, а.е.м.',fontsize=12)
-        plt.xlabel('угол рассеяния θ, градусы', fontsize=12)
-        plt.colorbar(label=f'сечение для налетающего {incident_atom}, Å2/ср', ticks=ticks)
+        if "scatter" in type:
+            plt.xlabel('угол рассеяния θ, градусы', fontsize=12)
+            plt.colorbar(label=f'сечение для налетающего {incident_atom}, Å2/ср', ticks=ticks)
+        else:
+            plt.xlabel('угол выбивания θ, градусы', fontsize=12)
+            plt.colorbar(label=f'сечение атома, выбитого {incident_atom}, Å2/ср', ticks=ticks)
     #plt.clim(0.001, 0.35)
     plt.minorticks_on()
     plt.show()
