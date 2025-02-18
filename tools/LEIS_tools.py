@@ -649,9 +649,9 @@ def plot_CrossSection_map(type="scat"):
     incident_mass = get_mass_by_element(incident_atom)
     step_theta = 0.5 #0.5
     min_value_theta = 10
-    max_value_theta = 170
+    max_value_theta = 178
     if "rec" in type:
-        max_value_theta = 80
+        max_value_theta = 40
     number_of_points_theta = int((max_value_theta-min_value_theta)/step_theta)
     
     map0 = np.zeros((number_of_points_mu, number_of_points_theta))
@@ -661,8 +661,10 @@ def plot_CrossSection_map(type="scat"):
     for i_theta in range (0,number_of_points_theta):
         theta = min_value_theta+i_theta*step_theta
         angles[i_theta] = theta
-        # TODO fix bug with arcsin 
-        min_value_mu_string = get_element_by_mass(np.sin(theta*np.pi/180)*incident_mass)
+        if theta<90:
+            min_value_mu_string = get_element_by_mass(np.sin(theta*np.pi/180)*incident_mass)
+        else:
+            min_value_mu_string= incident_atom
         min_value_mu = next (i for i in range(1, total_num_elem) if get_element_info_by_atomic_number(i)[1] == min_value_mu_string)
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
@@ -676,9 +678,9 @@ def plot_CrossSection_map(type="scat"):
     #file.close()
 
     plt.figure(figsize=(10, 6))
-    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(-6, 1, 100), norm=LogNorm())
+    plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(-3.5, 1, 100), norm=LogNorm())
     plt.text(60, 16, 'restricted zone: μ> sin(θ)', fontsize = 13)
-    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr', ticks=[1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10])
+    plt.colorbar(label=f'log(cross section) for {incident_atom}, A2/sr', ticks=[ 1e-3, 1e-2, 1e-1, 1, 10])
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
     plt.yticks(np.arange(10, 201, 10))
     plt.ylabel('target atom mass, a.m.u.',fontsize=12)
@@ -1038,7 +1040,7 @@ def _vybit(E0, o2, od):
     else:
         E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
     #print(str(math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))) 
-    print (f"{_m[0]} {_m[1]} {o2*180/math.pi} {od*180/math.pi} {E0} {E1} {p1:.7f}")
+    #print (f"{_m[0]} {_m[1]} {o2*180/math.pi} {od*180/math.pi} {E0} {E1} {p1:.7f}")
     _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
@@ -1246,4 +1248,4 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scat"):
     
     
     
-plot_CrossSection_map("scat")
+plot_CrossSection_map("rec")
