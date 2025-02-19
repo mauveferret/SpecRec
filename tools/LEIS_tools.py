@@ -683,9 +683,9 @@ def plot_CrossSection_map(type="scatter"):
     plt.figure(figsize=(10, 6))
     restricted_zone = ('restricted zone: ' if language=='eng' else 'запрещённая зона ')+'μ> sin(θ)' 
     if "recoil" in type:
-        start_log = -5
+        start_log = -3
         end_log = 1
-        ticks=[1E-4,1E-3, 1E-2, 1E-1, 1E0, 1E1]
+        ticks=[1E-3, 1E-2, 1E-1, 1E0, 1E1]
         start_y_tick = 0
         end_y_tick = 201
     else:
@@ -1006,53 +1006,17 @@ def _approach( E0):
     return y
 
 # aka vybit
-def _recoil(E0, o2, od):
+def __recoil(E0, o2, od):
     
-    global En1, En2, dif1, dif2, _B, a, q, cr1, _o 
-    
-    """
-    constant_against_wrong_rounding = 0.00001
-    hi = math.pi - 2 * o2
-    o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-    if o1 < 0:
-        o1 = math.pi + o1
-    #labelugolv.setText(f"{(o1 * 180 / math.pi):.4f}")
-    if (_m[1] / _m[0]) < 1:
-        if o2 > (((math.pi / 4) - (math.asin(_m[1] / _m[0])) / 2)):
-            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    else:
-        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    # labelEnergyv.setText(f"{(E0 - E1):.0f}")
-    En1 = E0 - E1
-    # 0.00001 is added due to some strange roundind bug leading to dividing by zero in several cases
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1+constant_against_wrong_rounding) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
-    if _o < 0:
-        _o = math.pi + _o
-    #labelAnglev.setText(f"{(o * 180 / math.pi):.2f}")
-    r0 = _approach(E0)
-    #print(r0)
-    #labelapproachv.setText(f"{(r0 * math.pow(10, 8)):.5f}")
-    q = _pric(r0)
-    #labelparamv.setText(f"{(B * _a * math.pow(10, 8)):.5f}")
-    orm = o2 - od / 2
-    orp = o2 + od / 2
-    if o2 + od / 2 > math.pi / 2 or orm <= 0:
-        #labelraznv.setText("нет решения")
-        dif1 = -1
+    global En1, En2, dif1, dif2, _B, _a, q, cr1, _o 
+    orm = o2 - 0.000001
     hi = math.pi - 2 * orm
     o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
     if o1 < 0:
         o1 = math.pi + o1
-    if (_m[1] / _m[0]) < 1:
-        if orm > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    else:
-        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(o1+constant_against_wrong_rounding) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    E1 = E0 - E0 * 4 * _m[1] * _m[0] * math.pow(math.cos(orm), 2) / math.pow(_m[0] + _m[1], 2)
+
+    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / (_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
     r0 = _approach(E0)
@@ -1060,60 +1024,14 @@ def _recoil(E0, o2, od):
     if o2 == 0:
         _B = 0
     p1 = _B * _a * math.pow(10, 8)
-    hi = math.pi - 2 * (orp)
+    orp = o2 + 0.000001
+    hi = math.pi - 2 * orp
     o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
     if o1 < 0:
         o1 = math.pi + o1
-    if (_m[1] / _m[0]) < 1:
-        if orp > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-            E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(o1) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    else:
-        E1 = E0 * math.pow((math.cos(o1) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2))) / (1 + _m[1] / _m[0]), 2)
-    #print(str(math.cos(o1) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))) 
-    
-    _o = math.atan(math.sin(o1) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(float(o1+constant_against_wrong_rounding)) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p2 = _B * _a * math.pow(10, 8)
-    #print(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
-    #labelraznv.setText(f"{math.fabs(math.pow(p1, 2) - math.pow(p2, 2)):.7f}")
-    #cr1 = f"{math.fabs((p1 - p2) * (p1 + p2)):.7f}"
-    """
-    hi = math.pi - 2 * (o2 - 0.000001)
-    orm = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-    hi = math.pi - 2 * (o2 + 0.000001)
-    orp = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-    if orp < 0:
-        orp = math.pi + orp
-    if orm < 0:
-        orm = math.pi + orm
-    if _m[1] / _m[0] < 1:
-        if orm > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-            E1 = E0 * math.pow((math.cos(orm) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(orm) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
-    else:
-        E1 = E0 * math.pow((math.cos(orm) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2))) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orm) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(orm) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    if o2 == 0:
-        _B = 0
-    p1 = _B * _a * math.pow(10, 8)
-    if _m[1] / _m[0] < 1:
-        if orp > (math.pi / 4 - math.asin(_m[1] / _m[0]) / 2):
-            E1 = E0 * math.pow((math.cos(orp) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
-        else:
-            E1 = E0 * math.pow((math.cos(orp) - math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
-    else:
-        E1 = E0 * math.pow((math.cos(orp) + math.sqrt(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2))) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orp) * math.sqrt(2 * _m[0] * E1) / (_m[0] * (math.cos(orp) * math.sqrt(2 * _m[0] * E1) / _m[0] - math.sqrt(2 * _m[0] * E0) / (_m[0] + _m[1]))))
+    E1 = E0 - E0 * 4 * _m[1] * _m[0] * math.pow(math.cos(orp), 2) / math.pow(_m[0] + _m[1], 2)
+
+    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / (_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1]))))
     if _o < 0:
         _o = math.pi + _o
     r0 = _approach(E0)
@@ -1122,7 +1040,7 @@ def _recoil(E0, o2, od):
     return abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))
 
 # aka rassey
-def scatter(E0, o1, od):
+def __scatter(E0, o1, od):
     global En1, En2, dif1, dif2, _B, a, q, cr1, _o 
     E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
     #print(f"Energy after scattering: {E1:.0f} eV")
@@ -1254,7 +1172,7 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"
     target_symbol - symbol of the target element  
     """
     
-    o1 = o1 * math.pi / 180
+    o2 = o1 * math.pi / 180
     od = od * math.pi / 180
     
     global _C1, _C2, _C3, _C4, _C5, _s1, _s2, _s3, _s4, _d1, _d2, _d3, _d4
@@ -1275,8 +1193,22 @@ def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"
         _s1, _s2, _s3, _s4 = 0.190945, 0.473674, 0.335381, 0
         _d1, _d2, _d3, _d4 = 0.278544, 0.637174, 1.919249, 0
         _C1, _C2, _C3, _C4, _C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
-        
-    if "scatter" in type :      
-        return scatter(E0, o1, od)
+    
+    if "scatter" in type :  
+        if  _m[0] > _m[1]: 
+            try:         
+                if o2 >= np.asin(_m[1]/_m[0]):
+                    print(f"ERROR: scattering angle should be lower than {np.asin(_m[1]/_m[0])*180/np.pi:.2f} degrees. Now it is {o1} degrees")
+                    return 0
+                else:
+                    return __scatter(E0, o2, od)
+            except:
+                print("this error would never happen ha-ha") 
+        else:
+            return __scatter(E0, o2, od)
     elif "recoil" in type:
-        return _recoil(E0, o1, od)
+        if o1>=90:
+            print(f"ERROR: recoil angle should be less than 90 degrees. Now it is {o1} degrees")
+            return 0
+        else:
+            return __recoil(E0, o2, od)
