@@ -73,3 +73,4 @@ This project is licensed under the GNU License - see the [this](https://github.c
 ## Acknowledgements
 
 * [Inteq](https://github.com/mwt/inteq) for the Python library intended for Fredholm and Volterra equation solving with the [TwoMey](https://dl.acm.org/doi/10.1145/321150.321157) method. LEIS energy spectra reconstruction
+* Ivan Nikitin for his [LEIS_calculator](https://elibrary.ru/item.asp?id=54049055), from which Cross-section submodule of **SpecRec** was taken.

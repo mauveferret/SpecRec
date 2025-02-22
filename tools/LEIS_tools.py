@@ -909,6 +909,8 @@ class fitted_spectrum:
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
 
+# Taken from LEIS_calculator made by Ivan Nikitin
+# see https://elibrary.ru/item.asp?id=54049055 for details
 # Global variables
 __m = [0, 0]  # Masses of projectile and target
 __z = [0, 0]  # Atomic numbers of projectile and target
