@@ -28,7 +28,7 @@ import math, re, os
 step = 2.0 #energy step, eV
 Emin = 300.0 #minimal energy, eV
 Emax = 30000.0 #maximal energy, eV
-language = "ru" #language of the output
+language = "eng" #language of the output
 
 ######################    GLOBAL SETTINGS   ############################
 
@@ -304,7 +304,7 @@ class spectrum:
         """
         Returns cross section in steradians for scattering on specific target element specified by symbol
         """
-        return get_cross_section(self.__incident_atom, self.__E0, self.__scattering_angle, self.__dTheta, target_symbol)
+        return get_cross_section(self.__incident_atom, self.__E0, self.__scattering_angle, target_symbol)
     
     def do_elemental_analysis(self):
         """
@@ -570,7 +570,7 @@ def get_sensitivity_factor(E0:float, incident_element:str, target_element:str, t
     mu = get_mass_by_element(target_element)/get_mass_by_element(incident_element)
     if R > 0:
         dE = R*get_energy_by_angle(E0, theta, mu)   
-    sensitivity_factor = 1/(get_dBeta(E0, theta, mu, dE)*get_cross_section(incident_element, E0, theta, dTheta, target_element))
+    sensitivity_factor = 1/(get_dBeta(E0, theta, mu, dE)*get_cross_section(incident_element, E0, theta, target_element))
     if R > 0:
         return sensitivity_factor/get_energy_by_angle(E0, theta, mu)   
     else:
@@ -613,6 +613,8 @@ def plot_dBeta_map():
         theta = min_value_theta+i_theta*step_theta
         angles[i_theta] = theta
         min_value_mu = np.sin(theta*np.pi/180)
+        if theta>=90:
+            min_value_mu = 1+step_mu
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
             mu_values[i_mu] = mu
@@ -626,7 +628,7 @@ def plot_dBeta_map():
     #nipy_spectral   gist_ncar
     plt.figure(figsize=(10, 6))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
-    plt.text(80, 0.5, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.text(80, 0.8, 'restricted zone: μ> sin(θ)', fontsize = 13)
     plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35])
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
     plt.yticks(np.arange(0, max_value_mu, 2))
@@ -635,7 +637,7 @@ def plot_dBeta_map():
     plt.minorticks_on()
     plt.show()
 
-def plot_CrossSection_map(type="scatter"):
+def plot_CrossSection_map(incident_atom, type="scatter"):
     """
     Method to plot the map of dSidma/dOmega values in dependence of scattering angle and mu
     type = "scatter" or "recoil" for scattering or recoils
@@ -647,7 +649,6 @@ def plot_CrossSection_map(type="scatter"):
     max_value_mu = total_num_elem-10
     number_of_points_mu = int((max_value_mu-min_value_mu)/step_mu)
 
-    incident_atom = "Ne"
     incident_mass = get_mass_by_element(incident_atom)
     step_theta = 0.5
     min_value_theta = 10
@@ -673,7 +674,7 @@ def plot_CrossSection_map(type="scatter"):
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
             mu = min_value_mu+i_mu*step_mu
             mu_values[i_mu] = get_element_info_by_atomic_number(int(mu))[0]
-            map0[i_mu, i_theta] = (get_cross_section(incident_atom, E0, theta, 2, get_element_info_by_atomic_number(int(mu))[1],  type))  #get_dBeta(E0, theta, mu, 2)/2
+            map0[i_mu, i_theta] = (get_cross_section(incident_atom, E0, theta,get_element_info_by_atomic_number(int(mu))[1],  type))  #get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
            # file.write(str(map0[i_mu, i_theta])[0:7]+" ")
         #file.write("\n")
@@ -712,6 +713,10 @@ def plot_CrossSection_map(type="scatter"):
             plt.xlabel('угол выбивания θ, градусы', fontsize=12)
             plt.colorbar(label=f'сечение атома, выбитого {incident_atom}, Å2/ср', ticks=ticks)
     #plt.clim(0.001, 0.35)
+    if "scatter" in type:
+        plt.title(f'Scattering cross-section map for {incident_atom} incident ion', fontsize=14)
+    else:
+        plt.title(f'Recoil cross-section map for {incident_atom} incident ion', fontsize=14)
     plt.minorticks_on()
     plt.show()
 
@@ -874,12 +879,10 @@ class fitted_spectrum:
         int1 = sum(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.incident_atom, 
                                                                                     self.__spectrum.E0, 
                                                                                     self.__spectrum.scattering_angle, 
-                                                                                    self.__spectrum.dTheta, 
                                                                                     self.__target_element1)
         int2 = sum(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.incident_atom, 
                                                                                     self.__spectrum.E0, 
                                                                                     self.__spectrum.scattering_angle, 
-                                                                                    self.__spectrum.dTheta, 
                                                                                     self.__target_element2)
 
         return int2/(int1+int2)*100
@@ -905,310 +908,246 @@ class fitted_spectrum:
                                                                                                                                                                                                                                                                                                                                                                                  
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
-# Constants
-_epsilon_0 = 8.854187817e-12  # Vacuum permittivity (F/m)
-_e = 1.602176634e-19  # Elementary charge (C)
-_a0 = 5.29177210903e-11  # Bohr radius (m)
-
 
 # Global variables
-_m = [0, 0]  # Masses of projectile and target
-_z = [0, 0]  # Atomic numbers of projectile and target
-_E = 0  # Energy of the projectile
-_a = 0  # Screening length
-_Z = 0  # Product of atomic numbers
-_U = 0  # Potential energy
-_c = 0  # Curvature parameter
-_B = 0  # Impact parameter
-_o = 0  # Scattering angle
-_e1 = 0  # Reduced energy
-_R = 0  # Reduced distance
-_C1, _C2, _C3, _C4, _C5 = 0, 0, 0, 0, 0  # Constants for potential
-_s1, _s2, _s3, _s4 = 0, 0, 0, 0  # Screening function parameters
-_d1, _d2, _d3, _d4 = 0, 0, 0, 0  # Screening function parameters
-_pot = 1  # Potential type
+__m = [0, 0]  # Masses of projectile and target
+__z = [0, 0]  # Atomic numbers of projectile and target
+
+__chosen_potential = 1 # 0 - TFM, 1 - ZBL, 2 - KRC
+__EnergyCMS = 0 # Energy in the center of mass system
+__screeningLength = 0 # Screening length
+__potentialEnergy = 0 # Potential energy
+__curv = 0 # Curvature
+__average_Z = 0 # Average atomic number
+__impactParameterDimentionless = 0 
+__scatteringAngleCMS = 0 # Scattering angle in the center of mass system 
+__energyReduced = 0 # Reduced energy
+__closestApproachDimentionless = 0 # Closest approach
+
+__C1, __C2, __C3, __C4, __C5 = 0, 0, 0, 0, 0  # Constants for potential
+__s1, __s2, __s3, __s4 = 0, 0, 0, 0  # Screening function parameters
+__d1, __d2, __d3, __d4 = 0, 0, 0, 0  # Screening function parameters
+
+def __element(ta, por):
+    global __m, __z    
+    __z[por] = next((z for z in range (1, total_num_elem) 
+                   if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic number
+        
+    __m[por]=next((get_element_info_by_atomic_number(z)[0] for z in range (1, total_num_elem) 
+                 if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic mass
+
+def __potential():
+    global __potentialEnergy, __average_Z, __screeningLength, __closestApproachDimentionless
+    __potentialEnergy = __average_Z * 23.0707 * math.pow(10, -20) * (
+        __s1 * math.exp(-__d1 * __closestApproachDimentionless) + 
+        __s2 * math.exp(-__d2 * __closestApproachDimentionless) + 
+        __s3 * math.exp(-__d3 * __closestApproachDimentionless) + 
+        __s4 * math.exp(-__d4 * __closestApproachDimentionless)
+    ) / (__closestApproachDimentionless * __screeningLength)
+
+def __impact_parameter(r0):
+    global __impactParameterDimentionless, __screeningLength, __EnergyCMS, __potentialEnergy
+    __potential()
+    if (1 - __potentialEnergy / __EnergyCMS) < 0:
+        return 1
+    else:
+        impact_param = r0 * math.pow(1 - __potentialEnergy / __EnergyCMS, 0.5)
+        __impactParameterDimentionless = impact_param / __screeningLength
+        return 0
+
+def __curvature(r0):
+    global __curv, __closestApproachDimentionless, __potentialEnergy, __screeningLength, __EnergyCMS
+    global __s1, __s2, __s3, __s4, __d1, __d2, __d3, __d4
+    __curv = 2 * (__EnergyCMS - __potentialEnergy) * r0 / (
+        __screeningLength * __potentialEnergy + 
+        __average_Z * 23.0707 * math.pow(10, -20) * (
+            __s1 * __d1 * math.exp(-__d1 * __closestApproachDimentionless) + 
+            __s2 * __d2 * math.exp(-__d2 * __closestApproachDimentionless) + 
+            __s3 * __d3 * math.exp(-__d3 * __closestApproachDimentionless) + 
+            __s4 * __d4 * math.exp(-__d4 * __closestApproachDimentionless)
+        )
+    )
+
+def __res():
+    global __impactParameterDimentionless, __closestApproachDimentionless, __curv, __scatteringAngleCMS, __energyReduced
+    beta = (__C2 + math.pow(__energyReduced, 0.5)) / (__C3 + math.pow(__energyReduced, 0.5))
+    A0 = 2 * (1 + __C1 * math.pow(__energyReduced, -0.5)) * __energyReduced * math.pow(__impactParameterDimentionless, beta)
+    G = (__C5 + __energyReduced) / ((__C4 + __energyReduced) * (math.pow(1 + A0 * A0, 0.5) - A0))
+    d = (__impactParameterDimentionless + __curv + A0 * (__closestApproachDimentionless - __impactParameterDimentionless) / (1 + G)) / (__closestApproachDimentionless + __curv) - math.cos(__scatteringAngleCMS / 2)
+    return d
+
+def __approach(initial_energy):
+    global __EnergyCMS, __screeningLength, __energyReduced, __average_Z, __closestApproachDimentionless
+    
+    __EnergyCMS = 1.6021766 * math.pow(10, -12) * initial_energy / (1 + __m[0] / __m[1])
+    z0 = math.pow(__z[0], 0.5) + math.pow(__z[1], 0.5)
+    __screeningLength = 0.8853 * 0.529 * math.pow(10, -8) / math.pow(z0, 0.666666666)
+    
+    if __chosen_potential == 1 or __chosen_potential == 2:
+        z0 = math.pow(__z[0], 0.23) + math.pow(__z[1], 0.23)
+        __screeningLength = 0.88534 * 0.529 * math.pow(10, -8) / z0
+        
+    __energyReduced = __screeningLength * __EnergyCMS / (__z[0] * __z[1] * 23.0707 * math.pow(10, -20))
+    __average_Z = __z[0] * __z[1]
+    
+    closest_approach_left = 0
+    closest_approach_right = 5 * math.pow(10, -8)
+    
+    for _ in range(40):
+        closest_approach_average = (closest_approach_left + closest_approach_right) / 2
+        __closestApproachDimentionless = closest_approach_average / __screeningLength
+        q = __impact_parameter(closest_approach_average)
+        
+        if q == 0:
+            __curvature(closest_approach_average)
+            solutions_difference = __res()
+            if solutions_difference > 0:
+                closest_approach_right = closest_approach_average
+            else:
+                closest_approach_left = closest_approach_average
+        if q == 1:
+            closest_approach_left = closest_approach_average
+            
+    closest_approach_average = (closest_approach_left + closest_approach_right) / 2
+    return closest_approach_average
+
+
+def __recoiled(initial_energy, recoiled_angle):
+    global __scatteringAngleCMS, __impactParameterDimentionless
+    __scatteringAngleCMS = math.pi - 2 * recoiled_angle
+    #recoiledEnergy = initial_energy * 4 * __m[0] * __m[1] * math.pow(math.cos(recoiled_angle), 2) / math.pow(__m[0] + __m[1], 2)
+    scattered_angle = math.atan(__m[1] * math.sin(__scatteringAngleCMS) / (__m[0] + __m[1] * math.cos(__scatteringAngleCMS)))
+    if scattered_angle < 0:
+        scattered_angle += math.pi
+
+    if recoiled_angle == 0:
+        __impactParameterDimentionless = 0
+        
+    # Calculate differential cross section
+    recoiled_angle_left = recoiled_angle - 0.000001
+    __scatteringAngleCMS = math.pi - 2 * recoiled_angle_left
+    closest_approach = __approach(initial_energy)
+    __impact_parameter(closest_approach)
+        
+    impact_parameter1 = __impactParameterDimentionless * __screeningLength * math.pow(10, 8)
+    recoiled_angle_right = recoiled_angle + 0.000001
+    __scatteringAngleCMS = math.pi - 2 * recoiled_angle_right
+    closest_approach = __approach(initial_energy)
+    __impact_parameter(closest_approach)
+    impact_parameter2 = __impactParameterDimentionless * __screeningLength * math.pow(10, 8)
+
+    dsdo = abs((abs(math.pow(impact_parameter1, 2) - math.pow(impact_parameter2, 2))) / (2 * math.sin(recoiled_angle) * 0.000002))
+    return dsdo
+
+
+def __scattered(initial_energy, scattering_angle):
+    
+    global __scatteringAngleCMS, __m, __z, __impactParameterDimentionless, __screeningLength
+    scattering_angle_left = scattering_angle - 0.00001
+    scattering_angle_right = scattering_angle + 0.00001
+    
+    # Calculate energy for left angle
+    energy_scattered = initial_energy * math.pow(
+        (math.cos(scattering_angle_left) + math.pow(math.pow(__m[1] / __m[0], 2) - math.pow(math.sin(scattering_angle_left), 2), 0.5)) / (1 + __m[1] / __m[0]), 2
+    )
+    # Calculate CMS angle for left
+    __scatteringAngleCMS = math.atan(
+        math.sin(scattering_angle_left) * math.pow(2 * __m[0] * energy_scattered, 0.5) / 
+        ((__m[0] * (math.cos(scattering_angle_left) * math.pow(2 * __m[0] * energy_scattered, 0.5) / __m[0] - 
+        math.pow(2 * __m[0] * initial_energy, 0.5) / (__m[0] + __m[1]))))
+    )
+    
+    if __scatteringAngleCMS < 0:
+        __scatteringAngleCMS = math.pi + __scatteringAngleCMS
+    
+    closest_approach = __approach(initial_energy)
+    __impact_parameter(closest_approach)
+    impact_parameter1 = __impactParameterDimentionless * __screeningLength * math.pow(10, 8)
+    
+    # Calculate for right angle
+    energy_scattered = initial_energy * math.pow(
+        (math.cos(scattering_angle_right) + math.pow(math.pow(__m[1] / __m[0], 2) - math.pow(math.sin(scattering_angle_right), 2), 0.5)) / (1 + __m[1] / __m[0]), 2
+    )
+    # Calculate CMS angle for right
+    __scatteringAngleCMS = math.atan(
+        math.sin(scattering_angle_right) * math.pow(2 * __m[0] * energy_scattered, 0.5) / 
+        ((__m[0] * (math.cos(scattering_angle_right) * math.pow(2 * __m[0] * energy_scattered, 0.5) / __m[0] - 
+        math.pow(2 * __m[0] * initial_energy, 0.5) / (__m[0] + __m[1]))))
+    )
+    
+    if __scatteringAngleCMS < 0:
+        __scatteringAngleCMS = math.pi + __scatteringAngleCMS
+    
+    closest_approach = __approach(initial_energy)
+    __impact_parameter(closest_approach)
+    impact_parameter2 = __impactParameterDimentionless * __screeningLength * math.pow(10, 8)
+    
+    # Calculate differential cross section
+    dsdo = ((impact_parameter1 - impact_parameter2) * (impact_parameter1 + impact_parameter2) / 
+           (2 * math.sin(scattering_angle) * 2E-5))
+    return dsdo
 
 def set_potential(pot:str):
     """
     Method to set the potential type: ZBL, TFM, KRC
     """
-    pots = ("ZBL", "TFM", "KRC")
-    global _pot
+    pots = ("TFM", "ZBL", "KRC")
+    global __chosen_potential
     try:
-        _pot = pots.index(pot)
+        __chosen_potential = pots.index(pot)
     except:
         print("ERROR in set_potential: potential not found")
 
-def _element(ta, por):
-    global _m, _z
-    #z[por]=next((el for el in get_element_info_by_atomic_number if el[1] == ta), None).atomic_number #projectile atomic number
-    
-    _z[por] = next((z for z in range (1, total_num_elem) 
-                   if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic number
-        
-    _m[por]=next((get_element_info_by_atomic_number(z)[0] for z in range (1, total_num_elem) 
-                 if get_element_info_by_atomic_number(z)[1] == ta), None) #projectile atomic mass
-
-def _potenc(r0):
-    global _U, _R
-    _U = _Z * 23.0707e-20 * (_s1 * math.exp(-_d1 * _R) + _s2 * math.exp(-_d2 * _R) + _s3 * math.exp(-_d3 * _R) + _s4 * math.exp(-_d4 * _R)) / (_R * _a)
-    return 0
-
-def _pric(r0):
-    global _B
-    _potenc(r0)
-    if (1 - _U / _E) < 0:
-        return 1
-    else:
-        P = r0 * math.pow(1 - _U / _E, 0.5)
-        _B = P / _a
-        return 0
-
-def _criv(r0):
-    global _c
-    _c = 2 * (_E - _U) * r0 / (_a * _U + _Z * 23.0707e-20 * (_s1 * _d1 * math.exp(-_d1 * _R) + _s2 * _d2 * math.exp(-_d2 * _R) + _s3 * _d3 * math.exp(-_d3 * _R) + _s4 * _d4 * math.exp(-_d4 * _R)))
-    return 0
-
-def _res():
-    global _e1, _B, _R, _o
-    be = (_C2 + math.pow(_e1, 0.5)) / (_C3 + math.pow(_e1, 0.5))
-    A0 = 2 * (1 + _C1 * math.pow(_e1, -0.5)) * _e1 * math.pow(_B, be)
-    G = (_C5 + _e1) / ((_C4 + _e1) * (math.pow(1 + A0 * A0, 0.5) - A0))
-    d = (_B + _c + A0 * (_R - _B) / (1 + G)) / (_R + _c) - math.cos(_o / 2)
-    return d
-
-def _approach( E0):
-    global _E, _a, _Z, _e1, _R, q
-    _E = 1.6021766e-12 * E0 / (1 + _m[0] / _m[1])
-    z0 = math.pow(_z[0], 0.5) + math.pow(_z[1], 0.5)
-    _a = 0.8853 * 0.529e-8 / math.pow(z0, 0.666666666)
-    if _pot == 1 or _pot == 2:
-        z0 = math.pow(_z[0], 0.23) + math.pow(_z[1], 0.23)
-        _a = 0.88534 * 0.529e-8 / z0
-    _e1 = _a * _E / (_z[0] * _z[1] * 23.0707e-20)
-    _Z = _z[0] * _z[1]
-    x1 = 0
-    x2 = 5e-8
-    for i in range(1, 41):
-        y = (x1 + x2) / 2
-        _R = y / _a
-        q = _pric(y)
-        if q == 0:
-            q = _criv(y)
-            re = _res()
-            if re > 0:
-                x2 = y
-            else:
-                x1 = y
-        if q == 1:
-            x1 = y
-    y = (x1 + x2) / 2
-    return y
-
-# aka vybit
-def __recoil(E0, o2, od):
-    
-    global En1, En2, dif1, dif2, _B, _a, q, cr1, _o 
-    orm = o2 - 0.000001
-    hi = math.pi - 2 * orm
-    o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-    if o1 < 0:
-        o1 = math.pi + o1
-    E1 = E0 - E0 * 4 * _m[1] * _m[0] * math.pow(math.cos(orm), 2) / math.pow(_m[0] + _m[1], 2)
-
-    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / (_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1]))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    if o2 == 0:
-        _B = 0
-    p1 = _B * _a * math.pow(10, 8)
-    orp = o2 + 0.000001
-    hi = math.pi - 2 * orp
-    o1 = math.atan(_m[1] * math.sin(hi) / (_m[0] + _m[1] * math.cos(hi)))
-    if o1 < 0:
-        o1 = math.pi + o1
-    E1 = E0 - E0 * 4 * _m[1] * _m[0] * math.pow(math.cos(orp), 2) / math.pow(_m[0] + _m[1], 2)
-
-    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / (_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1]))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p2 = _B * _a * math.pow(10, 8)
-    return abs(abs(math.pow(p1, 2) - math.pow(p2, 2)) / (2 * math.sin(o2) * 0.000002))
-
-# aka rassey
-def __scatter(E0, o1, od):
-    global En1, En2, dif1, dif2, _B, a, q, cr1, _o 
-    E1 = E0 * math.pow((math.cos(o1) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    #print(f"Energy after scattering: {E1:.0f} eV")
-    En1 = E1
-    #E2 = E0 * math.pow((math.cos(o1 / 2) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-    #print(f"Double scattering energy: {E2:.0f} eV"
-    _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    #print(f"Scattering angle: {o * 180 / math.pi:.2f} degrees")
-    r0 = _approach(E0)
-    #print(f"__Approach distance: {r0 * 1e8:.5f} Å")
-    q = _pric(r0)
-    pc1 = _B * _a * 1e8
-    #print(f"Impact parameter: {pc1:.5f} Å")
-    if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-        print("No solution")
-        dif1 = -1
-    else:
-        orm = o1 - od / 2
-        orp = o1 + od / 2
-        E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p1 = _B * _a * 1e8
-        E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        r0 = _approach(E0)
-        q = _pric(r0)
-        p2 = _B * _a * 1e8
-        #print(f"Difference: {abs(p1**2 - p2**2):.7f}")
-        dif1 = abs(p1**2 - p2**2)
-
-    if (_m[1] / _m[0]) < 1 and False:
-        E1 = E0 * math.pow((math.cos(o1) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-        print(f"Complementary energy: {E1:.0f} eV")
-        En2 = E1
-        E2 = E0 * math.pow((math.cos(o1 / 2) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 / 2), 2), 0.5)) / (1 + _m[1] / _m[0]), 4)
-        print(f"Complementary double scattering energy: {E2:.0f} eV")
-        _o = math.atan(math.sin(o1) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(o1) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-        if _o < 0:
-            _o = math.pi + _o
-        print(f"Complementary scattering angle: {_o * 180 / math.pi:.2f} degrees")
-        r0 = _approach(E0)
-        print(f"Complementary __approach distance: {r0 * 1e8:.5f} Å")
-        q = _pric(r0)
-        pc2 = _B * _a * 1e8
-        print(f"Complementary impact parameter: {pc2:.5f} Å")
-
-        if o1 - od / 2 <= 0 or o1 + od / 2 >= 180 or ((math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(o1 + od / 2), 2))) < 0:
-            print("No solution")
-            dif2 = -1
-        else:
-            orm = o1 - od / 2
-            orp = o1 + od / 2
-            if orp >= 180:
-                orp = 360 - orp
-            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p1 = _B * _a * 1e8
-            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p2 = _B * _a * 1e8
-            print(f"Complementary difference: {abs(p1**2 - p2**2):.7f}")
-            dif2 = abs(p1**2 - p2**2)
-
-            orm = o1 - 0.00001
-            orp = o1 + 0.00001
-            E1 = E0 * math.pow((math.cos(orm) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p1 = _B * _a * 1e8
-            E1 = E0 * math.pow((math.cos(orp) - math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-            _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-            if _o < 0:
-                _o = math.pi + _o
-            r0 = _approach(E0)
-            q = _pric(r0)
-            p2 = _B * _a * 1e8
-            print(f"Complementary differential cross-section: {abs((p2 - p1) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-    else:
-        En2 = -1
-
-    orm = o1 - 0.00001
-    orp = o1 + 0.00001
-    E1 = E0 * math.pow((math.cos(orm) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orm), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orm) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orm) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p1 = _B * _a * 1e8
-    E1 = E0 * math.pow((math.cos(orp) + math.pow(math.pow(_m[1] / _m[0], 2) - math.pow(math.sin(orp), 2), 0.5)) / (1 + _m[1] / _m[0]), 2)
-    _o = math.atan(math.sin(orp) * math.pow(2 * _m[0] * E1, 0.5) / ((_m[0] * (math.cos(orp) * math.pow(2 * _m[0] * E1, 0.5) / _m[0] - math.pow(2 * _m[0] * E0, 0.5) / (_m[0] + _m[1])))))
-    if _o < 0:
-        _o = math.pi + _o
-    r0 = _approach(E0)
-    q = _pric(r0)
-    p2 = _B * _a * 1e8
-    #print(f"Differential cross-section: {abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5)):.7f}")
-    #print ("--------------------------------")
-
-    return abs((p1 - p2) * (p1 + p2) / (2 * math.sin(o1) * 2e-5))
-
-def get_cross_section(incident_symbol, E0, o1, od, target_symbol, type="scatter"):
+def get_cross_section(incident_symbol, E0, o1, target_symbol, type="scatter"):
     
     """
     returns cross section of the scattering process for given incident and target elements
     incident_symbol - symbol of the incident element
     E0 - energy of the incident particle
     o1 - scattering angle
-    od - spread of the scattering angle
     target_symbol - symbol of the target element  
-    """
+    defaul potential is ZBL. Use set_potential(pot) to change it
+    type = "scatter" or "recoil" for scattering or recoils
+    """    
+    global __chosen_potential, __C1, __C2, __C3, __C4, __C5, __s1, __s2, __s3, __s4, __d1, __d2, __d3, __d4
     
     o2 = o1 * math.pi / 180
-    od = od * math.pi / 180
-    
-    global _C1, _C2, _C3, _C4, _C5, _s1, _s2, _s3, _s4, _d1, _d2, _d3, _d4
 
     #print (incident_symbol+" -> "+target_symbol)
-    _element(incident_symbol, 0)  # Example: Neon as projectile
-    _element(target_symbol, 1)  # Example: Tungsten as target
+    __element(incident_symbol, 0)  # Example: Neon as projectile
+    __element(target_symbol, 1)  # Example: Tungsten as target
     
-    if _pot == 0:
-        _s1, _s2, _s3, _s4 = 0.35, 0.55, 0.1, 0
-        _d1, _d2, _d3, _d4 = 0.3, 1.2, 6, 0
-        _C1, _C2, _C3, _C4, _C5 = 0.6743, 0.009611, 0.005175, 6.314, 10
-    elif _pot == 1:
-        _s1, _s2, _s3, _s4 = 0.028171, 0.28022, 0.50986, 0.18175
-        _d1, _d2, _d3, _d4 = 0.20162, 0.40290, 0.94229, 3.1998
-        _C1, _C2, _C3, _C4, _C5 = 0.99229, 0.011615, 0.0071222, 9.3066, 14.813
-    elif _pot == 2:
-        _s1, _s2, _s3, _s4 = 0.190945, 0.473674, 0.335381, 0
-        _d1, _d2, _d3, _d4 = 0.278544, 0.637174, 1.919249, 0
-        _C1, _C2, _C3, _C4, _C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
+    if __chosen_potential == 0:
+        __s1, __s2, __s3, __s4 = 0.35, 0.55, 0.1, 0
+        __d1, __d2, __d3, __d4 = 0.3, 1.2, 6, 0
+        __C1, __C2, __C3, __C4, __C5 = 0.6743, 0.009611, 0.005175, 6.314, 10
+    elif __chosen_potential == 1:
+        __s1, __s2, __s3, __s4 = 0.028171, 0.28022, 0.50986, 0.18175
+        __d1, __d2, __d3, __d4 = 0.20162, 0.40290, 0.94229, 3.1998
+        __C1, __C2, __C3, __C4, __C5 = 0.99229, 0.011615, 0.0071222, 9.3066, 14.813
+    elif __chosen_potential == 2:
+        __s1, __s2, __s3, __s4 = 0.190945, 0.473674, 0.335381, 0
+        __d1, __d2, __d3, __d4 = 0.278544, 0.637174, 1.919249, 0
+        __C1, __C2, __C3, __C4, __C5 = 1.0144, 0.235809, 0.126, 6.9350, 8.3550
     
     if "scatter" in type :  
-        if  _m[0] > _m[1]: 
+        if  __m[0] > __m[1]: 
             try:         
-                if o2 >= np.asin(_m[1]/_m[0]):
-                    print(f"ERROR: scattering angle should be lower than {np.asin(_m[1]/_m[0])*180/np.pi:.2f} degrees. Now it is {o1} degrees")
+                if o2 >= np.arcsin(__m[1]/__m[0]):
+                    print(f"ERROR: scattering angle should be lower than {np.arcsin(__m[1]/__m[0])*180/np.pi:.2f} degrees. Now it is {o1} degrees")
                     return 0
                 else:
-                    return __scatter(E0, o2, od)
-            except:
-                print("this error would never happen ha-ha") 
+                    return __scattered(E0, o2)
+            except ValueError:
+                print(ValueError)
+                print("This error has not been expected ha-ha")
+                return 0
         else:
-            return __scatter(E0, o2, od)
+            return __scattered(E0, o2)
     elif "recoil" in type:
         if o1>=90:
             print(f"ERROR: recoil angle should be less than 90 degrees. Now it is {o1} degrees")
             return 0
         else:
-            return __recoil(E0, o2, od)
+            return __recoiled(E0, o2)
+
