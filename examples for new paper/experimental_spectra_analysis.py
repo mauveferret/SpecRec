@@ -60,8 +60,8 @@ for spectrum in exp_spectra:
     int_Au = 1*leis.get_sensitivity_factor(data.E0, data.incident_atom, "Au", data.scattering_angle,data.dTheta, R = 0.01)
     conc_Au_semiRef = int_Au/(int_Au+int_Pd)*100
     
-    int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, data.dTheta, "Pd")
-    int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, data.dTheta, "Au")
+    int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
+    int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
     
     conc_Au_semiRef_cross = int_Au/(int_Au+int_Pd)*100
     
