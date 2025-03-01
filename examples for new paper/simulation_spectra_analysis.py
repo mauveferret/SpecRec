@@ -23,7 +23,7 @@ sys.path.insert(1, os.getcwd()+os.sep+BASE_LIB_PATH)
 import LEIS_tools as leis
 
 #####################################    PRESETS      #####################################
-spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"sim_AuPd_dE2eVdBeta2deg"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"sim_AuPd_dE200eVdBeta1deg"
 leis.Emin = 10
 dE = 2
 #############################################################################################
