@@ -255,7 +255,7 @@ class spectrum:
             data = lines[i].split(" ")
             if "sim" in self.__calc_name or "sim" in spectrum_path:
                 raw_spectrum_en[i] = float(data[0])
-            elif "exp" in self.__calc_name or "exp" in spectrum_path:
+            elif "exp" in self.__calc_name or "exp" in spectrum_path or "Спектры" in spectrum_path:
                 raw_spectrum_en[i] = float(data[0])*1000
             raw_spectrum_int[i] = float(data[1])
         # do interpolation with new energy step and normalization to 1 in range (Emin, Emax)
