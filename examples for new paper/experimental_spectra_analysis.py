@@ -73,8 +73,29 @@ for spectrum in exp_spectra:
     plt.plot(i, conc_Au_semiRef, "*", color="red" if data.incident_atom == "Ne" else "green")
     plt.plot(i, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
     plt.plot(i, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
+    
+    # Store concentrations for statistics
+    if i == 0:
+        Ne_conc = []
+        Ar_conc = []
+    
+    if data.incident_atom == "Ne":
+        Ne_conc.append(conc_Au_fitting)
+    else:
+        Ar_conc.append(conc_Au_fitting)
 
     i+=1
+
+    # After last spectrum, print statistics
+    if i == len([s for s in exp_spectra if "ref" not in s]):
+        if Ne_conc:
+            print(f"\nNe incident atoms:")
+            print(f"Average Au concentration: {np.mean(Ne_conc):.2f}%")
+            print(f"Standard deviation: {np.std(Ne_conc):.2f}%")
+        if Ar_conc:
+            print(f"\nAr incident atoms:")
+            print(f"Average Au concentration: {np.mean(Ar_conc):.2f}%")
+            print(f"Standard deviation: {np.std(Ar_conc):.2f}%")
 
 plt.axhline(y=50, color='black', linestyle=':', alpha=0.7, linewidth=2)
 plt.ylim(30, 75)
