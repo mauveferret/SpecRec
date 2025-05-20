@@ -209,6 +209,7 @@ class spectrum:
 
         lines = spectrum_file.splitlines()
         
+        is_not_valid_name = False
         #print(self.__calc_name)
         
         # find letter strings and save its indexes
@@ -216,33 +217,45 @@ class spectrum:
         for i in range(0, len(lines)):
             if  any(c.isalpha() and not ("e" in c) for c in lines[i]) or ("*" in lines[i]) or lines[i]=='':
                 __indexes_letter_strings.append(lines[i])
-        if "sim" in self.__calc_name:
-            # get initial params from the filename
-            self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
-            self._M0 = get_mass_by_element(self.__incident_atom)
-            
-            self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
-            self.__scattering_angle = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
-            try:
-                self.__dTheta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[1])
-            except:
-                print("ERROR during spectrum import. Can't find dTheta in the filename")
+        
+        try:
+            if "sim" in self.__calc_name:
+                # get initial params from the filename
+                self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0]).replace(".","")
+                self._M0 = get_mass_by_element(self.__incident_atom)
+                
+                self.__E0 = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[0].split(self.__incident_atom)[1])*1000
+                self.__scattering_angle = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[0])
+                try:
+                    self.__dTheta = float(spectrum_path.split(os.sep)[-1].split("_")[1].split("keV")[1].split("deg")[1])
+                except:
+                    print("ERROR during spectrum import. Can't find dTheta in the filename")
+                    self.__dTheta = 1.0
+            elif ("exp" in self.__calc_name or "exp" in spectrum_path) and not "exp_ref" in self.__calc_name:
+                # parameters are valid ONLY for data obtained on
+                # the Large-mass monocromator "Mephi" aka "Crocodile" LEIS facility  
+                self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]
+                self._M0 = get_mass_by_element(self.__incident_atom)
+                self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
+                self.__scattering_angle = 32 # scattering angle is usually fixed at 32 degrees
+                self.__dTheta = 1.0	
+            elif "ex" in spectrum_path and "sim" in spectrum_path:
+                # get initial params from the filename
+                self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0]).replace(".","")
+                self._M0 = get_mass_by_element(self.__incident_atom)
+                self.__E0 = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0].split(self.__incident_atom)[1])*1000
+                self.__scattering_angle = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[1].split("deg")[0])
                 self.__dTheta = 1.0
-        elif ("exp" in self.__calc_name or "exp" in spectrum_path) and not "exp_ref" in self.__calc_name:
-            # parameters are valid ONLY for data obtained on
-            # the Large-mass monocromator "Mephi" aka "Crocodile" LEIS facility  
-            self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]
+            else:
+                 raise Exception("not valid filename")
+        except:
+            print("WARNING: spectrum name is not valid. Some scattering parameters can not be loaded. Trying  to guess it ... ")
+            is_not_valid_name = True
+            self.__incident_atom = "Ne"
             self._M0 = get_mass_by_element(self.__incident_atom)
-            self.__E0 = float(spectrum_path.split(os.sep)[-1].split("+")[1].split("keV")[0].strip())*1000
+            self.__E0 = 15000
             self.__scattering_angle = 32 # scattering angle is usually fixed at 32 degrees
             self.__dTheta = 1.0	
-        elif "ex" in spectrum_path and "sim" in spectrum_path:
-            # get initial params from the filename
-            self.__incident_atom = re.sub(r'\d', '', spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0]).replace(".","")
-            self._M0 = get_mass_by_element(self.__incident_atom)
-            self.__E0 = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[0].split(self.__incident_atom)[1])*1000
-            self.__scattering_angle = float(spectrum_path.split(os.sep)[-2].split("_")[2].split("keV")[1].split("deg")[0])
-            self.__dTheta = 1.0
         # remove letter strings from lines
         for i in __indexes_letter_strings:
             lines.remove(i)
@@ -255,9 +268,11 @@ class spectrum:
             data = lines[i].split(" ")
             if "sim" in self.__calc_name or "sim" in spectrum_path:
                 raw_spectrum_en[i] = float(data[0])
-            elif "exp" in self.__calc_name or "exp" in spectrum_path or "Спектры" in spectrum_path:
+            elif "exp" in self.__calc_name or "exp" in spectrum_path or "Спектры" in spectrum_path or True:
                 raw_spectrum_en[i] = float(data[0])*1000
             raw_spectrum_int[i] = float(data[1])
+        if is_not_valid_name:
+            self.__E0 = max (raw_spectrum_en)
         # do interpolation with new energy step and normalization to 1 in range (Emin, Emax)
         self.__spectrum_en = np.arange(0, raw_spectrum_en[-1], self.__step)
         # scaling range in eV (influence spectra normalization in Web charts and output files)
