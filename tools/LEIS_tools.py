@@ -796,7 +796,8 @@ def plot_spectrum(spectrum: spectrum, title = None):
 def _young( E, E0, A, R, FWHM, B, K):
     #R=1
     I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
-    I_inel = B*(np.pi-2*np.arctan(2*(E-E0)/(FWHM+0.001)))
+    # UPDATE 250520 150 is to reduce inelactic compared to elastic at peak position
+    I_inel = B*(np.pi-2*np.arctan(2*(E-E0+150)/(FWHM+0.001)))
     I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
     return I_el+I_inel*I_tail
 

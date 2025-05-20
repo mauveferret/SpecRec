@@ -15,7 +15,6 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 import os,  sys
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt2
 # changing working directoru to the SpecRec dir
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 os.chdir(parent_dir) 
@@ -34,6 +33,8 @@ filter_window = 100 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
 plt.figure(figsize=(12, 8))
+
+do_spectra_charts = True
 
 # Load reference spectra
 exp_spectra = os.listdir(spectrum_path0)
@@ -59,14 +60,6 @@ for spectrum in exp_spectra:
             print(f"No reference was found for the {data.incident_atom} incident atom")
        # Calculate the concentration of Au and Pd based on the SemiRef approach and the sensitivity factors
 
-    #plt2.plot(data.spectrum_en, leis.norm(data.spectrum_int), label="raw")
-    #plt2.plot(data.spectrum_en, Pd_signal, label="Pd")
-    #if "Ne" in data.incident_atom:
-    #    plt2.plot(ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int, label="Au")
-   # else:
-    #    plt2.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int, label="Au")
-
-
     int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
     int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
     
@@ -76,23 +69,40 @@ for spectrum in exp_spectra:
     young_fitting = leis.fitted_spectrum(data, "Pd", "Au")
     conc_Au_fitting = young_fitting.get_concentration()
     
-    plt2.plot(data.spectrum_en, young_fitting.get_fitted_spectrum(), label="Young")
-    box  = f"Au_conc_by_Young_fit = {conc_Au_fitting:.2f} at. % \nAu_conc_by_SemiRef = {conc_Au_semiRef_cross:.2f} at. %"   
-    plt2.text(11000, 0.7, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-    plt.ylim(0, 1)
-    plt.xlim(10000,15000)
-    plt.title(f"Experimental energy spectrum for {spectrum}")
-    plt2.show(block=True)
-    plt2.pause(0.01)
     print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_fitting:.2f} %")
-    if "Ne" in data.incident_atom:
-        i_ne+=1        
-        #plt.plot(i_ne, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
-        #plt.plot(i_ne, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
+    
+    if do_spectra_charts:
+        plt.figure(figsize=(12, 8))
+        plt.plot(data.spectrum_en, leis.norm(data.spectrum_int), label="Эксперименитальный спектр")
+        if "Ne" in data.incident_atom:
+            plt.plot(ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int, label="Полуэталонный Au")
+        else:
+            plt.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int, label="Полуэталонный Au")
+        plt.plot(data.spectrum_en, Pd_signal, label="Сигнал Pd")
+    
+        plt.plot(data.spectrum_en, young_fitting.get_fitted_spectrum(), label="Аппроксимация по формуле Йанга")
+        plt.plot(data.spectrum_en, young_fitting.get_elastic_part("Au"), "--", label="Упругая часть Au по формуле Йанга")
+        plt.plot(data.spectrum_en, young_fitting.get_inelastic_part("Au"), "--", label="Неупругая часть Au по формуле Йанга")     
+        plt.plot(data.spectrum_en, young_fitting.get_elastic_part("Pd"), "--", label="Упругая часть Pd по формуле Йанга")
+        plt.plot(data.spectrum_en, young_fitting.get_inelastic_part("Pd"), "--", label="Неупругая часть Pd по формуле Йанга")      
+        box  = f"Au_conc_by_Young_fit = {conc_Au_fitting:.2f} at. % \nAu_conc_by_SemiRef = {conc_Au_semiRef_cross:.2f} at. %"   
+        plt.text(11100, 0.3, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+        plt.ylim(0, 1)
+        plt.xlim(11000,15000)
+        plt.xlabel('энергия, эВ')
+        plt.ylabel('интенсивность, норм.')
+        plt.title(f"Экспериментальный спектр {spectrum}")
+        plt.legend()
+        plt.show()
     else:
-        i_ar+=1
-        #plt.plot(i_ar, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
-        #plt.plot(i_ar, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
+        if "Ne" in data.incident_atom:
+            i_ne+=1        
+            plt.plot(i_ne, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
+            plt.plot(i_ne, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
+        else:
+            i_ar+=1
+            plt.plot(i_ar, conc_Au_semiRef_cross, "x", color="red" if data.incident_atom == "Ne" else "green")
+            plt.plot(i_ar, conc_Au_fitting, "o", color="red" if data.incident_atom == "Ne" else "green")
     # Store concentrations for statistics
     if i == 0:
         Ne_conc = []
