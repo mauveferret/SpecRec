@@ -249,7 +249,7 @@ class spectrum:
             else:
                  raise Exception("not valid filename")
         except:
-            print("WARNING: spectrum name is not valid. Some scattering parameters can not be loaded. Trying  to guess it ... ")
+            print("WARNING: spectrum name is not valid. Some scattering parameters can not be loaded. Trying  to guess it for "+spectrum_path)
             is_not_valid_name = True
             self.__incident_atom = "Ne"
             self._M0 = get_mass_by_element(self.__incident_atom)
