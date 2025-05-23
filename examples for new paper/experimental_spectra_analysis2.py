@@ -15,6 +15,8 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 import os,  sys
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
 # changing working directoru to the SpecRec dir
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 os.chdir(parent_dir) 
@@ -45,6 +47,15 @@ for spectrum in exp_spectra:
         ref_Ne_Au_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ar_Au" in spectrum:
         ref_Ar_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+    if "ref_Ar_Pd" in spectrum:
+        ref_Ar_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+
+def twoCompTargetFitting(E, Pd_coef, Au_coef):
+
+    ll = [x*Pd_coef*ref_Ar_Pd.spectrum_max for x in np.interp(E, ref_Ar_Pd.spectrum_en, ref_Ar_Pd.spectrum_int)] 
+    yy = [x*Au_coef*ref_Ar_Au.spectrum_max for x in np.interp(E, ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int)] 
+    return [x + y for x, y in zip(ll, yy)]
+
 
 # Load experimental spectra and calculate the concentration of Au and Pd
 i = 0
@@ -79,7 +90,15 @@ for spectrum in exp_spectra:
                 print(e)
                 #conc_Au_fitting = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
         else:
-            conc_Au_fitting = data.spectrum_max/ref_Ar_Au.spectrum_max*100
+                pars, covariance = curve_fit(twoCompTargetFitting, data.spectrum_en, data.spectrum_int*data.spectrum_max, method = 'dogbox', maxfev=500000, bounds=([0,0],[10,10]), loss='linear', ftol=1E-9)
+                plt.figure(figsize=(12, 8))
+                plt.plot(data.spectrum_en, data.spectrum_int*data.spectrum_max)
+                plt.plot(ref_Ar_Pd.spectrum_en, ref_Ar_Pd.spectrum_int*ref_Ar_Pd.spectrum_max)
+                plt.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int*ref_Ar_Au.spectrum_max)
+                plt.plot(data.spectrum_en, twoCompTargetFitting(data.spectrum_en, pars[0], pars[1]) )
+                plt.show()
+                print(f"1 {pars[0]}   2   {pars[1]}   =  {pars[1]/(pars[0]+pars[1])}")
+                conc_Au_fitting =  pars[1]/(pars[0]+pars[1])*100#data.spectrum_max/ref_Ar_Au.spectrum_max*100
         print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_fitting:.2f} %")
         
         if do_spectra_charts:
