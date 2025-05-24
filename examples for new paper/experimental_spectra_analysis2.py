@@ -15,7 +15,7 @@ If you have questions regarding this program, please contact NEEfimov@mephi.ru
 import os,  sys
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+from scipy.optimize import minimize
 
 # changing working directoru to the SpecRec dir
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -43,6 +43,10 @@ exp_spectra = os.listdir(spectrum_path0)
 for spectrum in exp_spectra:
     if "ref_Ne_Au" in spectrum and not "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+    if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
+        ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+    if "ref_Ne_Pd_late" in spectrum:
+        ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ar_Au" in spectrum:
@@ -50,12 +54,16 @@ for spectrum in exp_spectra:
     if "ref_Ar_Pd" in spectrum:
         ref_Ar_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
 
-def twoCompTargetFitting(E, Pd_coef, Au_coef):
+def makeSpectrumByTwoRefs(E, Pd_coef, Au_coef):
 
     ll = [x*Pd_coef*ref_Ar_Pd.spectrum_max for x in np.interp(E, ref_Ar_Pd.spectrum_en, ref_Ar_Pd.spectrum_int)] 
     yy = [x*Au_coef*ref_Ar_Au.spectrum_max for x in np.interp(E, ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int)] 
     return [x + y for x, y in zip(ll, yy)]
 
+def common_minimization_func(coeffs, data, ref_a, ref_b):
+    a, b = coeffs
+    S_combined = a * ref_a + b * ref_b
+    return np.sum((data - S_combined) ** 2)
 
 # Load experimental spectra and calculate the concentration of Au and Pd
 i = 0
@@ -75,31 +83,95 @@ for spectrum in exp_spectra:
 
         int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
         int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
-        
         conc_Au_semiRef_cross = int_Au/(int_Au+int_Pd)*100
         
         # Calculate the concentration of Au and Pd based on the Young's fitting model 
         young_fitting = leis.fitted_spectrum(data, "Pd", "Au")
+        conc_Au_fitting = young_fitting.get_concentration()
+        
         if "Ne" in data.incident_atom:
+            Emax = 14800
+            leis.Emax = Emax
             try:
                 if int(spectrum.split("-")[1])<18:
-                    conc_Au_fitting = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
+                 
+                    Pd_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[:int(Emax/leis.step)])*ref_Ne_Pd.spectrum_max
+                    Au_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au.spectrum_int[:int(Emax/leis.step)])*ref_Ne_Au.spectrum_max
+                    result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[:int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
+                    Pd_coeff, Au_coeff = result.x
+                    conc_Au_etalon =  Au_coeff*100   
+
+                    #plt.figure(figsize=(12, 8))
+                    #plt.plot(data.spectrum_en, data.spectrum_int*data.spectrum_max)
+                    #plt.plot(ref_Ne_Pd.spectrum_en, ref_Ne_Pd.spectrum_int*ref_Ne_Pd.spectrum_max*Pd_coeff)
+                    #plt.plot(ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int*ref_Ne_Au.spectrum_max*Au_coeff)
+                    #plt.legend()
+                    #plt.show()
+                    #print(f"etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
+                    
+                    # for semi-etalon method
+                    Pd_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[:int(Emax/leis.step)]))
+                    Au_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au.spectrum_int[:int(Emax/leis.step)]))
+                    result = minimize(common_minimization_func, [0.5, 0.5], args=(leis.norm(data.spectrum_int[:int(Emax/leis.step)]), Pd_spec, Au_spec), method='Nelder-Mead')
+                    Pd_coeff, Au_coeff = result.x          
+                    Pd_coeff = Pd_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
+                    Au_coeff = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
+                    #print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
+                    conc_Au_semiRef_cross =  Au_coeff/(Pd_coeff+Au_coeff)*100     
                 else:
-                    conc_Au_fitting = data.spectrum_max/ref_Ne_Au_late.spectrum_max*100  #young_fitting.get_concentration()
+                    #conc_Au_etalon = data.spectrum_max/ref_Ne_Au_late.spectrum_max*100  #young_fitting.get_concentration()
+                    Pd_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd_late.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd_late.spectrum_int[:int(Emax/leis.step)])*ref_Ne_Pd_late.spectrum_max
+                    Au_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au_late.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au_late.spectrum_int[:int(Emax/leis.step)])*ref_Ne_Au_late.spectrum_max
+                    result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[:int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
+                    Pd_coeff, Au_coeff = result.x
+                    conc_Au_etalon =  Au_coeff*100   
+                    
+                    # for semi-etalon method
+                    Pd_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd_late.spectrum_en[:int(Emax/leis.step)], ref_Ne_Pd_late.spectrum_int[:int(Emax/leis.step)]))
+                    Au_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au_late.spectrum_en[:int(Emax/leis.step)], ref_Ne_Au_late.spectrum_int[:int(Emax/leis.step)]))
+                    result = minimize(common_minimization_func, [0.5, 0.5], args=(leis.norm(data.spectrum_int[:int(Emax/leis.step)]), Pd_spec, Au_spec), method='Nelder-Mead')
+                    Pd_coeff, Au_coeff = result.x                
+                    Pd_coeff = Pd_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
+                    Au_coeff = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
+                    #print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
+                    conc_Au_semiRef_cross =  Au_coeff/(Pd_coeff+Au_coeff)*100                      
+                    
             except Exception as e:
                 print(e)
-                #conc_Au_fitting = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
-        else:
-                pars, covariance = curve_fit(twoCompTargetFitting, data.spectrum_en, data.spectrum_int*data.spectrum_max, method = 'dogbox', maxfev=500000, bounds=([0,0],[10,10]), loss='linear', ftol=1E-9)
-                plt.figure(figsize=(12, 8))
-                plt.plot(data.spectrum_en, data.spectrum_int*data.spectrum_max)
-                plt.plot(ref_Ar_Pd.spectrum_en, ref_Ar_Pd.spectrum_int*ref_Ar_Pd.spectrum_max)
-                plt.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int*ref_Ar_Au.spectrum_max)
-                plt.plot(data.spectrum_en, twoCompTargetFitting(data.spectrum_en, pars[0], pars[1]) )
-                plt.show()
-                print(f"1 {pars[0]}   2   {pars[1]}   =  {pars[1]/(pars[0]+pars[1])}")
-                conc_Au_fitting =  pars[1]/(pars[0]+pars[1])*100#data.spectrum_max/ref_Ar_Au.spectrum_max*100
-        print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_fitting:.2f} %")
+                #conc_Au_etalon = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
+        elif "Ar" in data.incident_atom:
+                #   for etalon method
+                
+                Emax = 14400
+                Pd_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[:int(Emax/leis.step)])*ref_Ar_Pd.spectrum_max
+                Au_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_int[:int(Emax/leis.step)])*ref_Ar_Au.spectrum_max
+                result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[:int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
+                Pd_coeff, Au_coeff = result.x
+                
+                #plt.figure(figsize=(12, 8))
+                #plt.plot(data.spectrum_en, data.spectrum_int*data.spectrum_max)
+                #plt.plot(ref_Ar_Pd.spectrum_en, ref_Ar_Pd.spectrum_int*ref_Ar_Pd.spectrum_max)
+                #plt.plot(ref_Ar_Au.spectrum_en, ref_Ar_Au.spectrum_int*ref_Ar_Au.spectrum_max)
+                #plt.plot(data.spectrum_en, makeSpectrumByTwoRefs(data.spectrum_en, Pd_coeff, Au_coeff), label="fitted")
+                #plt.legend()
+                #plt.show()
+                #print(f"etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
+                conc_Au_etalon =  Au_coeff*100   
+                
+                # for semi-etalon method
+                Pd_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[:int(Emax/leis.step)])
+                Au_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_int[:int(Emax/leis.step)])
+                result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[:int(Emax/leis.step)], Pd_spec, Au_spec), method='Nelder-Mead')
+   
+                # Извлечение оптимальных коэффициентов
+                Pd_coeff, Au_coeff = result.x               
+                Pd_coeff = Pd_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
+                Au_coeff = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
+                
+                #print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
+                conc_Au_semiRef_cross =  Au_coeff/(Pd_coeff+Au_coeff)*100           
+                
+        print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_etalon:.2f} % {conc_Au_fitting:.2f} %")
         
         if do_spectra_charts:
             plt.plot(data.spectrum_en, leis.norm(data.spectrum_int), label="Эксперименитальный спектр")
@@ -114,7 +186,7 @@ for spectrum in exp_spectra:
             plt.plot(data.spectrum_en, young_fitting.get_inelastic_part("Au"), "--", label="Неупругая часть Au по формуле Йанга")     
             plt.plot(data.spectrum_en, young_fitting.get_elastic_part("Pd"), "--", label="Упругая часть Pd по формуле Йанга")
             plt.plot(data.spectrum_en, young_fitting.get_inelastic_part("Pd"), "--", label="Неупругая часть Pd по формуле Йанга")      
-            box  = f"Au_conc_by_Young_fit = {conc_Au_fitting:.2f} at. % \nAu_conc_by_SemiRef = {conc_Au_semiRef_cross:.2f} at. %"   
+            box  = f"Au_conc_by_Young_fit = {conc_Au_etalon:.2f} at. % \nAu_conc_by_SemiRef = {conc_Au_semiRef_cross:.2f} at. %"   
             plt.text(11100, 0.3, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
             plt.ylim(0, 1)
             plt.xlim(11000,15000)
@@ -128,15 +200,19 @@ for spectrum in exp_spectra:
                 i_ne+=1        
                 plt.plot(i_ne, conc_Au_semiRef_cross, "x", color="red" )
                 plt.annotate(spectrum.split("Ne")[0].split("2025")[1], (i_ne,conc_Au_semiRef_cross + 0.2))
-                plt.plot(i_ne, conc_Au_fitting, "o", color="red" )
+                plt.plot(i_ne, conc_Au_etalon, "o", color="red" )
+                plt.annotate(spectrum.split("Ne")[0].split("2025")[1], (i_ne,conc_Au_etalon + 0.2))
+                plt.plot(i_ne, conc_Au_fitting, "*", color="red")
                 plt.annotate(spectrum.split("Ne")[0].split("2025")[1], (i_ne,conc_Au_fitting + 0.2))
+
             else:
                 i_ar+=1
                 plt.plot(i_ar, conc_Au_semiRef_cross, "x", color= "green")
                 plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_semiRef_cross + 0.2))
-                plt.plot(i_ar, conc_Au_fitting, "o", color="green")
+                plt.plot(i_ar, conc_Au_etalon, "o", color="green")
+                plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_etalon + 0.2))
+                plt.plot(i_ar, conc_Au_fitting, "*", color="green")
                 plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_fitting + 0.2))
-
         # Store concentrations for statistics
         if i == 0:
             Ne_conc = []
@@ -167,5 +243,5 @@ if not do_spectra_charts:
     plt.title('Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. Ne - RED, Ar - GREEN')
     plt.grid(True)
     plt.minorticks_on()
-    plt.legend([ "Полуэталонный метод", "Эталонный метод"])
+    plt.legend([ "Полуэталонный метод", "Эталонный метод", "Метод аппроксимации"])
     plt.show()
