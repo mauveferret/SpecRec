@@ -26,7 +26,7 @@ import LEIS_tools as leis
 #import spectraConvDeconv_tools as SCD
 
 # Presets
-spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd2"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
 leis.Emin = 5000 # eV
 leis.Emax = 15000 # eV
 dE = 2 # eV
