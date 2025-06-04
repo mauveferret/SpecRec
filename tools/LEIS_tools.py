@@ -235,7 +235,7 @@ class spectrum:
                 except:
                     print("ERROR during spectrum import. Can't find dTheta in the filename")
                     self.__dTheta = 1.0
-            elif ("exp" in self.__calc_name or "exp" in spectrum_path) and not "exp_ref" in self.__calc_name and not "deg" in self.__calc_name:
+            elif ("exp" in self.__calc_name or "exp" in spectrum_path) and not "exp_ref" in self.__calc_name and not "deg" in self.__calc_name or ("Спектры" in spectrum_path and not "exp_ref" in self.__calc_name ):
                 # parameters are valid ONLY for data obtained on
                 # the Large-mass monocromator "Mephi" aka "Crocodile" LEIS facility  
                 self.__incident_atom = spectrum_path.split(os.sep)[-1].split("+")[0].split("-")[-1]

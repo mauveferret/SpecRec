@@ -26,7 +26,7 @@ import LEIS_tools as leis
 #import spectraConvDeconv_tools as SCD
 
 # Presets
-spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd2"
 leis.Emin = 5000 # eV
 leis.Emax = 15000 # eV
 dE = 2 # eV
@@ -36,7 +36,7 @@ filter_window = 100 # eV
 R = 0.01
 plt.figure(figsize=(12, 8))
 
-do_spectra_charts = False
+do_spectra_charts = True
 
 # Load reference spectra
 exp_spectra = os.listdir(spectrum_path0)
