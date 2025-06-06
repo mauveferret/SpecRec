@@ -27,7 +27,11 @@ import LEIS_tools as leis
 
 # Presets
 #spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
-spectrum_path0 = "D:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
+#spectrum_path0 = "D:\Спектры\\250603 Ne 15 keV AuPd"
+spectrum_path0 = "D:\Спектры\\250604 Ne 15 keV AuPd heating"
+#spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
+
+
 leis.Emin = 5000 # eV
 leis.Emax = 15000 # eV
 dE = 2 # eV
@@ -36,7 +40,7 @@ filter_window = 100 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
 plt.figure(figsize=(12, 8))
-
+ 
 do_spectra_charts = False
 
 # Load reference spectra
@@ -98,7 +102,9 @@ for spectrum in exp_spectra:
         int_Pd = leis.peak(Pd_signal)/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
         int_Au = 1/leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
         conc_Au_semiRef_cross = int_Au/(int_Au+int_Pd)*100
-        
+        Au_rel_int = data.spectrum_max/1E-8*100
+        Pd_rel_int = leis.peak(Pd_signal)*data.spectrum_max/1E-8*100
+       
         # Calculate the concentration of Au and Pd based on the Young's fitting model 
         #young_fitting = leis.fitted_spectrum(data, "Pd", "Au")
         #conc_Au_fitting = young_fitting.get_concentration()
@@ -174,8 +180,8 @@ for spectrum in exp_spectra:
                 conc_Au_etalon =  Au_coeff*100   
                 
                 # for semi-etalon method
-                Pd_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[:int(Emax/leis.step)])
-                Au_spec = np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_int[:int(Emax/leis.step)])
+                Pd_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[:int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[:int(Emax/leis.step)]))
+                Au_spec = leis.norm(np.interp(data.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_en[:int(Emax/leis.step)], ref_Ar_Au.spectrum_int[:int(Emax/leis.step)]))
                 result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[:int(Emax/leis.step)], Pd_spec, Au_spec), method='Nelder-Mead')
    
                 # Извлечение оптимальных коэффициентов
@@ -184,7 +190,7 @@ for spectrum in exp_spectra:
                 Au_coeff = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
                 
                 #print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
-                conc_Au_semiRef_cross =  Au_coeff/(Pd_coeff+Au_coeff)*100           
+                #conc_Au_semiRef_cross =  Au_coeff/(Pd_coeff+Au_coeff)*100           
                 
         #print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_etalon:.2f} % {conc_Au_fitting:.2f} %")
         
@@ -200,8 +206,8 @@ for spectrum in exp_spectra:
                 plt.text(12.2, 0.7, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
             else:
-                plt.plot(ref_Ar_Au.spectrum_en/1000, ref_Ar_Au.spectrum_int, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
-                plt.plot(ref_Ar_Pd.spectrum_en/1000, ref_Ar_Pd.spectrum_int*max(Pd_signal),  "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
+                plt.plot(ref_Ar_Au.spectrum_en/1000, ref_Ar_Au.spectrum_int*Au_coeff, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
+                plt.plot(ref_Ar_Pd.spectrum_en/1000, ref_Ar_Pd.spectrum_int*Pd_coeff,  "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[:int(14300/dE)]/1000, Pd_signal[:int(14300/dE)], "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
                 plt.xlim(10,15)
                 plt.text(10.2, 0.7, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
@@ -226,19 +232,26 @@ for spectrum in exp_spectra:
                 i_ne+=1        
                 plt.plot(i_ne, conc_Au_semiRef_cross, "x", color="red", markersize=15)
                 plt.annotate(f"{t}", (i_ne,conc_Au_semiRef_cross + 0.2))
-                plt.plot(i_ne, conc_Au_etalon, "o", color="red" )
-                plt.annotate(f"{t}", (i_ne,conc_Au_etalon + 0.2))
+                
+                plt.plot(i_ne, Au_rel_int, "o", color="blue", markersize=15)
+                plt.plot(i_ne, Pd_rel_int, "<", color="black", markersize=15)
+
+                #plt.plot(i_ne, conc_Au_etalon, "o", color="red" )
+                #plt.annotate(f"{t}", (i_ne,conc_Au_etalon + 0.2))
                 #plt.plot(i_ne, conc_Au_fitting, "*", color="red")
                 #plt.annotate(spectrum.split("Ne")[0].split("2025")[1], (i_ne,conc_Au_fitting + 0.2))
 
-            elif False:
+            else:
                 i_ar+=1
-                plt.plot(i_ar, conc_Au_semiRef_cross, "*", color= "green", markersize=20)
-                plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_semiRef_cross + 0.2))
-                plt.plot(i_ar, conc_Au_etalon, "^", color="green")
-                plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_etalon + 0.2))
+                #plt.plot(i_ar, conc_Au_semiRef_cross, "*", color= "green", markersize=20)
+                #plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_semiRef_cross + 0.2))
+                
+               # plt.plot(i_ar, conc_Au_etalon, "^", color="green")
+                #plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_etalon + 0.2))
                 #plt.plot(i_ar, conc_Au_fitting, "*", color="green")
                 #plt.annotate(spectrum.split("Ar")[0].split("2025")[1], (i_ar,conc_Au_fitting + 0.2))
+                #plt.plot(i_ar, Au_rel_int, "o", color="blue", markersize=15)
+                #plt.plot(i_ar, Pd_rel_int, "<", color="black", markersize=15)
         # Store concentrations for statistics
         if i == 0:
             Ne_conc = []
@@ -264,13 +277,17 @@ for spectrum in exp_spectra:
 if not do_spectra_charts:
     #plt.plot(-1, 0, "*", color= "green", label ="Аргон 15 кэВ")
     plt.plot(-1, 0, "x", color="red", label ="Ne 15 кэВ \"Полуэталонный\"")
-    plt.plot(-1, 0, "o", color="red", label ="Ne 15 кэВ \"Эталонный\" норм.")
+    #plt.plot(-1, 0, "o", color="red", label ="Ne 15 кэВ \"Эталонный\" норм.")
+    plt.plot(-1, 0, "*", color="green", label ="Ar 15 кэВ \"Полуэталонный\"")
+    plt.plot(-1, 0, "o", color="blue", label ="пик золота / 1E-8 * 100%")
+    plt.plot(-1, 0, "<", color="black", label ="пик палладия / 1E-8 * 100%")
+
     plt.axhline(y=50, color='black', linestyle=':', alpha=0.8, linewidth=3)
     plt.xlim(left=0)
-    plt.ylim(40, 80)
+    plt.ylim(0, 120)
     plt.xlabel('номер спектра', fontsize = 15)
     plt.ylabel('концентрация Au, %', fontsize = 15)
-    plt.title('Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. \n Sample Temperature is shown in Annotations', y=1.02)
+    plt.title(f'Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. \n Sample Temperature is shown in Annotations \n {spectrum_path0}', y=1.02)
     plt.grid(True)
     plt.legend(fontsize=15)
     plt.xticks(fontsize=15)
