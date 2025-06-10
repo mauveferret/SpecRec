@@ -89,6 +89,11 @@ class spectrum:
     def spectrum_en(self):
         return self.__spectrum_en
 
+
+    def shift_spectrum_en(self, energy):
+        for i in range(len(self.__spectrum_en)):
+            self.__spectrum_en[i] = self.__spectrum_en[i]-energy
+
     @property
     def spectrum_int(self):
         return self.__spectrum_int

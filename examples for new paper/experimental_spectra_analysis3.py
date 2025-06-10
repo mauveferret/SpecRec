@@ -31,17 +31,17 @@ SCD.step = dE
 
 ##############################            PRESETS          ##########################################################
 
-#spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
 #spectrum_path0 = "D:\Спектры\\250603 Ne 15 keV AuPd"
 #spectrum_path0 = "D:\Спектры\\250604 Ne 15 keV AuPd heating"
-spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
+#spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250605 Ar Ne 15 keV AuPd heating"
 leis.Emin = 13000 # eV
 leis.Emax = 15000 # eV
 
 # smoothing parameter
-filter_window = 30 # eV
+filter_window = 80 # eV
 
 # R - relative energy resolution of spectrometer
 R = 0.01
@@ -58,8 +58,10 @@ exp_spectra = os.listdir(spectrum_path0)
 for spectrum in exp_spectra:
     if "ref_Ne_Au" in spectrum and not "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+        #ref_Ne_Au.shift_spectrum_en(20)
     if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
         ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+        #ref_Ne_Pd.shift_spectrum_en(100)
     if "ref_Ne_Pd_late" in spectrum:
         ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
