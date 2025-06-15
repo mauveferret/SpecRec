@@ -31,17 +31,17 @@ SCD.step = dE
 
 ##############################            PRESETS          ##########################################################
 
-#spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd2"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
 #spectrum_path0 = "D:\Спектры\\250603 Ne 15 keV AuPd"
 #spectrum_path0 = "D:\Спектры\\250604 Ne 15 keV AuPd heating"
 #spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
-spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
+#spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250605 Ar Ne 15 keV AuPd heating"
-leis.Emin = 12000 # eV
+leis.Emin = 7000 # eV
 leis.Emax = 15000 # eV
 
 # smoothing parameter
-filter_window = 100 # eV
+filter_window = 80 # eV
 
 # R - relative energy resolution of spectrometer
 R = 0.01
@@ -58,8 +58,10 @@ exp_spectra = os.listdir(spectrum_path0)
 for spectrum in exp_spectra:
     if "ref_Ne_Au" in spectrum and not "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+        #ref_Ne_Au.shift_spectrum_en(20)
     if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
         ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
+        #ref_Ne_Pd.shift_spectrum_en(100)
     if "ref_Ne_Pd_late" in spectrum:
         ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
@@ -141,9 +143,11 @@ for spectrum in exp_spectra:
                     #plt.show()
                     
                     # for SEMI-ETALON method
-                    Pd_spec = leis.norm(np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
-                    Au_spec = leis.norm(np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
-                    result = minimize(common_minimization_func, [0.5, 0.5], args=(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), Pd_spec, Au_spec), method='Nelder-Mead')
+                    Pd_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
+                    Pd_spec = Pd_spec/max(Pd_spec)
+                    Au_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
+                    Au_spec = Au_spec/max(Au_spec)
+                    result = minimize(common_minimization_func, [0.5, 0.5], args=((data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), Pd_spec, Au_spec), method='Nelder-Mead')
                     Pd_coeff, Au_coeff = result.x          
     
                     Au_Deconv_spectrum = Au_spec*Au_coeff
@@ -160,6 +164,7 @@ for spectrum in exp_spectra:
                 #conc_Au_etalon = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
         elif "Ar" in data.incident_atom:
                 #   for etalon method
+                Emin = 13300
                 Emin = leis.Emin
                 Emax = 14400
                 Pd_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ar_Pd.spectrum_max
@@ -178,20 +183,23 @@ for spectrum in exp_spectra:
                 conc_Au_etalon =  Au_coeff*100   
                 
                 # for semi-etalon method
-                Pd_spec = leis.norm(np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
-                Au_spec = leis.norm(np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
+                Pd_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
+                Pd_spec = Pd_spec/max(Pd_spec)
+                Au_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
+                Au_spec = Au_spec/max(Au_spec)
                 result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)], Pd_spec, Au_spec), method='Nelder-Mead')
    
                 # Извлечение оптимальных коэффициентов
                 Pd_coeff, Au_coeff = result.x               
     
-                Au_Deconv_spectrum = ref_Ar_Au.spectrum_int*Au_coeff
-                Pd_Deconv_spectrum = ref_Ar_Pd.spectrum_int*Pd_coeff
+                Au_Deconv_spectrum = Au_spec*Au_coeff
+                Pd_Deconv_spectrum = Pd_spec*Pd_coeff
                 
                 Pd_coeff_cross = Pd_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
                 Au_coeff_cross = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
                 
                 conc_Au_semiRef_cross_Deconvolution =  Au_coeff_cross/(Pd_coeff_cross+Au_coeff_cross)*100             
+            
             
         #print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_etalon:.2f} % {conc_Au_fitting:.2f} %")
 
@@ -202,15 +210,17 @@ for spectrum in exp_spectra:
             if "Ne" in data.incident_atom:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
-
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
                 plt.plot(data.spectrum_en[:int(14500/dE)]/1000, Pd_signal[:int(14500/dE)], "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
                 plt.xlim(12,15)
                 plt.text(12.2, 0.5, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
             elif "Ar":
-                plt.plot(ref_Ar_Au.spectrum_en/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
-                plt.plot(ref_Ar_Pd.spectrum_en/1000, Pd_Deconv_spectrum,  "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum,  "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[:int(14300/dE)]/1000, Pd_signal[:int(14300/dE)], "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
+
                 plt.xlim(10,15)
                 plt.text(10.2, 0.5, box, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
