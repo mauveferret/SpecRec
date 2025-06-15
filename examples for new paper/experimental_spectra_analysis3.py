@@ -37,7 +37,7 @@ SCD.step = dE
 #spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
 spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250605 Ar Ne 15 keV AuPd heating"
-leis.Emin = 7000 # eV
+leis.Emin = 12000 # eV
 leis.Emax = 15000 # eV
 
 # smoothing parameter

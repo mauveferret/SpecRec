@@ -398,7 +398,11 @@ def norm(signal: str):
     """
     method for spectrum normalization to 1 in range (Emin, Emax)
     """
-    return signal/max(signal[int(Emin/step):int(Emax/step)])
+    try:
+        max_value = signal/max(signal[int(Emin/step):int(Emax/step)])
+        return max_value
+    except:
+        print(f"ERROR no signal found during leis.norm {signal[int(Emin/step):int(Emax/step)]}")
 
 def peak(signal: str):
     """
@@ -803,7 +807,7 @@ def _young( E, E0, A, R, FWHM, B, K):
     #R=1
     I_el = A*np.exp((-(1-R)*2.77259*(E-E0)/(FWHM+0.001)*2))/(R*(E-E0)**2+((FWHM+0.001)/2)**2)
     # UPDATE 250520 150 is to reduce inelactic compared to elastic at peak position
-    I_inel = B*(np.pi-2*np.arctan(2*(E-E0+150)/(FWHM+0.001)))
+    I_inel = B*(np.pi-2*np.arctan(2*(E-E0+0)/(FWHM+0.001)))
     I_tail = np.exp(-K/(np.sqrt(E)+0.001))    
     return I_el+I_inel*I_tail
 
@@ -838,11 +842,11 @@ class fitted_spectrum:
         self.__E02 = get_energy_by_angle(spectrum.E0,  get_mass_by_element(target_element2)/spectrum.M0, spectrum.scattering_angle)
         
         self.__E01 = int((self.__E01-100))+peak_pos(spectrum.spectrum_int[int((self.__E01-100)/spectrum.step):int((self.__E01+100)/spectrum.step)])*spectrum.step-20
-        self.__E02 = int((self.__E02-100))+peak_pos(spectrum.spectrum_int[int((self.__E02-100)/spectrum.step):int((self.__E02+100)/spectrum.step)])*spectrum.step
+        self.__E02 = int((self.__E02-100))+peak_pos(spectrum.spectrum_int[int((self.__E02-100)/spectrum.step):int((self.__E02+100)/spectrum.step)])*spectrum.step+50
 
         pars, covariance = curve_fit(self.__twoCompTargetFitting, 
                                      spectrum.spectrum_en, spectrum.spectrum_int, 
-                                     method = 'dogbox', maxfev=500000, bounds=self.__param_bounds, loss='linear', ftol=1E-9)
+                                     method = 'trf', maxfev=500000, bounds=self.__param_bounds, loss='linear', ftol=1E-9)
 
         self.__pars = pars
         
@@ -909,13 +913,15 @@ class fitted_spectrum:
 
         return int2/(int1+int2)*100
         
-    def get_conc_by_inten(self, R):
-        int1 = max(self.get_elastic_part(self.__target_element1))*get_sensitivity_factor(self.__spectrum.E0, self.__spectrum.incident_atom,
-                                                                                         self.__target_element1, self.__spectrum.scattering_angle,
-                                                                                         self.__spectrum.dTheta, R)
-        int2 = max(self.get_elastic_part(self.__target_element2))*get_sensitivity_factor(self.__spectrum.E0, self.__spectrum.incident_atom,
-                                                                                         self.__target_element2, self.__spectrum.scattering_angle,
-                                                                                         self.__spectrum.dTheta, R)
+    def get_conc_by_inten(self):
+        int1 = max(self.get_elastic_part(self.__target_element1))/get_cross_section(self.__spectrum.incident_atom, 
+                                                                                    self.__spectrum.E0, 
+                                                                                    self.__spectrum.scattering_angle, 
+                                                                                    self.__target_element1)
+        int2 = max(self.get_elastic_part(self.__target_element2))/get_cross_section(self.__spectrum.incident_atom, 
+                                                                                    self.__spectrum.E0, 
+                                                                                    self.__spectrum.scattering_angle, 
+                                                                                    self.__target_element2)
         return int2/(int1+int2)*100
 #####################################  CROSS-SECTION CALCULATION   #####################################
 
