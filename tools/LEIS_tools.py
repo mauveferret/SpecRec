@@ -642,7 +642,7 @@ def plot_dBeta_map():
         if theta>=90:
             min_value_mu = 1+step_mu
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
-            mu = min_value_mu+i_mu*step_mu
+            mu = i_mu*step_mu
             mu_values[i_mu] = mu
             map0[i_mu, i_theta] = get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
@@ -654,7 +654,7 @@ def plot_dBeta_map():
     #nipy_spectral   gist_ncar
     plt.figure(figsize=(10, 6))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
-    plt.text(80, 0.8, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.text(80, 0.4, 'restricted zone: μ> sin(θ)', fontsize = 13)
     plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35])
     plt.xlabel('scattering angle θ, degrees', fontsize=12)
     plt.yticks(np.arange(0, max_value_mu, 2))
@@ -698,7 +698,7 @@ def plot_CrossSection_map(incident_atom, type="scatter"):
         if "scatter" in type:
             min_value_mu = next (i for i in range(1, total_num_elem) if get_element_info_by_atomic_number(i)[1] == min_value_mu_string)
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
-            mu = min_value_mu+i_mu*step_mu
+            mu = i_mu*step_mu
             mu_values[i_mu] = get_element_info_by_atomic_number(int(mu))[0]
             map0[i_mu, i_theta] = (get_cross_section(incident_atom, E0, theta,get_element_info_by_atomic_number(int(mu))[1],  type))  #get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
@@ -716,12 +716,12 @@ def plot_CrossSection_map(incident_atom, type="scatter"):
         start_y_tick = 0
         end_y_tick = 201
     else:
-        start_log = -3.2
+        start_log = -4.1
         end_log = 1
-        ticks=[1E-4, 1E-3, 1E-2, 1E-1, 1E0, 1E1]
+        ticks=[ 1E-4, 1E-3, 1E-2, 1E-1, 1E0, 1E1]
         start_y_tick = 10
-        end_y_tick = 210
-        plt.text(60, 20, restricted_zone, fontsize = 13)
+        end_y_tick = 201
+        plt.text(60, 12, restricted_zone, fontsize = 13)
     plt.contourf(angles, mu_values, map0, cmap='gist_ncar', levels=np.logspace(start_log, end_log, 300), norm=LogNorm())
     plt.yticks(np.arange(start_y_tick, end_y_tick, 10))
     plt.ylim(start_y_tick, end_y_tick)
@@ -1163,7 +1163,7 @@ def get_cross_section(incident_symbol, E0, o1, target_symbol, type="scatter"):
         if  __m[0] > __m[1]: 
             try:         
                 if o2 >= np.arcsin(__m[1]/__m[0]):
-                    print(f"ERROR: scattering angle should be lower than {np.arcsin(__m[1]/__m[0])*180/np.pi:.2f} degrees. Now it is {o1} degrees")
+                    print(f"plot_CrossSection_map {np.arcsin(__m[1]/__m[0])*180/np.pi:.2f} degrees. Now it is {o1} degrees")
                     return 0
                 else:
                     return __scattered(E0, o2)

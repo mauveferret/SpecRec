@@ -31,10 +31,10 @@ SCD.step = dE
 
 ##############################            PRESETS          ##########################################################
 
-spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd3"
+spectrum_path0 = os.getcwd()+os.sep+"raw_data"+os.sep+"exp_AuPd"
 #spectrum_path0 = "D:\Спектры\\250603 Ne 15 keV AuPd"
 #spectrum_path0 = "D:\Спектры\\250604 Ne 15 keV AuPd heating"
-#spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
+spectrum_path0 = "D:\Спектры\\250605 Ar Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250604 Ne 15 keV AuPd heating"
 #spectrum_path0 = "O:\OneDrive\Проекты\Крокодил\Данные\Спектры\\250605 Ar Ne 15 keV AuPd heating"
 leis.Emin = 13000 # eV
@@ -46,7 +46,7 @@ filter_window = 80 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = True
+do_spectra_charts = False
 
 ####################################################################################################################
 
