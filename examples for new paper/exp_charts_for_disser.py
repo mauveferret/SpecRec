@@ -213,16 +213,16 @@ for spectrum in exp_spectra:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum/max(Pd_Deconv_spectrum)*max(scipy.signal.savgol_filter(Pd_signal[:int(14500/dE)], int(300/leis.step), 5)), "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
                 plt.plot(data.spectrum_en[:int(14400/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14400/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
-                plt.xlim(9,15)
-                plt.text(9.05, 0.7, box, fontsize=14)
+                plt.xlim(7,15)
+                plt.text(7.05, 0.7, box, fontsize=14)
 
             elif "Ar":
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum/max(Au_Deconv_spectrum), "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum/max(Pd_Deconv_spectrum)*max(scipy.signal.savgol_filter(Pd_signal[:int(14500/dE)], int(300/leis.step), 5)), "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[:int(14100/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14100/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
 
-                plt.xlim(9,15)
-                plt.text(9.2, 0.7, box, fontsize=14)
+                plt.xlim(7,15)
+                plt.text(7.2, 0.7, box, fontsize=14)
 
             #plt.plot(data.spectrum_en, young_fitting.get_fitted_spectrum(), label="Аппроксимация по формуле Йанга")
             #plt.plot(data.spectrum_en, young_fitting.get_elastic_part("Au"), "--", label="Упругая часть Au по формуле Йанга")
