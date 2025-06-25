@@ -62,14 +62,14 @@ for spectrum in exp_spectra:
         ref_Ne_Au.shift_spectrum_en(20)
     if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
         ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
-        ref_Ne_Pd.shift_spectrum_en(120)
+        ref_Ne_Pd.shift_spectrum_en(110)
     if "ref_Ne_Pd_late" in spectrum:
         ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ar_Au" in spectrum:
         ref_Ar_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
-        ref_Ar_Au.shift_spectrum_en(20)
+        ref_Ar_Au.shift_spectrum_en(-10)
     if "ref_Ar_Pd" in spectrum:
         ref_Ar_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
         ref_Ar_Au.shift_spectrum_en(20)
@@ -207,19 +207,23 @@ for spectrum in exp_spectra:
             plt.plot(data.spectrum_en/1000, leis.norm(data.spectrum_int), "-", color="grey", linewidth=3, alpha=0.5)
             plt.plot(data.spectrum_en/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int), int(300/leis.step), 5), "k-",  label="Экспериментальный спектр Au-Pd", linewidth=3)
 
-            box  = f"Концентрация золота {conc_Au_semiRef_cross:.1f} ат. % \n"   
+            box  = f"Концентрация золота {conc_Au_semiRef_cross_Deconvolution:.1f} ат. % \n"   
             if "Ne" in data.incident_atom:
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum/max(Au_Deconv_spectrum), "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum/max(Pd_Deconv_spectrum)*max(scipy.signal.savgol_filter(Pd_signal[:int(14500/dE)], int(300/leis.step), 5)), "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[:int(14400/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14400/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+
+                #plt.plot(data.spectrum_en[:int(14400/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14400/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
                 plt.xlim(7,15)
                 plt.text(7.05, 0.7, box, fontsize=14)
 
             elif "Ar":
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum/max(Au_Deconv_spectrum), "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum/max(Pd_Deconv_spectrum)*max(scipy.signal.savgol_filter(Pd_signal[:int(14500/dE)], int(300/leis.step), 5)), "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[:int(14100/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14100/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+
+                #plt.plot(data.spectrum_en[:int(14100/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14100/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
 
                 plt.xlim(7,15)
                 plt.text(7.2, 0.7, box, fontsize=14)
