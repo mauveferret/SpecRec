@@ -299,6 +299,7 @@ class spectrum:
    
     def _smooth(self, filter_window_length: int):
             self.__spectrum_int = scipy.signal.savgol_filter(self.__spectrum_int, int(filter_window_length/self.__step), 3)
+            self.__spectrum_int = norm(self.__spectrum_int)
 
     def get_target_mass_by_energy(self, E1: float):
         """

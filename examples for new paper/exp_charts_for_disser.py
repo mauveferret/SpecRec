@@ -42,7 +42,7 @@ leis.Emin = 7000 # eV
 leis.Emax = 15000 # eV
 
 # smoothing parameter
-filter_window = 20 # eV
+filter_window = 80 # eV
 
 # R - relative energy resolution of spectrometer
 R = 0.01
@@ -59,10 +59,10 @@ exp_spectra = os.listdir(spectrum_path0)
 for spectrum in exp_spectra:
     if "ref_Ne_Au" in spectrum and not "ref_Ne_Au_late" in spectrum:
         ref_Ne_Au = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
-        ref_Ne_Au.shift_spectrum_en(20)
+        ref_Ne_Au.shift_spectrum_en(30)
     if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
         ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
-        ref_Ne_Pd.shift_spectrum_en(110)
+        ref_Ne_Pd.shift_spectrum_en(60)
     if "ref_Ne_Pd_late" in spectrum:
         ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
@@ -96,7 +96,7 @@ i_ne = 0
 for spectrum in exp_spectra:
     if not "ref" in spectrum and ".txt" in spectrum :
             
-        data = leis.spectrum(spectrum_path0+os.sep+spectrum, -1, step=dE)
+        data = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
         # Basic semietalon method with one reference
         if "Ne" in data.incident_atom:
             Pd_signal = leis.norm(data.spectrum_int) - leis.norm(np.interp(data.spectrum_en, ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int))
@@ -119,7 +119,7 @@ for spectrum in exp_spectra:
         #conc_Au_fitting = young_fitting.get_concentration()
 
         if "Ne" in data.incident_atom:
-            Emin = leis.Emin
+            Emin = 13800
             Emax = 14800
             leis.Emax = Emax
             try:
@@ -151,19 +151,20 @@ for spectrum in exp_spectra:
     
                     Au_Deconv_spectrum = Au_spec*Au_coeff
                     Pd_Deconv_spectrum = Pd_spec*Pd_coeff
-                    #print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {Au_coeff/(Pd_coeff+Au_coeff)}")
                     
                     Pd_coeff_cross = Pd_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Pd")
                     Au_coeff_cross = Au_coeff / leis.get_cross_section(data.incident_atom, data.E0, data.scattering_angle, "Au")
                     
-                    conc_Au_semiRef_cross_Deconvolution =  Au_coeff_cross/(Pd_coeff_cross+Au_coeff_cross)*100                     
-                    
+                    conc_Au_semiRef_cross_Deconvolution =  Au_coeff_cross/(Pd_coeff_cross+Au_coeff_cross)*100        
+                                 
+                    print(f"semi-etalon 1 {Pd_coeff}   2   {Au_coeff}   =  {conc_Au_semiRef_cross_Deconvolution}   {conc_Au_semiRef_cross}")
+
             except Exception as e:
                 print(e)
                 #conc_Au_etalon = data.spectrum_max/ref_Ne_Au.spectrum_max*100  #young_fitting.get_concentration()
         elif "Ar" in data.incident_atom:
                 #   for etalon method
-                Emin = 13300
+                Emin = 13000
                 Emin = leis.Emin
                 Emax = 14400
                 Pd_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ar_Pd.spectrum_max
@@ -204,29 +205,33 @@ for spectrum in exp_spectra:
 
         if do_spectra_charts:
             plt.figure(figsize=(12, 8))
-            plt.plot(data.spectrum_en/1000, leis.norm(data.spectrum_int), "-", color="grey", linewidth=3, alpha=0.5)
-            plt.plot(data.spectrum_en/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int), int(300/leis.step), 5), "k-",  label="Экспериментальный спектр Au-Pd", linewidth=3)
+            plt.plot(data.spectrum_en/1000, data.spectrum_int, "-", color="grey", label="Экспериментальный спектр Au-Pd",  linewidth=3, alpha=0.8)
+            #plt.plot(data.spectrum_en/1000, leis.norm(scipy.signal.savgol_filter((data.spectrum_int), int(400/leis.step), 3)), "k-",  label="Экспериментальный спектр Au-Pd", linewidth=3)
 
-            box  = f"Концентрация золота {conc_Au_semiRef_cross_Deconvolution:.1f} ат. % \n"   
+            box  = f"Конц. золота СтарыйСпособ {conc_Au_semiRef_cross:.1f} ат. % \nКонц. золота Декомпозиция {conc_Au_semiRef_cross_Deconvolution:.1f} ат. % \n"   
             if "Ne" in data.incident_atom:
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
-                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_spec, "k--"  ,label="Полуэталонный Au норм.", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au Декомпозиция", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd Декомпозиция", linewidth=3, alpha=0.9)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000,(Au_Deconv_spectrum+Pd_Deconv_spectrum)/max(Au_Deconv_spectrum+Pd_Deconv_spectrum), "m-.", label="Сумма пиков Декомпозиции (красный+синий)", linewidth=3, alpha=0.7)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)] - Au_spec, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
 
                 #plt.plot(data.spectrum_en[:int(14400/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14400/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
-                plt.xlim(7,15)
-                plt.text(7.05, 0.7, box, fontsize=14)
+                plt.xlim(13,15)
+                plt.text(13.05, 0.5, box, fontsize=14)
 
             elif "Ar":
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum/max(Pd_Deconv_spectrum)*max(scipy.signal.savgol_filter(Pd_signal[:int(14500/dE)], int(300/leis.step), 5)), "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_spec, "k--"  ,label="Полуэталонный Au норм.", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au Декомпозиция", linewidth=3, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd Декомпозиция", linewidth=3, alpha=0.9)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000,(Au_Deconv_spectrum+Pd_Deconv_spectrum)/max(Au_Deconv_spectrum+Pd_Deconv_spectrum), "m-.", label="Сумма пиков Декомпозиции (красный+синий)", linewidth=3, alpha=0.7)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]), int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)] - Au_spec, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
+             #plt.plot(data.spectrum_en[:int(14100/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14100/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
 
-                #plt.plot(data.spectrum_en[:int(14100/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14100/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
-
-                plt.xlim(7,15)
-                plt.text(7.2, 0.7, box, fontsize=14)
+                plt.xlim(12,15)
+                plt.text(12.2, 0.5, box, fontsize=14)
 
             #plt.plot(data.spectrum_en, young_fitting.get_fitted_spectrum(), label="Аппроксимация по формуле Йанга")
             #plt.plot(data.spectrum_en, young_fitting.get_elastic_part("Au"), "--", label="Упругая часть Au по формуле Йанга")
@@ -238,7 +243,7 @@ for spectrum in exp_spectra:
             plt.xlabel('энергия, кэВ', fontsize=16)
             plt.ylabel('интенсивность, норм.', fontsize=16)
             plt.title(f"Экспериментальный спектр {spectrum}", y=1.05) 
-            plt.legend(fontsize=15)
+            plt.legend(fontsize=14)
             plt.xticks(fontsize=15)
             plt.yticks(fontsize=15)
             plt.minorticks_on()
