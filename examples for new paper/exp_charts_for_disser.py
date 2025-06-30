@@ -47,7 +47,7 @@ filter_window = 80 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = False
+do_spectra_charts = True
 
 ####################################################################################################################
 
@@ -99,7 +99,7 @@ i_ne = 0
 i_kr = 0
 #plt.figure(figsize=(12, 8))
 
-plt.figure(figsize=(12, 8))
+#plt.figure(figsize=(12, 8))
 
 for spectrum in exp_spectra:
     if not "ref" in spectrum and ".txt" in spectrum :
@@ -248,7 +248,7 @@ for spectrum in exp_spectra:
             
         #print(f"{data.calc_name[0:16]} {data.incident_atom} {conc_Au_semiRef_cross:.2f} % {conc_Au_etalon:.2f} % {conc_Au_fitting:.2f} %")
 
-        if do_spectra_charts and "Kr" in data.incident_atom:
+        if do_spectra_charts and "Ne" in data.incident_atom:
             plt.figure(figsize=(12, 8))
             plt.plot(data.spectrum_en/1000, leis.norm(data.spectrum_int), "-", color="grey", linewidth=3, alpha=0.5)
             plt.plot(data.spectrum_en/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int), int(300/leis.step), 5), "k-",  label="Экспериментальный спектр Au-Pd", linewidth=3)
@@ -257,7 +257,7 @@ for spectrum in exp_spectra:
             if "Ne" in data.incident_atom:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--"  ,label="Полуэталонный Au", linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label="Полуэталонный Pd", linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label="Сумма", linewidth=3, alpha=0.7)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
 
                 #plt.plot(data.spectrum_en[:int(14400/dE)]/1000, scipy.signal.savgol_filter(Pd_signal[:int(14400/dE)], int(300/leis.step), 5), "g-", label="Сигнал Pd (= чёрный - красный)", linewidth=3, alpha=0.7)
@@ -292,12 +292,12 @@ for spectrum in exp_spectra:
             #plt.plot(data.spectrum_en, young_fitting.get_inelastic_part("Pd"), "--", label="Неупругая часть Pd по формуле Йанга")      
             
             plt.ylim(0.03, 1)
-            plt.xlabel('энергия, кэВ', fontsize=16)
-            plt.ylabel('интенсивность, норм.', fontsize=16)
+            plt.xlabel('энергия, кэВ', fontsize=20)
+            plt.ylabel('интенсивность, норм.', fontsize=20)
             plt.title(f"Экспериментальный спектр {spectrum}", y=1.05) 
-            plt.legend(fontsize=15)
-            plt.xticks(fontsize=15)
-            plt.yticks(fontsize=15)
+            plt.legend(fontsize=18)
+            plt.xticks(fontsize=20)
+            plt.yticks(fontsize=20)
             plt.minorticks_on()
             plt.show()
         else:
@@ -379,13 +379,13 @@ if not do_spectra_charts:
     plt.axhline(y=50, color='black', linestyle=':', alpha=0.8, linewidth=4)
     plt.xlim(left=0)
     plt.ylim(30, 80)
-    plt.xlabel('номер спектра', fontsize = 18)
-    plt.ylabel('концентрация Au, %', fontsize = 18)
+    plt.xlabel('номер спектра', fontsize = 24)
+    plt.ylabel('концентрация Au, %', fontsize = 24)
     #plt.title(f'Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. \n Sample Temperature is shown in Annotations \n {spectrum_path0}', y=1.02)
     plt.grid(True)
     plt.legend(fontsize=18)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     plt.minorticks_on()    
-    plt.legend( fontsize = 15)
+    plt.legend( fontsize = 20)
     plt.show()
