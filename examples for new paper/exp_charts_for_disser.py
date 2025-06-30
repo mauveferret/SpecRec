@@ -303,8 +303,8 @@ for spectrum in exp_spectra:
         else:
             if "Ne" in data.incident_atom:
                 i_ne+=1        
-                plt.plot(i_ne, conc_Au_semiRef_cross, "o", color="red", markersize=12)
-                plt.plot(i_ne, conc_Au_semiRef_cross_Deconvolution, "x", color="red", markersize=15)
+                #plt.plot(i_ne, conc_Au_semiRef_cross, "o", color="red", markersize=12)
+                plt.plot(i_ne, conc_Au_semiRef_cross_Deconvolution, "x", color="red", markersize=17)
 
                 #plt.plot(i_ne, conc_Au_semiRef_cross_Deconvolution, "s", color="orange", markersize=10, alpha=0.7)
 
@@ -335,7 +335,7 @@ for spectrum in exp_spectra:
                 #plt.plot(i_ar, Pd_rel_int, "<", color="black", markersize=15)
             else:
                 i_kr+=1
-                plt.plot(i_kr, conc_Au_semiRef_cross_Deconvolution, "*", color= "blue", markersize=20)
+                plt.plot(i_kr, conc_Au_semiRef_cross_Deconvolution, "o", color= "blue", markersize=17)
                 
         # Store concentrations for statistics
         if i == 0:
@@ -376,14 +376,14 @@ if not do_spectra_charts:
     #plt.plot(-1, 0, "o", color="blue", label ="пик золота / 1E-8 * 100%")
     #plt.plot(-1, 0, "<", color="black", label ="пик палладия / 1E-8 * 100%")
 
-    plt.axhline(y=50, color='black', linestyle=':', alpha=0.8, linewidth=3)
+    plt.axhline(y=50, color='black', linestyle=':', alpha=0.8, linewidth=4)
     plt.xlim(left=0)
     plt.ylim(30, 80)
-    plt.xlabel('номер спектра', fontsize = 15)
-    plt.ylabel('концентрация Au, %', fontsize = 15)
-    plt.title(f'Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. \n Sample Temperature is shown in Annotations \n {spectrum_path0}', y=1.02)
+    plt.xlabel('номер спектра', fontsize = 18)
+    plt.ylabel('концентрация Au, %', fontsize = 18)
+    #plt.title(f'Concentration of Au in the Au50Pd50 samples for experimental LEIS spectra. \n Sample Temperature is shown in Annotations \n {spectrum_path0}', y=1.02)
     plt.grid(True)
-    plt.legend(fontsize=15)
+    plt.legend(fontsize=18)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.minorticks_on()    
