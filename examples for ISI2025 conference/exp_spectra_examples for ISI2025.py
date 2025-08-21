@@ -54,13 +54,13 @@ TRANSLATIONS = {
         "label_concentration": "Au concentration, %",
         "label_spectrum_number": "spectrum number",
         "legend_experimental": "Experimental Au-Pd spectrum",
-        "legend_au": "Semi-etalon Au",
-        "legend_pd": "Semi-etalon Pd",
-        "legend_sum": "Sum",
+        "legend_au": "Semi-reference Au",
+        "legend_pd": "Semi-reference Pd",
+        "legend_sum": "Sum (= blue + red)",
         "legend_pd_signal": "Pd signal (= black - red)",
-        "legend_ne": "Ne 15 keV \"Semi-etalon\"",
-        "legend_ar": "Ar 15 keV \"Semi-etalon\"",
-        "legend_kr": "Kr 11 keV \"Semi-etalon\"",
+        "legend_ne": "Ne 15 keV \"Semi-reference\"",
+        "legend_ar": "Ar 15 keV \"Semi-reference\"",
+        "legend_kr": "Kr 11 keV \"Semi-reference\"",
         "concentration_box": "Gold concentration {:.1f} at. % \n",
         "stats_ne": "Ne incident atoms:",
         "stats_ar": "Ar incident atoms:",
@@ -99,8 +99,8 @@ filter_window = 80 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = True
-plot_ions = "Kr"
+do_spectra_charts = False
+plot_ions = "Ne"
 ####################################################################################################################
 
 #plt.figure(figsize=(12, 8))
@@ -114,7 +114,7 @@ for spectrum in exp_spectra:
         ref_Ne_Au.shift_spectrum_en(20)
     if "ref_Ne_Pd" in spectrum  and not "ref_Ne_Pd_late"  in spectrum:
         ref_Ne_Pd = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
-        ref_Ne_Pd.shift_spectrum_en(110)
+        ref_Ne_Pd.shift_spectrum_en(90)
     if "ref_Ne_Pd_late" in spectrum:
         ref_Ne_Pd_late = leis.spectrum(spectrum_path0+os.sep+spectrum, filter_window, step=dE)
     if "ref_Ne_Au_late" in spectrum:
@@ -152,7 +152,7 @@ for spectrum in exp_spectra:
     if not "ref" in spectrum and ".txt" in spectrum :
             
         data = leis.spectrum(spectrum_path0+os.sep+spectrum, -1, step=dE)
-        # Basic semietalon method with one reference
+        # Basic semireference method with one reference
         if "Ne" in data.incident_atom:
             Pd_signal = leis.norm(data.spectrum_int) - leis.norm(np.interp(data.spectrum_en, ref_Ne_Au.spectrum_en, ref_Ne_Au.spectrum_int))
         elif "Ar" in data.incident_atom:
@@ -177,15 +177,15 @@ for spectrum in exp_spectra:
             leis.Emax = Emax
             try:
                 if True:
-                    # ETALON method
+                    # reference method
                     Pd_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ne_Pd.spectrum_max
                     Au_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ne_Au.spectrum_max
                     result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
                     Pd_coeff, Au_coeff = result.x
                     
-                    conc_Au_etalon = Au_coeff*100   
+                    conc_Au_reference = Au_coeff*100   
                     
-                    # for SEMI-ETALON method
+                    # for SEMI-reference method
                     Pd_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
                     Pd_spec = Pd_spec/max(Pd_spec)
                     Au_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ne_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
@@ -211,9 +211,9 @@ for spectrum in exp_spectra:
             result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
             Pd_coeff, Au_coeff = result.x
                 
-            conc_Au_etalon = Au_coeff*100   
+            conc_Au_reference = Au_coeff*100   
             
-            # for semi-etalon method
+            # for semi-reference method
             Pd_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
             Pd_spec = Pd_spec/max(Pd_spec)
             Au_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
@@ -236,9 +236,9 @@ for spectrum in exp_spectra:
             result = minimize(common_minimization_func, [0.5, 0.5], args=(data.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]*data.spectrum_max, Pd_spec, Au_spec), method='Nelder-Mead')
             Pd_coeff, Au_coeff = result.x
                 
-            conc_Au_etalon = Au_coeff*100   
+            conc_Au_reference = Au_coeff*100   
             
-            # for semi-etalon method
+            # for semi-reference method
             Pd_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
             Pd_spec = Pd_spec/max(Pd_spec)
             Au_spec = (np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)]))
@@ -261,20 +261,38 @@ for spectrum in exp_spectra:
 
             box = t("concentration_box").format(conc_Au_semiRef_cross_Deconvolution)
             
+            
+            angle = 32
+            if "Ne" in data.incident_atom:
+                O_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("O")/leis.get_mass_by_element(data.incident_atom), angle)
+                plt.vlines(x=O_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(O_peak_local/leis.step)], linewidth = 3, colors='black', linestyles='dotted', alpha = 0.6)
+                plt.text(O_peak_local/1000, data.spectrum_int[int(O_peak_local/leis.step)] + 0.01, 'O', ha='center', va='bottom', fontsize = 18, color = 'black' )
+            
+            angle = 33
+            Au_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Au")/leis.get_mass_by_element(data.incident_atom), angle)
+            plt.vlines(x=Au_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Au_peak_local/leis.step)], linewidth = 3, colors='r', linestyles='dotted', alpha = 0.6)
+            plt.text(Au_peak_local/1000, data.spectrum_int[int(Au_peak_local/leis.step)] + 0.01, 'Au', ha='center', va='bottom', fontsize = 18, color = 'r' )
+            Pd_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Pd")/leis.get_mass_by_element(data.incident_atom), angle)
+            plt.vlines(x=Pd_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Pd_peak_local/leis.step)], linewidth =3 , colors='b', linestyles='dotted', alpha = 0.6)
+            plt.text(Pd_peak_local/1000, data.spectrum_int[int(Pd_peak_local/leis.step)] + 0.01, 'Pd', ha='center', va='bottom', fontsize = 18, color = 'b' )
+
             if "Ne" in data.incident_atom:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
-                plt.xlim(7,15)
-                plt.text(7.05, 0.65, box, fontsize=14)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
+
+                plt.xlim(9,15)
+                plt.text(9.2, 0.67, box, fontsize=14)
 
             elif "Ar" in data.incident_atom:
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
+
+                plt.plot(ref_Ar_Au.spectrum_en/1000, leis.norm(ref_Ar_Au.spectrum_int)*max(Au_Deconv_spectrum), "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
-                plt.xlim(7,15)
-                plt.text(7.2, 0.5, box, fontsize=14)
+                plt.xlim(9,15)
+                plt.text(9.2, 0.6, box, fontsize=14)
 
             elif "Kr" in data.incident_atom:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
@@ -282,9 +300,9 @@ for spectrum in exp_spectra:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
                 plt.xlim(5,11)
-                plt.text(5, 0.62, box, fontsize=14)
+                plt.text(5.2, 0.62, box, fontsize=14)
             
-            plt.ylim(0.03, 1)
+            plt.ylim(0.02, 1)
             plt.xlabel(t("label_energy"), fontsize=20)
             plt.ylabel(t("label_intensity"), fontsize=20)
             plt.legend(loc="lower left", frameon=False, fontsize=18)
