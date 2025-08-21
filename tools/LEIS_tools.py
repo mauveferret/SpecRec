@@ -89,9 +89,17 @@ class spectrum:
     def spectrum_en(self):
         return self.__spectrum_en
 
+    def shift_spectrum_en(self, energy):
+        for i in range(len(self.__spectrum_en)):
+            self.__spectrum_en[i] = self.__spectrum_en[i]-energy
+
     @property
     def spectrum_int(self):
         return self.__spectrum_int
+
+    @property
+    def spectrum_max(self):
+        return self.__spectrum_max
     
     @property
     def calc_name(self):
@@ -280,6 +288,7 @@ class spectrum:
         try:
             global Emax
             Emax = self.__spectrum_en[-1]-100
+            self.__spectrum_max = max(self.__spectrum_int[int(Emin/step):int((self.__spectrum_en[-1]-100)/step)])
             self.__spectrum_int /= max(self.__spectrum_int[int(Emin/step):int((self.__spectrum_en[-1]-100)/step)])
         except:
             print("ERROR during spectrum import. File not found or corrupted or Emin/Emax are beyond limits: "+spectrum_path)
