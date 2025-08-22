@@ -58,9 +58,9 @@ TRANSLATIONS = {
         "legend_pd": "Semi-reference Pd",
         "legend_sum": "Sum (= blue + red)",
         "legend_pd_signal": "Pd signal (= black - red)",
-        "legend_ne": "Ne 15 keV \"Semi-reference\"",
-        "legend_ar": "Ar 15 keV \"Semi-reference\"",
-        "legend_kr": "Kr 11 keV \"Semi-reference\"",
+        "legend_ne": "Ne 15 keV ",
+        "legend_ar": "Ar 15 keV ",
+        "legend_kr": "Kr 11 keV ",
         "concentration_box": "Gold concentration {:.1f} at. % \n",
         "stats_ne": "Ne incident atoms:",
         "stats_ar": "Ar incident atoms:",
@@ -94,7 +94,7 @@ leis.Emin = 7000 # eV
 leis.Emax = 15000 # eV
 
 # smoothing parameter
-filter_window = 80 # eV
+filter_window = 120 # eV
 
 # R - relative energy resolution of spectrometer
 R = 0.01
@@ -144,9 +144,13 @@ def common_minimization_func(coeffs, data, ref_a, ref_b):
 
 # Load experimental spectra and calculate the concentration of Au and Pd
 i = 0
-i_ar = 0
-i_ne = 0
-i_kr = 0
+#i_ar = 0
+#i_ne = 0
+#i_kr = 0
+
+ne_data = []    # Будет хранить кортежи (номер_файла, концентрация)
+ar_data = []    # Будет хранить кортежи (номер_файла, концентрация)
+kr_data = []
 
 for spectrum in exp_spectra:
     if not "ref" in spectrum and ".txt" in spectrum :
@@ -172,7 +176,7 @@ for spectrum in exp_spectra:
         Pd_rel_int = leis.peak(Pd_signal)*data.spectrum_max/1E-8*100
        
         if "Ne" in data.incident_atom:
-            Emin = leis.Emin
+            Emin = 13900 #leis.Emin
             Emax = 14800
             leis.Emax = Emax
             try:
@@ -321,14 +325,12 @@ for spectrum in exp_spectra:
             plt.show()
         else:
             if "Ne" in data.incident_atom:
-                i_ne += 1        
-                plt.plot(i_ne, conc_Au_semiRef_cross_Deconvolution, "x", color="red", markersize=17)
+                ne_data.append(conc_Au_semiRef_cross_Deconvolution)
             elif "Ar" in data.incident_atom:
-                i_ar += 1
-                plt.plot(i_ar, conc_Au_semiRef_cross_Deconvolution, "*", color="green", markersize=20)
-            else:
-                i_kr += 1
-                plt.plot(i_kr, conc_Au_semiRef_cross_Deconvolution, "o", color="blue", markersize=17)
+                ar_data.append(conc_Au_semiRef_cross_Deconvolution)
+            elif "Kr" in data.incident_atom:
+                kr_data.append(conc_Au_semiRef_cross_Deconvolution)
+
                 
         # Store concentrations for statistics
         if i == 0:
@@ -361,20 +363,61 @@ for spectrum in exp_spectra:
                 print(t('stats_std').format(np.std(Kr_conc)))
 
 if not do_spectra_charts:
-    plt.plot(-1, 0, "x", color="red", label=t("legend_ne"))
-    plt.plot(-1, 0, "*", color="green", label=t("legend_ar"))
-    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr"))
-
-    plt.axhline(y=50, color='black', linestyle=':', alpha=0.8, linewidth=4)
-    plt.xlim(left=0)
+    plt.figure(figsize=(14, 10))
+    all_data = []
+    
+    for conc in ne_data:
+        all_data.append((0, conc, "red", "x", t("legend_ne")))
+    
+    for conc in ar_data:
+        all_data.append((1, conc, "green", "*", t("legend_ar")))
+    
+    for conc in kr_data:
+        all_data.append((2, conc, "blue", "o", t("legend_kr")))
+    
+    np.random.shuffle(all_data)
+    x_positions = {0: 1, 1: 1, 2: 1}  
+    for group, conc, color, marker, label in all_data:
+        x = x_positions[group]
+        plt.plot(x, conc, marker, color=color, markersize=16 if marker != "*" else 18)
+        x_positions[group] += 1
+    
+    if ne_data:
+        mean_ne = np.mean(ne_data)
+        plt.axhline(y=mean_ne, color='red', linestyle='--', alpha=0.6, linewidth=2)
+    
+    if ar_data:
+        mean_ar = np.mean(ar_data)
+        plt.axhline(y=mean_ar, color='green', linestyle='--', alpha=0.6, linewidth=2)
+    
+    if kr_data:
+        mean_kr = np.mean(kr_data)
+        plt.axhline(y=mean_kr, color='blue', linestyle='--', alpha=0.6, linewidth=2) #label=f'Kr avg: {mean_kr:.1f}%'
+    
+    plt.axhline(y=50, color='black', linestyle='-', alpha=0.6, linewidth=4, label='expected')
+    plt.axhline(y=51.95, color='black', linestyle=':', alpha=0.6, linewidth=4, label=f'XPS data 51.95 at. %')
+    
+    # Добавляем легенду и оформление графика
+    plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f"(mean={round(np.mean(Ne_conc))}±{round(np.std(Ne_conc))} at. %)")
+    plt.plot(-1, 0, "*", color="green", label=t("legend_ar")+f"(mean={round(np.mean(Ar_conc))}±{round(np.std(Ar_conc))} at. %)")
+    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr")+f"(mean={round(np.mean(Kr_conc))}±{round(np.std(Kr_conc))} at. %)")
+    
+    plt.xlim(0, max(len(ne_data), len(ar_data), len(kr_data)) + 1)
     plt.ylim(30, 80)
-    plt.xlabel(t("label_spectrum_number"), fontsize=24)
+    #plt.xlabel(t("label_spectrum_number"), fontsize=24)
+    
+    plt.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        labelbottom=False) # labels along the bottom edge are off
+
     plt.ylabel(t("label_concentration"), fontsize=24)
     plt.title(t("title_concentration"), y=1.02)
     plt.grid(True)
-    plt.legend(fontsize=18)
+    plt.legend(loc="upper left", frameon=False, fontsize=18)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
     plt.minorticks_on()    
-    plt.legend(fontsize=20)
     plt.show()
