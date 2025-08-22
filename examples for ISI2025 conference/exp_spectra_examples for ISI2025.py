@@ -19,7 +19,7 @@ import scipy
 from scipy.optimize import minimize
 
 # Language selection - choose between "rus" and "eng"
-charts_lang = "rus"  # Change to "rus" for Russian or "eng" for English
+charts_lang = "eng"  # Change to "rus" for Russian or "eng" for English
 
 # Translation dictionaries
 TRANSLATIONS = {
@@ -49,7 +49,6 @@ TRANSLATIONS = {
         "mean" : "в среднем",
         "at" : "ат.",
         "warning_no_reference": "WARNING: No reference was found for the {} incident atom"
-
     },
     "eng": {
         "title_experimental": "Experimental spectrum",
@@ -61,7 +60,7 @@ TRANSLATIONS = {
         "legend_experimental": "Experimental Au-Pd spectrum",
         "legend_au": "Semi-reference Au",
         "legend_pd": "Semi-reference Pd",
-        "legend_sum": "Sum (= blue + red)",
+        "legend_sum": "Fitting (= blue + red)",
         "legend_pd_signal": "Pd signal (= black - red)",
         "legend_ne": "Ne 15 keV ",
         "legend_ar": "Ar 15 keV ",
@@ -108,8 +107,8 @@ filter_window = 120 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = False
-plot_ions = "Ne"
+do_spectra_charts = True
+plot_ions = "Kr"
 ####################################################################################################################
 
 #plt.figure(figsize=(12, 8))
@@ -217,7 +216,7 @@ for spectrum in exp_spectra:
             except Exception as e:
                 print(e)
         elif "Ar" in data.incident_atom:
-            Emin = leis.Emin
+            Emin = 12500 #leis.Emin
             Emax = 14400
             Pd_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ar_Pd.spectrum_max
             Au_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Ar_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Ar_Au.spectrum_max
@@ -242,7 +241,7 @@ for spectrum in exp_spectra:
             
             conc_Au_semiRef_cross_Deconvolution = Au_coeff_cross/(Pd_coeff_cross+Au_coeff_cross)*100             
         elif "Kr" in data.incident_atom:
-            Emin = leis.Emin
+            Emin = 7000
             Emax = 11000
             Pd_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Pd.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Pd.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Kr_Pd.spectrum_max
             Au_spec = np.interp(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Au.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)], ref_Kr_Au.spectrum_int[int(Emin/leis.step):int(Emax/leis.step)])*ref_Kr_Au.spectrum_max
@@ -281,19 +280,30 @@ for spectrum in exp_spectra:
                 plt.vlines(x=O_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(O_peak_local/leis.step)], linewidth = 3, colors='black', linestyles='dotted', alpha = 0.6)
                 plt.text(O_peak_local/1000, data.spectrum_int[int(O_peak_local/leis.step)] + 0.01, 'O', ha='center', va='bottom', fontsize = 18, color = 'black' )
             
-            angle = 33
+            if "Ne" in data.incident_atom:
+                angle = 33
+            else:
+                angle = 31
             Au_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Au")/leis.get_mass_by_element(data.incident_atom), angle)
-            plt.vlines(x=Au_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Au_peak_local/leis.step)], linewidth = 3, colors='r', linestyles='dotted', alpha = 0.6)
-            plt.text(Au_peak_local/1000, data.spectrum_int[int(Au_peak_local/leis.step)] + 0.01, 'Au', ha='center', va='bottom', fontsize = 18, color = 'r' )
-            Pd_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Pd")/leis.get_mass_by_element(data.incident_atom), angle)
-            plt.vlines(x=Pd_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Pd_peak_local/leis.step)], linewidth =3 , colors='b', linestyles='dotted', alpha = 0.6)
-            plt.text(Pd_peak_local/1000, data.spectrum_int[int(Pd_peak_local/leis.step)] + 0.01, 'Pd', ha='center', va='bottom', fontsize = 18, color = 'b' )
+            
+            if not "Kr" in data.incident_atom:
+                plt.vlines(x=Au_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Au_peak_local/leis.step)], linewidth = 3, colors='r', linestyles='dotted', alpha = 0.6)
+                plt.text(Au_peak_local/1000, data.spectrum_int[int(Au_peak_local/leis.step)] + 0.01, 'Au', ha='center', va='bottom', fontsize = 18, color = 'r' )
+                Pd_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Pd")/leis.get_mass_by_element(data.incident_atom), angle)
+                plt.vlines(x=Pd_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Pd_peak_local/leis.step)], linewidth =3 , colors='b', linestyles='dotted', alpha = 0.6)
+                plt.text(Pd_peak_local/1000, data.spectrum_int[int(Pd_peak_local/leis.step)] + 0.01, 'Pd', ha='center', va='bottom', fontsize = 18, color = 'b' )   
+            else:
+                plt.vlines(x=Au_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Au_peak_local/leis.step)]+0.2, linewidth = 3, colors='r', linestyles='dotted', alpha = 0.6)
+                plt.text(Au_peak_local/1000, data.spectrum_int[int(Au_peak_local/leis.step)] + 0.01+0.2, 'Au', ha='center', va='bottom', fontsize = 18, color = 'r' )
+                Pd_peak_local = leis.get_energy_by_angle(data.E0, leis.get_mass_by_element("Pd")/leis.get_mass_by_element(data.incident_atom), angle)
+                plt.vlines(x=Pd_peak_local/1000, ymin=0, ymax=data.spectrum_int[int(Pd_peak_local/leis.step)]+0.2, linewidth =3 , colors='b', linestyles='dotted', alpha = 0.6)
+                plt.text(Pd_peak_local/1000, data.spectrum_int[int(Pd_peak_local/leis.step)] + 0.01+0.2, 'Pd', ha='center', va='bottom', fontsize = 18, color = 'b' )
 
             if "Ne" in data.incident_atom:
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
+                plt.plot(ref_Ne_Au.spectrum_en/1000, leis.norm(ref_Ne_Au.spectrum_int)*max(Au_Deconv_spectrum), "r--", label=t("legend_au"), linewidth=2, alpha=0.8)
+                plt.plot(ref_Ne_Pd.spectrum_en/1000, leis.norm(ref_Ne_Pd.spectrum_int)*max(Pd_Deconv_spectrum), "b--", label=t("legend_pd"), linewidth=2, alpha=0.8)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=3, alpha=0.99)
 
                 plt.xlim(9,15)
                 plt.text(9.2, 0.67, box, fontsize=14)
@@ -301,9 +311,9 @@ for spectrum in exp_spectra:
             elif "Ar" in data.incident_atom:
 
                 plt.plot(ref_Ar_Au.spectrum_en/1000, leis.norm(ref_Ar_Au.spectrum_int)*max(Au_Deconv_spectrum), "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
+                plt.plot(ref_Ar_Pd.spectrum_en/1000, leis.norm(ref_Ar_Pd.spectrum_int)*max(Pd_Deconv_spectrum), "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
                 plt.xlim(9,15)
                 plt.text(9.2, 0.6, box, fontsize=14)
 
@@ -311,15 +321,15 @@ for spectrum in exp_spectra:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "m-.", label=t("legend_sum"), linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
+                #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
                 plt.xlim(5,11)
-                plt.text(5.2, 0.62, box, fontsize=14)
+                plt.text(5.1, 0.65, box, fontsize=14)
             
             plt.ylim(0.02, 1)
             plt.xlabel(t("label_energy"), fontsize=20)
             plt.ylabel(t("label_intensity"), fontsize=20)
             plt.legend(loc="lower left", frameon=False, fontsize=18)
-            plt.title(f"{t('title_experimental')} {spectrum}", y=1.05) 
+            #plt.title(f"{t('title_experimental')} {spectrum}", y=1.05) 
             plt.legend(fontsize=18, frameon=False)
             plt.xticks(fontsize=20)
             plt.yticks(fontsize=20)
