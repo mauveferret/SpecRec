@@ -19,7 +19,7 @@ import scipy
 from scipy.optimize import minimize
 
 # Language selection - choose between "rus" and "eng"
-charts_lang = "eng"  # Change to "rus" for Russian or "eng" for English
+charts_lang = "rus"  # Change to "rus" for Russian or "eng" for English
 
 # Translation dictionaries
 TRANSLATIONS = {
@@ -44,7 +44,12 @@ TRANSLATIONS = {
         "stats_kr": "Атомы Kr:",
         "stats_avg": "Средняя концентрация Au: {:.2f}%",
         "stats_std": "Стандартное отклонение: {:.2f}%",
+        "xps" : "результаты РФЭС (51.95 ат. %)",
+        "expected" : "ожидаемая",
+        "mean" : "в среднем",
+        "at" : "ат.",
         "warning_no_reference": "WARNING: No reference was found for the {} incident atom"
+
     },
     "eng": {
         "title_experimental": "Experimental spectrum",
@@ -67,7 +72,11 @@ TRANSLATIONS = {
         "stats_kr": "Kr incident atoms:",
         "stats_avg": "Average Au concentration: {:.2f}%",
         "stats_std": "Standard deviation: {:.2f}%",
-        "warning_no_reference": "WARNING: No reference was found for the {} incident atom"
+        "warning_no_reference": "WARNING: No reference was found for the {} incident atom",
+        "xps" : "XPS data (51.95 at. %)",
+        "expected" : "expected",
+        "mean" : "mean",
+        "at" : "at."
     }
 }
 
@@ -394,13 +403,13 @@ if not do_spectra_charts:
         mean_kr = np.mean(kr_data)
         plt.axhline(y=mean_kr, color='blue', linestyle='--', alpha=0.6, linewidth=2) #label=f'Kr avg: {mean_kr:.1f}%'
     
-    plt.axhline(y=50, color='black', linestyle='-', alpha=0.6, linewidth=4, label='expected')
-    plt.axhline(y=51.95, color='black', linestyle=':', alpha=0.6, linewidth=4, label=f'XPS data 51.95 at. %')
+    plt.axhline(y=50, color='black', linestyle='-', alpha=0.6, linewidth=4, label=t("expected"))
+    plt.axhline(y=51.95, color='black', linestyle=':', alpha=0.6, linewidth=4, label=t("xps"))
     
     # Добавляем легенду и оформление графика
-    plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f"(mean={round(np.mean(Ne_conc))}±{round(np.std(Ne_conc))} at. %)")
-    plt.plot(-1, 0, "*", color="green", label=t("legend_ar")+f"(mean={round(np.mean(Ar_conc))}±{round(np.std(Ar_conc))} at. %)")
-    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr")+f"(mean={round(np.mean(Kr_conc))}±{round(np.std(Kr_conc))} at. %)")
+    plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f"({t('mean')}={round(np.mean(Ne_conc))}±{round(np.std(Ne_conc))} {t('at')} %)")
+    plt.plot(-1, 0, "*", color="green", label=t("legend_ar")+f"({t('mean')}={round(np.mean(Ar_conc))}±{round(np.std(Ar_conc))} {t('at')} %)")
+    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr")+f"({t('mean')}={round(np.mean(Kr_conc))}±{round(np.std(Kr_conc))} {t('at')} %)")
     
     plt.xlim(0, max(len(ne_data), len(ar_data), len(kr_data)) + 1)
     plt.ylim(30, 80)
