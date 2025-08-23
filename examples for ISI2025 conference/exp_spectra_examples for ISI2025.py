@@ -19,7 +19,7 @@ import scipy
 from scipy.optimize import minimize
 
 # Language selection - choose between "rus" and "eng"
-charts_lang = "eng"  # Change to "rus" for Russian or "eng" for English
+charts_lang = "rus"  # Change to "rus" for Russian or "eng" for English
 
 # Translation dictionaries
 TRANSLATIONS = {
@@ -48,7 +48,8 @@ TRANSLATIONS = {
         "expected" : "ожидаемая",
         "mean" : "в среднем",
         "at" : "ат.",
-        "warning_no_reference": "WARNING: No reference was found for the {} incident atom"
+        "warning_no_reference": "WARNING: No reference was found for the {} incident atom",
+        "beam" : ""
     },
     "eng": {
         "title_experimental": "Experimental spectrum",
@@ -75,7 +76,8 @@ TRANSLATIONS = {
         "xps" : "XPS data (51.95 at. %)",
         "expected" : "expected",
         "mean" : "mean",
-        "at" : "at."
+        "at" : "at.",
+        "beam" : "beam"
     }
 }
 
@@ -107,7 +109,7 @@ filter_window = 120 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = True
+do_spectra_charts = False
 plot_ions = "Kr"
 ####################################################################################################################
 
@@ -404,17 +406,28 @@ if not do_spectra_charts:
     if ne_data:
         mean_ne = np.mean(ne_data)
         plt.axhline(y=mean_ne, color='red', linestyle='--', alpha=0.6, linewidth=2)
+        plt.text(12.2, mean_ne+0.2, "$Ne^+$ "+t("beam"), fontsize=18, color="red")
+
     
     if ar_data:
         mean_ar = np.mean(ar_data)
         plt.axhline(y=mean_ar, color='green', linestyle='--', alpha=0.6, linewidth=2)
-    
+        plt.text(12.2, mean_ar+0.2, "$Ar^+$ "+t("beam"), fontsize=18, color="green")
+
     if kr_data:
         mean_kr = np.mean(kr_data)
         plt.axhline(y=mean_kr, color='blue', linestyle='--', alpha=0.6, linewidth=2) #label=f'Kr avg: {mean_kr:.1f}%'
-    
+        plt.text(12.2, mean_kr+0.2, "$Kr^+$ "+t("beam"), fontsize=18, color="blue")
+
     plt.axhline(y=50, color='black', linestyle='-', alpha=0.6, linewidth=4, label=t("expected"))
     plt.axhline(y=51.95, color='black', linestyle=':', alpha=0.6, linewidth=4, label=t("xps"))
+    
+    plt.fill_betweenx(np.linspace (np.mean(Ne_conc)-np.std(Ne_conc), np.mean(Ne_conc)+np.std(Ne_conc) ),0, 14, color='red', alpha=0.1)
+    plt.fill_betweenx(np.linspace (np.mean(Ar_conc)-np.std(Ar_conc), np.mean(Ar_conc)+np.std(Ar_conc) ),0, 14, color='green', alpha=0.1)
+    plt.fill_betweenx(np.linspace (np.mean(Kr_conc)-np.std(Kr_conc), np.mean(Kr_conc)+np.std(Kr_conc) ),0, 14, color='blue', alpha=0.1)
+
+    plt.fill_betweenx(np.linspace (50, 51.95 ),0, 14, color='grey', alpha=0.6)
+    
     
     # Добавляем легенду и оформление графика
     plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f"({t('mean')}={round(np.mean(Ne_conc))}±{round(np.std(Ne_conc))} {t('at')} %)")
