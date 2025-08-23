@@ -284,6 +284,8 @@ class spectrum:
         # do interpolation with new energy step and normalization to 1 in range (Emin, Emax)
         self.__spectrum_en = np.arange(0, raw_spectrum_en[-1], self.__step)
         # scaling range in eV (influence spectra normalization in Web charts and output files)
+        # subtract background 
+        raw_spectrum_int = raw_spectrum_int - raw_spectrum_int[100]
         self.__spectrum_int = np.interp(self.__spectrum_en,raw_spectrum_en, raw_spectrum_int)
         try:
             global Emax
