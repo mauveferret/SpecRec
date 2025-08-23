@@ -19,7 +19,7 @@ import scipy
 from scipy.optimize import minimize
 
 # Language selection - choose between "rus" and "eng"
-charts_lang = "rus"  # Change to "rus" for Russian or "eng" for English
+charts_lang = "eng"  # Change to "rus" for Russian or "eng" for English
 
 # Translation dictionaries
 TRANSLATIONS = {
@@ -430,9 +430,9 @@ if not do_spectra_charts:
     
     
     # Добавляем легенду и оформление графика
-    plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f"({t('mean')}={round(np.mean(Ne_conc))}±{round(np.std(Ne_conc))} {t('at')} %)")
-    plt.plot(-1, 0, "*", color="green", label=t("legend_ar")+f"({t('mean')}={round(np.mean(Ar_conc))}±{round(np.std(Ar_conc))} {t('at')} %)")
-    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr")+f"({t('mean')}={round(np.mean(Kr_conc))}±{round(np.std(Kr_conc))} {t('at')} %)")
+    plt.plot(-1, 0, "o", color="blue", label=t("legend_kr")+f" ({t('mean')}={round(np.mean(Kr_conc))} {t('at')} %, σ={round(np.std(Kr_conc))} {t('at')} %)")
+    plt.plot(-1, 0, "x", color="red", label=t("legend_ne")+f" ({t('mean')}={round(np.mean(Ne_conc))} {t('at')} %, σ={round(np.std(Ne_conc))} {t('at')} %)")
+    plt.plot(-1, 0, "*", color="green", label=t("legend_ar")+f" ({t('mean')}={round(np.mean(Ar_conc))} {t('at')} %, σ={round(np.std(Ar_conc))} {t('at')} %)")
     
     plt.xlim(0, max(len(ne_data), len(ar_data), len(kr_data)) + 1)
     plt.ylim(30, 80)
