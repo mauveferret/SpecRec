@@ -19,7 +19,7 @@ import scipy
 from scipy.optimize import minimize
 
 # Language selection - choose between "rus" and "eng"
-charts_lang = "eng"  # Change to "rus" for Russian or "eng" for English
+charts_lang = "rus"  # Change to "rus" for Russian or "eng" for English
 
 # Translation dictionaries
 TRANSLATIONS = {
@@ -33,12 +33,12 @@ TRANSLATIONS = {
         "legend_experimental": "Экспериментальный спектр Au-Pd",
         "legend_au": "Полуэталонный Au",
         "legend_pd": "Полуэталонный Pd",
-        "legend_sum": "Сумма",
+        "legend_sum": "Фиттинг (= красный + чёрный)",
         "legend_pd_signal": "Сигнал Pd (= чёрный - красный)",
         "legend_ne": "Ne 15 кэВ \"Полуэталонный\"",
         "legend_ar": "Ar 15 кэВ \"Полуэталонный\"",
         "legend_kr": "Kr 11 кэВ \"Полуэталонный\"",
-        "concentration_box": "Концентрация золота {:.1f} ат. % \n",
+        "concentration_box": "Концентрация золота {:.0f} ат. % \n",
         "stats_ne": "Атомы Ne:",
         "stats_ar": "Атомы Ar:",
         "stats_kr": "Атомы Kr:",
@@ -109,7 +109,7 @@ filter_window = 120 # eV
 # R - relative energy resolution of spectrometer
 R = 0.01
  
-do_spectra_charts = True
+do_spectra_charts = False
 plot_ions = "Ne"
 ####################################################################################################################
 
@@ -305,7 +305,7 @@ for spectrum in exp_spectra:
                 plt.plot(ref_Ne_Au.spectrum_en/1000, leis.norm(ref_Ne_Au.spectrum_int)*max(Au_Deconv_spectrum), "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(ref_Ne_Pd.spectrum_en/1000, leis.norm(ref_Ne_Pd.spectrum_int)*max(Pd_Deconv_spectrum), "b--", label=t("legend_pd"), linewidth=3, alpha=0.8)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=4, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=4, alpha=0.92)
 
                 plt.xlim(9,15)
                 plt.text(9.2, 0.67, box, fontsize=14)
@@ -314,7 +314,7 @@ for spectrum in exp_spectra:
 
                 plt.plot(ref_Ar_Au.spectrum_en/1000, leis.norm(ref_Ar_Au.spectrum_int)*max(Au_Deconv_spectrum), "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(ref_Ar_Pd.spectrum_en/1000, leis.norm(ref_Ar_Pd.spectrum_int)*max(Pd_Deconv_spectrum), "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=5, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=5, alpha=0.99)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
                 plt.xlim(9,15)
                 plt.text(9.2, 0.65, box, fontsize=14)
@@ -322,7 +322,7 @@ for spectrum in exp_spectra:
             elif "Kr" in data.incident_atom:
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum, "r--", label=t("legend_au"), linewidth=3, alpha=0.8)
                 plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Pd_Deconv_spectrum, "b--", label=t("legend_pd"), linewidth=3, alpha=0.9)
-                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=4, alpha=0.8)
+                plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, Au_Deconv_spectrum+Pd_Deconv_spectrum, "g-.", label=t("legend_sum"), linewidth=4, alpha=0.92)
                 #plt.plot(data.spectrum_en[int(Emin/leis.step):int(Emax/leis.step)]/1000, scipy.signal.savgol_filter(leis.norm(data.spectrum_int)[int(Emin/leis.step):int(Emax/leis.step)], int(300/leis.step), 5) - Au_Deconv_spectrum, "g-", label=t("legend_pd_signal"), linewidth=3, alpha=0.7)
                 plt.xlim(5,11)
                 plt.text(5.1, 0.65, box, fontsize=14)
