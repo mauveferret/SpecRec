@@ -642,7 +642,7 @@ def plot_dBeta_map():
         if theta>=90:
             min_value_mu = 1+step_mu
         for i_mu in range (int(min_value_mu/step_mu)+1,number_of_points_mu):
-            mu = min_value_mu+i_mu*step_mu
+            mu = i_mu*step_mu
             mu_values[i_mu] = mu
             map0[i_mu, i_theta] = get_dBeta(E0, theta, mu, 2)/2
             #print(str(map0[i_mu, i_theta])[0:5], end=" ")
@@ -650,20 +650,35 @@ def plot_dBeta_map():
         #file.write("\n")
         #print("\n")
     #file.close()
-
+    
     #nipy_spectral   gist_ncar
     plt.figure(figsize=(10, 6))
     plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.35, 200))
-    plt.text(80, 0.8, 'запрещённая зона: μ> sin(θ)', fontsize = 13)
-    plt.colorbar(label='Δβ/ΔE, градусы/эВ', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35])
+    plt.text(80, 0.4, 'restricted zone: μ> sin(θ)', fontsize = 13)
+    plt.colorbar(label='Δβ/ΔE, degrees/eV', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35])
+    plt.xlabel('scattering angle θ, degrees', fontsize=12)
+    plt.yticks(np.arange(0, max_value_mu, 2))
+    plt.ylabel('target atom mass / incident atom mass μ',fontsize=12)
+    plt.clim(0.001, 0.35)
+    plt.minorticks_on()
+    plt.show()
+    
+    # Russian Version
+    """
+    #nipy_spectral   gist_ncar
+    plt.figure(figsize=(10, 6))
+    plt.contourf(angles,mu_values, map0, cmap='gist_ncar', levels=np.linspace(0.001, 0.4, 200))
+    plt.text(80, 0.2, 'запрещённая зона: μ> sin(θ)', fontsize = 13)
+    plt.colorbar(label='Δβ/ΔE, градусы/эВ', ticks=[0.001, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4])
     plt.xlabel('угол рассеяния θ, градусы', fontsize=12)
     plt.yticks(np.arange(0, max_value_mu, 2))
     plt.ylabel('масса атома мишени / масса налетающего атома μ',fontsize=12)
-    plt.clim(0.001, 0.35)
+    plt.clim(0.001, 0.4)
     plt.xticks(fontsize=13) # Sets x-axis tick label font size
     plt.yticks(fontsize=13) 
     plt.minorticks_on()
     plt.show()
+    """
 
 def plot_CrossSection_map(incident_atom, type="scatter"):
     """
